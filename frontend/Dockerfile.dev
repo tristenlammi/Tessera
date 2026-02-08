@@ -1,0 +1,22 @@
+# Development Dockerfile with hot-reload
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install pnpm and set store location
+RUN npm install -g pnpm && pnpm config set store-dir /app/.pnpm-store
+
+# Copy package files
+COPY package.json pnpm-lock.yaml* ./
+
+# Install dependencies
+RUN pnpm install
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Run dev server
+CMD ["pnpm", "dev", "--host", "0.0.0.0"]

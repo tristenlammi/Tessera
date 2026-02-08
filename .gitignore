@@ -1,0 +1,59 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/backend/bin/
+/backend/tmp/
+
+# Go
+*.test
+*.out
+go.work
+go.work.sum
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node/Frontend
+node_modules/
+dist/
+.nuxt/
+.output/
+.cache/
+.pnpm-store/
+
+# Docker volumes (local dev)
+.docker-data/
+
+# Logs
+*.log
+logs/
+
+# Test coverage
+coverage/
+*.cover
+*.coverage
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+build/

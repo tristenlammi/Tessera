@@ -1,0 +1,198 @@
+services:
+  # ===========================================
+  # PostgreSQL Database
+  # ===========================================
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: tessera-postgres
+    environment:
+      POSTGRES_DB: tessera
+      POSTGRES_USER: tessera
+      POSTGRES_PASSWORD: tessera_dev_password
+    volumes:
+      - ./.docker-data/postgres:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - tessera-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tessera -d tessera"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # Redis (Sessions, Cache, Job Queue)
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: tessera-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - ./.docker-data/redis:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - tessera-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # MinIO (S3-Compatible Object Storage)
+  # ===========================================
+  minio:
+    image: minio/minio:latest
+    container_name: tessera-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: tessera_access
+      MINIO_ROOT_PASSWORD: tessera_secret_dev
+    volumes:
+      - ./.docker-data/minio:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - tessera-network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # ===========================================
+  # MinIO Setup (Creates bucket on startup)
+  # ===========================================
+  minio-setup:
+    image: minio/mc:latest
+    container_name: tessera-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set tessera http://minio:9000 tessera_access tessera_secret_dev;
+      mc mb tessera/tessera-files --ignore-existing;
+      mc anonymous set none tessera/tessera-files;
+      exit 0;
+      "
+    networks:
+      - tessera-network
+
+  # ===========================================
+  # Go Backend API
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: tessera-backend
+    env_file:
+      - .env.example
+    volumes:
+      - ./backend:/app
+      - /app/tmp
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - tessera-network
+
+  # ===========================================
+  # Vue Frontend (Development)
+  # ===========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: tessera-frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    networks:
+      - tessera-network
+
+  # ===========================================
+  # Traefik Reverse Proxy
+  # ===========================================
+  traefik:
+    image: traefik:v3.0
+    container_name: tessera-traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8081:8080"
+    volumes:
+      - ./docker/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+    networks:
+      - tessera-network
+
+  # ===========================================
+  # Prometheus (Metrics Collection) - DISABLED
+  # ===========================================
+  # prometheus:
+  #   image: prom/prometheus:v2.50.0
+  #   container_name: tessera-prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #     - '--storage.tsdb.path=/prometheus'
+  #     - '--storage.tsdb.retention.time=15d'
+  #     - '--web.enable-lifecycle'
+  #   volumes:
+  #     - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - ./.docker-data/prometheus:/prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - tessera-network
+  #   depends_on:
+  #     - backend
+
+  # ===========================================
+  # Grafana (Metrics Visualization) - DISABLED
+  # ===========================================
+  # grafana:
+  #   image: grafana/grafana:10.3.0
+  #   container_name: tessera-grafana
+  #   environment:
+  #     GF_SECURITY_ADMIN_USER: admin
+  #     GF_SECURITY_ADMIN_PASSWORD: tessera_grafana
+  #     GF_USERS_ALLOW_SIGN_UP: "false"
+  #     GF_INSTALL_PLUGINS: ""
+  #   volumes:
+  #     - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+  #     - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+  #     - ./.docker-data/grafana:/var/lib/grafana
+  #   ports:
+  #     - "3001:3000"
+  #   networks:
+  #     - tessera-network
+  #   depends_on:
+  #     - prometheus
+
+networks:
+  tessera-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:

@@ -1,0 +1,13 @@
+http:
+  routers:
+    webdav:
+      rule: "PathPrefix(`/webdav`)"
+      entryPoints:
+        - web
+      service: webdav-backend
+
+  services:
+    webdav-backend:
+      loadBalancer:
+        servers:
+          - url: "http://backend:8080"
