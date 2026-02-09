@@ -49,7 +49,7 @@ LABEL org.opencontainers.image.description="Self-hosted productivity platform �
 
 # ── Install runtime packages ────────────────────────────────────────────────
 RUN apk add --no-cache \
-    postgresql16 postgresql16-client \
+    postgresql16 postgresql16-client postgresql16-contrib \
     redis \
     nginx \
     ca-certificates tzdata curl bash \
