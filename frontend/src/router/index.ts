@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useModulesStore } from '@/stores/modules'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -21,6 +22,12 @@ const router = createRouter({
       name: 'register',
       component: () => import('@/views/RegisterView.vue'),
       meta: { guest: true }
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('@/views/ResetPasswordView.vue'),
+      meta: { public: true }
     },
     {
       path: '/',
@@ -117,15 +124,42 @@ router.beforeEach(async (to, from, next) => {
   // Allow public routes without authentication
   if (to.meta.public) {
     next()
-  } else if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next({ name: 'login', query: { redirect: to.fullPath } })
-  } else if (to.meta.guest && authStore.isAuthenticated) {
-    next({ name: 'files' })
-  } else if (to.meta.requiresAdmin && authStore.user?.role !== 'admin') {
-    next({ name: 'files' })
-  } else {
-    next()
+    return
   }
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next({ name: 'login', query: { redirect: to.fullPath } })
+    return
+  }
+
+  if (to.meta.guest && authStore.isAuthenticated) {
+    next({ name: 'files' })
+    return
+  }
+
+  if (to.meta.requiresAdmin && authStore.user?.role !== 'admin') {
+    next({ name: 'files' })
+    return
+  }
+
+  // Module access guard: redirect to files if module is disabled
+  if (to.meta.module) {
+    const modulesStore = useModulesStore()
+    // Fetch module settings if not yet loaded
+    if (!modulesStore.loaded) {
+      try {
+        await modulesStore.fetchModuleSettings()
+      } catch {
+        // If fetch fails, deny access to module routes
+      }
+    }
+    if (!modulesStore.isModuleEnabled(to.meta.module as string)) {
+      next({ name: 'files' })
+      return
+    }
+  }
+
+  next()
 })
 
 export default router

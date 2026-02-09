@@ -30,11 +30,12 @@ type EventHandler = (event: WebSocketEvent) => void
 class WebSocketClient {
   private ws: WebSocket | null = null
   private reconnectAttempts = 0
-  private maxReconnectAttempts = 5
-  private reconnectDelay = 1000
+  private baseDelay = 1000       // Start at 1s
+  private maxDelay = 60000       // Cap at 60s
   private handlers: Map<EventType | '*', Set<EventHandler>> = new Map()
   private subscribedFolders: Set<string | null> = new Set()
   private isConnecting = false
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
   public isConnected = ref(false)
   public connectionError = ref<string | null>(null)
@@ -60,6 +61,7 @@ class WebSocketClient {
     } catch (e) {
       console.error('[WS] Failed to get WebSocket ticket:', e)
       this.connectionError.value = 'Failed to authenticate WebSocket connection'
+      this.scheduleReconnect()
       return
     }
 
@@ -95,12 +97,9 @@ class WebSocketClient {
         this.isConnected.value = false
         this.ws = null
 
-        // Attempt reconnection if not a normal close
-        if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.reconnectAttempts++
-          const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
-          console.log(`[WS] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`)
-          setTimeout(() => this.connect(), delay)
+        // Reconnect unless it was a clean close initiated by us
+        if (event.code !== 1000) {
+          this.scheduleReconnect()
         }
       }
 
@@ -111,15 +110,37 @@ class WebSocketClient {
     } catch (e) {
       console.error('[WS] Failed to connect:', e)
       this.connectionError.value = 'Failed to establish WebSocket connection'
+      this.scheduleReconnect()
     }
   }
 
+  private scheduleReconnect() {
+    if (this.reconnectTimer) return // Already scheduled
+
+    this.reconnectAttempts++
+    // Exponential backoff with jitter, capped at maxDelay
+    const baseWait = Math.min(this.baseDelay * Math.pow(2, this.reconnectAttempts - 1), this.maxDelay)
+    const jitter = Math.random() * baseWait * 0.3 // Up to 30% jitter
+    const delay = Math.round(baseWait + jitter)
+
+    console.log(`[WS] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`)
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null
+      this.connect()
+    }, delay)
+  }
+
   disconnect() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
     if (this.ws) {
       this.ws.close(1000, 'User disconnect')
       this.ws = null
     }
     this.isConnected.value = false
+    this.reconnectAttempts = 0
     this.subscribedFolders.clear()
   }
 

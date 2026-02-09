@@ -63,6 +63,7 @@ export const useModulesStore = defineStore('modules', () => {
   ])
 
   const loading = ref(false)
+  const loaded = ref(false)
   const error = ref<string | null>(null)
 
   const enabledModules = computed(() => 
@@ -88,6 +89,7 @@ export const useModulesStore = defineStore('modules', () => {
           module.enabled = serverModules[module.id]
         }
       })
+      loaded.value = true
     } catch (err: any) {
       // If not admin or endpoint doesn't exist, try user endpoint
       try {
@@ -99,6 +101,7 @@ export const useModulesStore = defineStore('modules', () => {
             module.enabled = serverModules[module.id]
           }
         })
+        loaded.value = true
       } catch {
         // Silently fail - modules stay disabled by default
       }
@@ -148,6 +151,7 @@ export const useModulesStore = defineStore('modules', () => {
   return {
     modules,
     loading,
+    loaded,
     error,
     enabledModules,
     isModuleEnabled,

@@ -93,8 +93,11 @@ services:
     container_name: tessera-backend
     env_file:
       - .env.example
+    environment:
+      - MIGRATIONS_PATH=file:///migrations
     volumes:
       - ./backend:/app
+      - ./migrations:/migrations:ro
       - /app/tmp
     ports:
       - "8080:8080"

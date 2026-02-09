@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/url"
 	"strconv"
@@ -10,12 +13,14 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/tessera/tessera/internal/middleware"
 	"github.com/tessera/tessera/internal/repository"
 	"github.com/tessera/tessera/internal/services"
+	"github.com/tessera/tessera/internal/storage"
 	"github.com/tessera/tessera/internal/websocket"
 )
 
@@ -24,14 +29,18 @@ type FileHandler struct {
 	fileService *services.FileService
 	log         zerolog.Logger
 	hub         *websocket.Hub
+	jwtSecret   string
+	storage     storage.Storage
 }
 
 // NewFileHandler creates a new file handler
-func NewFileHandler(fileService *services.FileService, log zerolog.Logger, hub *websocket.Hub) *FileHandler {
+func NewFileHandler(fileService *services.FileService, log zerolog.Logger, hub *websocket.Hub, jwtSecret string, store storage.Storage) *FileHandler {
 	return &FileHandler{
 		fileService: fileService,
 		log:         log,
 		hub:         hub,
+		jwtSecret:   jwtSecret,
+		storage:     store,
 	}
 }
 
@@ -1167,6 +1176,244 @@ func (h *FileHandler) DownloadShare(c *fiber.Ctx) error {
 	c.Set("Content-Type", fileInfo.MimeType)
 
 	return c.Send(data)
+}
+
+// streamTokenClaims represents a short-lived token for file streaming
+type streamTokenClaims struct {
+	FileID string `json:"file_id"`
+	UserID string `json:"user_id"`
+	jwt.RegisteredClaims
+}
+
+// StreamToken generates a short-lived token for streaming a file
+// The token is passed as a query parameter so <video>/<audio> elements can access the file
+func (h *FileHandler) StreamToken(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+
+	fileID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid file ID",
+		})
+	}
+
+	// Verify user has access to the file
+	_, err = h.fileService.Get(c.Context(), fileID, userID)
+	if err != nil {
+		if err == repository.ErrFileNotFound {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "File not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to get file",
+		})
+	}
+
+	claims := streamTokenClaims{
+		FileID: fileID.String(),
+		UserID: userID.String(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "tessera-stream",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(h.jwtSecret))
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to generate stream token")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to generate stream token",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"token": tokenString,
+	})
+}
+
+// StreamFile serves a file with HTTP Range request support for streaming playback.
+// Auth is via a short-lived token in the query string (so <video src="..."> works).
+//
+// IMPORTANT: We use c.Context().SetBodyStreamWriter() instead of c.SendStream()
+// because fasthttp reads the body stream AFTER the handler returns. If we used
+// defer reader.Close() + SendStream(), the reader would be closed before fasthttp
+// reads from it, producing empty/truncated responses. SetBodyStreamWriter gives us
+// a callback that runs during response writing, so the reader stays open.
+func (h *FileHandler) StreamFile(c *fiber.Ctx) error {
+	tokenString := c.Query("token")
+	if tokenString == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Missing stream token",
+		})
+	}
+
+	// Validate stream token
+	claims := &streamTokenClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method")
+		}
+		return []byte(h.jwtSecret), nil
+	})
+	if err != nil || !token.Valid {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid or expired stream token",
+		})
+	}
+
+	fileID, err := uuid.Parse(c.Params("id"))
+	if err != nil || fileID.String() != claims.FileID {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid file ID",
+		})
+	}
+
+	userID, err := uuid.Parse(claims.UserID)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid token",
+		})
+	}
+
+	// Get file metadata
+	file, err := h.fileService.Get(c.Context(), fileID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "File not found",
+		})
+	}
+
+	// Get object info for Content-Length
+	objInfo, err := h.storage.Stat(c.Context(), file.StorageKey)
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to stat file object")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to read file",
+		})
+	}
+	totalSize := objInfo.Size
+
+	// Set common headers
+	safeName := sanitizeFilename(file.Name)
+	c.Set("Content-Type", file.MimeType)
+	c.Set("Accept-Ranges", "bytes")
+	c.Set("Content-Disposition", "inline; filename=\""+safeName+"\"; filename*=UTF-8''"+url.PathEscape(file.Name))
+	c.Set("Cache-Control", "private, max-age=3600")
+
+	// Parse Range header
+	rangeHeader := c.Get("Range")
+	if rangeHeader == "" {
+		// No range — serve the entire file using stream writer
+		c.Set("Content-Length", strconv.FormatInt(totalSize, 10))
+		c.Status(fiber.StatusOK)
+
+		storageKey := file.StorageKey
+		c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+			reader, err := h.storage.Download(context.Background(), storageKey)
+			if err != nil {
+				h.log.Error().Err(err).Msg("Stream: failed to download file")
+				return
+			}
+			defer reader.Close()
+
+			if _, err := io.Copy(w, reader); err != nil {
+				h.log.Error().Err(err).Msg("Stream: failed to write file to response")
+			}
+			w.Flush()
+		})
+		return nil
+	}
+
+	// Parse "bytes=start-end"
+	rangeHeader = strings.TrimPrefix(rangeHeader, "bytes=")
+	parts := strings.SplitN(rangeHeader, "-", 2)
+	if len(parts) != 2 {
+		c.Set("Content-Range", fmt.Sprintf("bytes */%d", totalSize))
+		return c.Status(fiber.StatusRequestedRangeNotSatisfiable).SendString("Invalid range")
+	}
+
+	var start, end int64
+	if parts[0] == "" {
+		// Suffix range: bytes=-500 → last 500 bytes
+		suffixLen, parseErr := strconv.ParseInt(parts[1], 10, 64)
+		if parseErr != nil || suffixLen <= 0 {
+			c.Set("Content-Range", fmt.Sprintf("bytes */%d", totalSize))
+			return c.Status(fiber.StatusRequestedRangeNotSatisfiable).SendString("Invalid range")
+		}
+		start = totalSize - suffixLen
+		if start < 0 {
+			start = 0
+		}
+		end = totalSize - 1
+	} else {
+		var parseErr error
+		start, parseErr = strconv.ParseInt(parts[0], 10, 64)
+		if parseErr != nil || start < 0 {
+			c.Set("Content-Range", fmt.Sprintf("bytes */%d", totalSize))
+			return c.Status(fiber.StatusRequestedRangeNotSatisfiable).SendString("Invalid range")
+		}
+		if parts[1] == "" {
+			end = totalSize - 1
+		} else {
+			end, parseErr = strconv.ParseInt(parts[1], 10, 64)
+			if parseErr != nil || end < start {
+				c.Set("Content-Range", fmt.Sprintf("bytes */%d", totalSize))
+				return c.Status(fiber.StatusRequestedRangeNotSatisfiable).SendString("Invalid range")
+			}
+		}
+	}
+
+	if start >= totalSize {
+		c.Set("Content-Range", fmt.Sprintf("bytes */%d", totalSize))
+		return c.Status(fiber.StatusRequestedRangeNotSatisfiable).SendString("Range not satisfiable")
+	}
+	if end >= totalSize {
+		end = totalSize - 1
+	}
+
+	contentLen := end - start + 1
+
+	c.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, totalSize))
+	c.Set("Content-Length", strconv.FormatInt(contentLen, 10))
+	c.Status(fiber.StatusPartialContent)
+
+	storageKey := file.StorageKey
+	rangeStart := start
+	rangeLen := contentLen
+	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		reader, err := h.storage.Download(context.Background(), storageKey)
+		if err != nil {
+			h.log.Error().Err(err).Msg("Stream range: failed to download file")
+			return
+		}
+		defer reader.Close()
+
+		// Seek to start position
+		if rangeStart > 0 {
+			if seeker, ok := reader.(io.Seeker); ok {
+				if _, err := seeker.Seek(rangeStart, io.SeekStart); err != nil {
+					h.log.Error().Err(err).Msg("Stream range: failed to seek")
+					return
+				}
+			} else {
+				// Fallback: discard bytes to reach start
+				if _, err := io.CopyN(io.Discard, reader, rangeStart); err != nil {
+					h.log.Error().Err(err).Msg("Stream range: failed to skip to start")
+					return
+				}
+			}
+		}
+
+		// Copy only the requested range
+		if _, err := io.CopyN(w, reader, rangeLen); err != nil && err != io.EOF {
+			h.log.Error().Err(err).Msg("Stream range: failed to write range to response")
+		}
+		w.Flush()
+	})
+	return nil
 }
 
 // broadcastFileEvent sends a WebSocket event to subscribers

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -22,8 +23,9 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Env   string
-	Debug bool
+	Env      string
+	Debug    bool
+	LogLevel string
 }
 
 type ServerConfig struct {
@@ -87,10 +89,19 @@ func Load() (*Config, error) {
 	// Load .env file if it exists (ignore errors in production)
 	_ = godotenv.Load()
 
+	appEnv := getEnv("APP_ENV", "development")
+	isProduction := appEnv == "production"
+
+	defaultLogLevel := "debug"
+	if isProduction {
+		defaultLogLevel = "info"
+	}
+
 	cfg := &Config{
 		App: AppConfig{
-			Env:   getEnv("APP_ENV", "development"),
-			Debug: getEnvBool("APP_DEBUG", true),
+			Env:      appEnv,
+			Debug:    getEnvBool("APP_DEBUG", !isProduction),
+			LogLevel: getEnv("LOG_LEVEL", defaultLogLevel),
 		},
 		Server: ServerConfig{
 			Host:        getEnv("SERVER_HOST", "0.0.0.0"),
@@ -102,24 +113,24 @@ func Load() (*Config, error) {
 			Port:     getEnvInt("DB_PORT", 5432),
 			Name:     getEnv("DB_NAME", "tessera"),
 			User:     getEnv("DB_USER", "tessera"),
-			Password: getEnv("DB_PASSWORD", ""),
+			Password: getEnvOrSecret("DB_PASSWORD", ""),
 			SSLMode:  getEnv("DB_SSLMODE", "disable"),
 		},
 		Redis: RedisConfig{
 			Host:     getEnv("REDIS_HOST", "localhost"),
 			Port:     getEnvInt("REDIS_PORT", 6379),
-			Password: getEnv("REDIS_PASSWORD", ""),
+			Password: getEnvOrSecret("REDIS_PASSWORD", ""),
 			DB:       getEnvInt("REDIS_DB", 0),
 		},
 		Storage: StorageConfig{
 			Endpoint:  getEnv("MINIO_ENDPOINT", "localhost:9000"),
 			AccessKey: getEnv("MINIO_ACCESS_KEY", ""),
-			SecretKey: getEnv("MINIO_SECRET_KEY", ""),
+			SecretKey: getEnvOrSecret("MINIO_SECRET_KEY", ""),
 			Bucket:    getEnv("MINIO_BUCKET", "tessera-files"),
 			UseSSL:    getEnvBool("MINIO_USE_SSL", false),
 		},
 		JWT: JWTConfig{
-			Secret:        getEnv("JWT_SECRET", "change-me-in-production"),
+			Secret:        getEnvOrSecret("JWT_SECRET", "change-me-in-production"),
 			Expiry:        getEnvDuration("JWT_EXPIRY", 15*time.Minute),
 			RefreshExpiry: getEnvDuration("JWT_REFRESH_EXPIRY", 7*24*time.Hour),
 		},
@@ -130,11 +141,58 @@ func Load() (*Config, error) {
 		Encryption: EncryptionConfig{
 			// ENCRYPTION_KEY should be a base64-encoded 32-byte key
 			// Generate with: openssl rand -base64 32
-			MasterKey: getEnv("ENCRYPTION_KEY", ""),
+			MasterKey: getEnvOrSecret("ENCRYPTION_KEY", ""),
 		},
 	}
 
+	// In production, refuse to start with missing or placeholder secrets
+	if isProduction {
+		if err := validateProduction(cfg); err != nil {
+			return nil, err
+		}
+	}
+
 	return cfg, nil
+}
+
+// validateProduction ensures critical secrets are set when running in production.
+func validateProduction(cfg *Config) error {
+	var missing []string
+
+	if cfg.JWT.Secret == "" || cfg.JWT.Secret == "change-me-in-production" {
+		missing = append(missing, "JWT_SECRET")
+	}
+	if cfg.Encryption.MasterKey == "" {
+		missing = append(missing, "ENCRYPTION_KEY")
+	}
+	if cfg.Database.Password == "" {
+		missing = append(missing, "DB_PASSWORD")
+	}
+	if cfg.Redis.Password == "" {
+		missing = append(missing, "REDIS_PASSWORD")
+	}
+	if cfg.Storage.AccessKey == "" || cfg.Storage.SecretKey == "" {
+		missing = append(missing, "MINIO_ACCESS_KEY / MINIO_SECRET_KEY")
+	}
+
+	if len(missing) > 0 {
+		return fmt.Errorf("production mode requires the following secrets to be set: %v", missing)
+	}
+	return nil
+}
+
+// getEnvOrSecret reads from a Docker secret file (/run/secrets/<key>) first,
+// then falls back to the environment variable. This supports both plain env vars
+// and Docker Swarm / Compose secrets transparently.
+func getEnvOrSecret(key, fallback string) string {
+	secretPath := "/run/secrets/" + strings.ToLower(key)
+	if data, err := os.ReadFile(secretPath); err == nil {
+		v := strings.TrimSpace(string(data))
+		if v != "" {
+			return v
+		}
+	}
+	return getEnv(key, fallback)
 }
 
 func getEnv(key, fallback string) string {

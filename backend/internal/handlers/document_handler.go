@@ -7,67 +7,40 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/tessera/tessera/internal/middleware"
+	"github.com/tessera/tessera/internal/models"
+	"github.com/tessera/tessera/internal/repository"
 )
 
 // DocumentHandler handles document editing endpoints
 type DocumentHandler struct {
-	log zerolog.Logger
+	log      zerolog.Logger
+	docRepo  *repository.DocumentRepository
+	userRepo *repository.UserRepository
 }
 
 // NewDocumentHandler creates a new document handler
-func NewDocumentHandler(log zerolog.Logger) *DocumentHandler {
+func NewDocumentHandler(log zerolog.Logger, docRepo *repository.DocumentRepository, userRepo *repository.UserRepository) *DocumentHandler {
 	return &DocumentHandler{
-		log: log,
+		log:      log,
+		docRepo:  docRepo,
+		userRepo: userRepo,
 	}
-}
-
-// Document represents a rich text document
-type Document struct {
-	ID            uuid.UUID              `json:"id"`
-	FileID        *uuid.UUID             `json:"fileId"`
-	Title         string                 `json:"title"`
-	Content       string                 `json:"content"` // JSON (Tiptap format) or HTML
-	Format        string                 `json:"format"`  // tiptap, markdown, html
-	OwnerID       uuid.UUID              `json:"ownerId"`
-	OwnerName     string                 `json:"ownerName"`
-	Collaborators []DocumentCollaborator `json:"collaborators"`
-	IsPublic      bool                   `json:"isPublic"`
-	Version       int                    `json:"version"`
-	CreatedAt     time.Time              `json:"createdAt"`
-	UpdatedAt     time.Time              `json:"updatedAt"`
-}
-
-// DocumentCollaborator represents a document collaborator
-type DocumentCollaborator struct {
-	UserID     uuid.UUID `json:"userId"`
-	UserName   string    `json:"userName"`
-	UserEmail  string    `json:"userEmail"`
-	Permission string    `json:"permission"` // view, edit
-	Color      string    `json:"color"`
-	Online     bool      `json:"online"`
-}
-
-// In-memory storage (in production, use database)
-var documents = make(map[uuid.UUID][]Document)
-
-// Collaborator colors
-var collaboratorColors = []string{
-	"#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5",
-	"#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50",
-	"#8bc34a", "#cddc39", "#ffeb3b", "#ffc107", "#ff9800",
 }
 
 // ListDocuments returns all documents for a user
 func (h *DocumentHandler) ListDocuments(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 
-	userDocs, exists := documents[userID]
-	if !exists {
-		userDocs = []Document{}
+	docs, err := h.docRepo.ListByOwner(c.Context(), userID)
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to list documents")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch documents",
+		})
 	}
 
 	return c.JSON(fiber.Map{
-		"documents": userDocs,
+		"documents": docs,
 	})
 }
 
@@ -82,33 +55,24 @@ func (h *DocumentHandler) GetDocument(c *fiber.Ctx) error {
 		})
 	}
 
-	// Check user's own documents
-	userDocs := documents[userID]
-	for _, doc := range userDocs {
-		if doc.ID == docID {
-			return c.JSON(doc)
+	doc, err := h.docRepo.GetByID(c.Context(), docID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Document not found",
+		})
+	}
+
+	// Check access: must be owner or collaborator
+	if doc.OwnerID != userID {
+		isCollab, err := h.docRepo.IsCollaborator(c.Context(), docID, userID)
+		if err != nil || !isCollab {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Document not found",
+			})
 		}
 	}
 
-	// Check shared documents
-	for ownerID, ownerDocs := range documents {
-		if ownerID == userID {
-			continue
-		}
-		for _, doc := range ownerDocs {
-			if doc.ID == docID {
-				for _, collab := range doc.Collaborators {
-					if collab.UserID == userID {
-						return c.JSON(doc)
-					}
-				}
-			}
-		}
-	}
-
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-		"error": "Document not found",
-	})
+	return c.JSON(doc)
 }
 
 // CreateDocument creates a new document
@@ -138,23 +102,35 @@ func (h *DocumentHandler) CreateDocument(c *fiber.Ctx) error {
 		req.Content = `{"type":"doc","content":[{"type":"paragraph"}]}`
 	}
 
+	// Get owner name
+	ownerName := "User"
+	user, err := h.userRepo.GetByID(c.Context(), userID)
+	if err == nil {
+		ownerName = user.Name
+	}
+
 	now := time.Now()
-	doc := Document{
+	doc := &models.Document{
 		ID:            uuid.New(),
 		FileID:        req.FileID,
 		Title:         req.Title,
 		Content:       req.Content,
 		Format:        req.Format,
 		OwnerID:       userID,
-		OwnerName:     "User", // Would get from user service
-		Collaborators: []DocumentCollaborator{},
+		OwnerName:     ownerName,
+		Collaborators: []models.DocumentCollaborator{},
 		IsPublic:      false,
 		Version:       1,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
 
-	documents[userID] = append(documents[userID], doc)
+	if err := h.docRepo.Create(c.Context(), doc); err != nil {
+		h.log.Error().Err(err).Msg("Failed to create document")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to create document",
+		})
+	}
 
 	h.log.Info().
 		Str("doc_id", doc.ID.String()).
@@ -187,35 +163,49 @@ func (h *DocumentHandler) UpdateDocument(c *fiber.Ctx) error {
 		})
 	}
 
-	userDocs := documents[userID]
-	for i, doc := range userDocs {
-		if doc.ID == docID {
-			// Optimistic locking
-			if req.Version != nil && *req.Version != doc.Version {
-				return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-					"error":   "Document has been modified",
-					"version": doc.Version,
-				})
-			}
+	doc, err := h.docRepo.GetByID(c.Context(), docID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Document not found",
+		})
+	}
 
-			if req.Title != nil {
-				doc.Title = *req.Title
-			}
-			if req.Content != nil {
-				doc.Content = *req.Content
-			}
-
-			doc.Version++
-			doc.UpdatedAt = time.Now()
-			documents[userID][i] = doc
-
-			return c.JSON(doc)
+	// Check access: must be owner or collaborator with edit permission
+	if doc.OwnerID != userID {
+		isCollab, _ := h.docRepo.IsCollaborator(c.Context(), docID, userID)
+		if !isCollab {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Document not found",
+			})
 		}
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-		"error": "Document not found",
-	})
+	// Optimistic locking
+	if req.Version != nil && *req.Version != doc.Version {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error":   "Document has been modified",
+			"version": doc.Version,
+		})
+	}
+
+	if req.Title != nil {
+		doc.Title = *req.Title
+	}
+	if req.Content != nil {
+		doc.Content = *req.Content
+	}
+
+	doc.Version++
+	doc.UpdatedAt = time.Now()
+
+	if err := h.docRepo.Update(c.Context(), doc); err != nil {
+		h.log.Error().Err(err).Msg("Failed to update document")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update document",
+		})
+	}
+
+	return c.JSON(doc)
 }
 
 // DeleteDocument deletes a document
@@ -229,23 +219,19 @@ func (h *DocumentHandler) DeleteDocument(c *fiber.Ctx) error {
 		})
 	}
 
-	userDocs := documents[userID]
-	for i, doc := range userDocs {
-		if doc.ID == docID {
-			documents[userID] = append(userDocs[:i], userDocs[i+1:]...)
-
-			h.log.Info().
-				Str("doc_id", docID.String()).
-				Str("user_id", userID.String()).
-				Msg("Document deleted")
-
-			return c.SendStatus(fiber.StatusNoContent)
-		}
+	if err := h.docRepo.Delete(c.Context(), docID, userID); err != nil {
+		h.log.Error().Err(err).Msg("Failed to delete document")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete document",
+		})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-		"error": "Document not found",
-	})
+	h.log.Info().
+		Str("doc_id", docID.String()).
+		Str("user_id", userID.String()).
+		Msg("Document deleted")
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // ShareDocument shares a document with another user
@@ -280,42 +266,46 @@ func (h *DocumentHandler) ShareDocument(c *fiber.Ctx) error {
 		req.Permission = "view"
 	}
 
-	userDocs := documents[userID]
-	for i, doc := range userDocs {
-		if doc.ID == docID {
-			// Check if already shared
-			for _, collab := range doc.Collaborators {
-				if collab.UserEmail == req.Email {
-					return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-						"error": "Already shared with this user",
-					})
-				}
-			}
-
-			// Add collaborator (in production, look up user by email)
-			colorIndex := len(doc.Collaborators) % len(collaboratorColors)
-			collab := DocumentCollaborator{
-				UserID:     uuid.New(), // Would be actual user ID
-				UserName:   req.Email,  // Would be actual name
-				UserEmail:  req.Email,
-				Permission: req.Permission,
-				Color:      collaboratorColors[colorIndex],
-				Online:     false,
-			}
-
-			doc.Collaborators = append(doc.Collaborators, collab)
-			doc.UpdatedAt = time.Now()
-			documents[userID][i] = doc
-
-			return c.JSON(fiber.Map{
-				"success":       true,
-				"collaborators": doc.Collaborators,
-			})
-		}
+	// Verify document exists and user is owner
+	doc, err := h.docRepo.GetByID(c.Context(), docID)
+	if err != nil || doc.OwnerID != userID {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Document not found",
+		})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-		"error": "Document not found",
+	// Look up user by email
+	targetUser, err := h.userRepo.GetByEmail(c.Context(), req.Email)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	// Check if already shared
+	isCollab, _ := h.docRepo.IsCollaborator(c.Context(), docID, targetUser.ID)
+	if isCollab {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": "Already shared with this user",
+		})
+	}
+
+	colorIndex := len(doc.Collaborators) % len(models.CollaboratorColors)
+	color := models.CollaboratorColors[colorIndex]
+
+	if err := h.docRepo.AddCollaborator(c.Context(), docID, targetUser.ID, req.Permission, color); err != nil {
+		h.log.Error().Err(err).Msg("Failed to share document")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to share document",
+		})
+	}
+
+	// Re-fetch to get updated collaborators
+	doc, _ = h.docRepo.GetByID(c.Context(), docID)
+
+	return c.JSON(fiber.Map{
+		"success":       true,
+		"collaborators": doc.Collaborators,
 	})
 }
 
@@ -337,26 +327,20 @@ func (h *DocumentHandler) RemoveCollaborator(c *fiber.Ctx) error {
 		})
 	}
 
-	userDocs := documents[userID]
-	for i, doc := range userDocs {
-		if doc.ID == docID {
-			// Remove collaborator
-			newCollabs := []DocumentCollaborator{}
-			for _, collab := range doc.Collaborators {
-				if collab.UserID != collabID {
-					newCollabs = append(newCollabs, collab)
-				}
-			}
-
-			doc.Collaborators = newCollabs
-			doc.UpdatedAt = time.Now()
-			documents[userID][i] = doc
-
-			return c.SendStatus(fiber.StatusNoContent)
-		}
+	// Verify document exists and user is owner
+	doc, err := h.docRepo.GetByID(c.Context(), docID)
+	if err != nil || doc.OwnerID != userID {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Document not found",
+		})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-		"error": "Document not found",
-	})
+	if err := h.docRepo.RemoveCollaborator(c.Context(), docID, collabID); err != nil {
+		h.log.Error().Err(err).Msg("Failed to remove collaborator")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to remove collaborator",
+		})
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }

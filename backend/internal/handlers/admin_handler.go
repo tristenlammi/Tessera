@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"math"
 	"strconv"
 	"time"
@@ -9,7 +10,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
+	"github.com/tessera/tessera/internal/config"
 	"github.com/tessera/tessera/internal/middleware"
 	"github.com/tessera/tessera/internal/models"
 	"github.com/tessera/tessera/internal/repository"
@@ -18,24 +21,33 @@ import (
 
 type AdminHandler struct {
 	db           *pgxpool.Pool
+	rdb          *redis.Client
 	userRepo     *repository.UserRepository
 	fileRepo     *repository.FileRepository
 	activityRepo *repository.ActivityRepository
+	settingsRepo *repository.SettingsRepository
+	cfg          *config.Config
 	log          zerolog.Logger
 }
 
 func NewAdminHandler(
 	db *pgxpool.Pool,
+	rdb *redis.Client,
 	userRepo *repository.UserRepository,
 	fileRepo *repository.FileRepository,
 	activityRepo *repository.ActivityRepository,
+	settingsRepo *repository.SettingsRepository,
+	cfg *config.Config,
 	log zerolog.Logger,
 ) *AdminHandler {
 	return &AdminHandler{
 		db:           db,
+		rdb:          rdb,
 		userRepo:     userRepo,
 		fileRepo:     fileRepo,
 		activityRepo: activityRepo,
+		settingsRepo: settingsRepo,
+		cfg:          cfg,
 		log:          log,
 	}
 }
@@ -66,6 +78,24 @@ type SystemSettings struct {
 	SMTPPort                 int      `json:"smtpPort"`
 	SMTPUser                 string   `json:"smtpUser"`
 	SMTPFrom                 string   `json:"smtpFrom"`
+}
+
+// defaultSystemSettings returns sensible defaults
+func (h *AdminHandler) defaultSystemSettings() SystemSettings {
+	return SystemSettings{
+		SiteName:                 "Tessera",
+		SiteURL:                  h.cfg.Server.FrontendURL,
+		DefaultQuota:             10 * 1024 * 1024 * 1024,
+		AllowRegistration:        true,
+		RequireEmailVerification: true,
+		MaxUploadSize:            100 * 1024 * 1024,
+		AllowedFileTypes:         []string{"*"},
+		MaintenanceMode:          false,
+		SMTPHost:                 "",
+		SMTPPort:                 587,
+		SMTPUser:                 "",
+		SMTPFrom:                 "",
+	}
 }
 
 // AdminUserResponse represents a user for admin display
@@ -106,7 +136,6 @@ func (h *AdminHandler) GetStats(c *fiber.Ctx) error {
 	h.db.QueryRow(ctx, "SELECT COUNT(*) FROM activities WHERE action = 'upload' AND created_at >= $1", today).Scan(&uploadsToday)
 	h.db.QueryRow(ctx, "SELECT COUNT(*) FROM activities WHERE action = 'download' AND created_at >= $1", today).Scan(&downloadsToday)
 
-	// Assume 1TB total storage for now (could be configurable)
 	totalStorage := int64(1024 * 1024 * 1024 * 1024) // 1TB
 
 	stats := SystemStats{
@@ -123,26 +152,29 @@ func (h *AdminHandler) GetStats(c *fiber.Ctx) error {
 	return c.JSON(stats)
 }
 
-// GetSettings returns system settings
+// GetSettings returns system settings (persisted in database)
 func (h *AdminHandler) GetSettings(c *fiber.Ctx) error {
-	settings := SystemSettings{
-		SiteName:                 "Tessera",
-		SiteURL:                  "http://localhost:3000",
-		DefaultQuota:             10 * 1024 * 1024 * 1024,
-		AllowRegistration:        true,
-		RequireEmailVerification: true,
-		MaxUploadSize:            100 * 1024 * 1024,
-		AllowedFileTypes:         []string{"*"},
-		MaintenanceMode:          false,
-		SMTPHost:                 "",
-		SMTPPort:                 587,
-		SMTPUser:                 "",
-		SMTPFrom:                 "",
+	defaults := h.defaultSystemSettings()
+
+	stored, err := h.settingsRepo.Get(c.Context(), "system_settings")
+	if err != nil {
+		// No settings saved yet, return defaults
+		return c.JSON(defaults)
 	}
+
+	// Marshal/unmarshal through JSON to merge stored values onto defaults
+	raw, err := json.Marshal(stored)
+	if err != nil {
+		return c.JSON(defaults)
+	}
+
+	settings := defaults
+	json.Unmarshal(raw, &settings)
+
 	return c.JSON(settings)
 }
 
-// UpdateSettings updates system settings
+// UpdateSettings updates system settings (persisted in database)
 func (h *AdminHandler) UpdateSettings(c *fiber.Ctx) error {
 	var input SystemSettings
 	if err := c.BodyParser(&input); err != nil {
@@ -150,6 +182,15 @@ func (h *AdminHandler) UpdateSettings(c *fiber.Ctx) error {
 			"error": "Invalid request body",
 		})
 	}
+
+	if err := h.settingsRepo.Set(c.Context(), "system_settings", input); err != nil {
+		h.log.Error().Err(err).Msg("Failed to save system settings")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to save settings",
+		})
+	}
+
+	h.log.Info().Msg("System settings updated by admin")
 	return c.JSON(input)
 }
 
@@ -209,21 +250,14 @@ func (h *AdminHandler) ListUsers(c *fiber.Ctx) error {
 	for rows.Next() {
 		var user AdminUserResponse
 		if err := rows.Scan(
-			&user.ID,
-			&user.Email,
-			&user.Name,
-			&user.Role,
-			&user.StorageQuota,
-			&user.IsActive,
-			&user.CreatedAt,
-			&user.LastLoginAt,
+			&user.ID, &user.Email, &user.Name, &user.Role,
+			&user.StorageQuota, &user.IsActive, &user.CreatedAt, &user.LastLoginAt,
 		); err != nil {
 			h.log.Error().Err(err).Msg("Failed to scan user")
 			continue
 		}
-		user.EmailVerified = true // Assume verified
+		user.EmailVerified = true
 
-		// Get storage used
 		var storageUsed int64
 		h.db.QueryRow(ctx, "SELECT COALESCE(SUM(size), 0) FROM files WHERE owner_id = $1", user.ID).Scan(&storageUsed)
 		user.StorageUsed = storageUsed
@@ -297,14 +331,12 @@ func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	// Validate required fields
 	if input.Email == "" || input.Password == "" || input.Name == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Email, password, and name are required",
 		})
 	}
 
-	// Validate role
 	if input.Role == "" {
 		input.Role = "user"
 	}
@@ -314,7 +346,6 @@ func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	// Check if email already exists
 	exists, err := h.userRepo.EmailExists(ctx, input.Email)
 	if err != nil {
 		h.log.Error().Err(err).Msg("Failed to check email existence")
@@ -328,7 +359,6 @@ func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		h.log.Error().Err(err).Msg("Failed to hash password")
@@ -337,7 +367,6 @@ func (h *AdminHandler) CreateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	// Default storage quota: 10GB
 	storageQuota := input.StorageQuota
 	if storageQuota <= 0 {
 		storageQuota = 10 * 1024 * 1024 * 1024
@@ -401,7 +430,6 @@ func (h *AdminHandler) UpdateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	// Prevent admins from demoting or disabling themselves
 	if currentUserID == targetUserID {
 		if input.Role != nil && *input.Role != "admin" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -479,7 +507,6 @@ func (h *AdminHandler) DeleteUser(c *fiber.Ctx) error {
 		})
 	}
 
-	// Prevent admin from deleting themselves
 	if currentUserID == targetUserID {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Cannot delete your own account. Ask another admin to delete it.",
@@ -493,7 +520,6 @@ func (h *AdminHandler) DeleteUser(c *fiber.Ctx) error {
 		})
 	}
 
-	// Use transaction for atomic deletion
 	tx, err := h.db.Begin(ctx)
 	if err != nil {
 		h.log.Error().Err(err).Msg("Failed to begin transaction")
@@ -504,46 +530,28 @@ func (h *AdminHandler) DeleteUser(c *fiber.Ctx) error {
 	defer tx.Rollback(ctx)
 
 	// Delete user's related data in order
-	if _, err := tx.Exec(ctx, "DELETE FROM file_versions WHERE file_id IN (SELECT id FROM files WHERE owner_id = $1)", targetUserID); err != nil {
-		h.log.Error().Err(err).Msg("Failed to delete user file versions")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete user data",
-		})
+	deleteQueries := []string{
+		"DELETE FROM document_collaborators WHERE user_id = $1",
+		"DELETE FROM documents WHERE owner_id = $1",
+		"DELETE FROM calendar_events WHERE user_id = $1",
+		"DELETE FROM contacts WHERE user_id = $1",
+		"DELETE FROM tasks WHERE user_id = $1",
+		"DELETE FROM task_groups WHERE user_id = $1",
+		"DELETE FROM password_reset_tokens WHERE user_id = $1",
+		"DELETE FROM file_versions WHERE file_id IN (SELECT id FROM files WHERE owner_id = $1)",
+		"DELETE FROM shares WHERE owner_id = $1",
+		"DELETE FROM files WHERE owner_id = $1",
+		"DELETE FROM activities WHERE user_id = $1",
+		"DELETE FROM users WHERE id = $1",
 	}
 
-	if _, err := tx.Exec(ctx, "DELETE FROM shares WHERE owner_id = $1", targetUserID); err != nil {
-		h.log.Error().Err(err).Msg("Failed to delete user shares")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete user data",
-		})
-	}
-
-	if _, err := tx.Exec(ctx, "DELETE FROM files WHERE owner_id = $1", targetUserID); err != nil {
-		h.log.Error().Err(err).Msg("Failed to delete user files")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete user data",
-		})
-	}
-
-	if _, err := tx.Exec(ctx, "DELETE FROM activities WHERE user_id = $1", targetUserID); err != nil {
-		h.log.Error().Err(err).Msg("Failed to delete user activities")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete user data",
-		})
-	}
-
-	if _, err := tx.Exec(ctx, "DELETE FROM sessions WHERE user_id = $1", targetUserID); err != nil {
-		h.log.Error().Err(err).Msg("Failed to delete user sessions")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete user data",
-		})
-	}
-
-	if _, err := tx.Exec(ctx, "DELETE FROM users WHERE id = $1", targetUserID); err != nil {
-		h.log.Error().Err(err).Msg("Failed to delete user")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete user",
-		})
+	for _, q := range deleteQueries {
+		if _, err := tx.Exec(ctx, q, targetUserID); err != nil {
+			h.log.Error().Err(err).Str("query", q).Msg("Failed to delete user data")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to delete user data",
+			})
+		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -631,15 +639,9 @@ func (h *AdminHandler) GetActivityLogs(c *fiber.Ctx) error {
 	for rows.Next() {
 		var log ActivityLogResponse
 		if err := rows.Scan(
-			&log.ID,
-			&log.UserID,
-			&log.UserEmail,
-			&log.Action,
-			&log.ResourceType,
-			&log.ResourceID,
-			&log.IPAddress,
-			&log.UserAgent,
-			&log.CreatedAt,
+			&log.ID, &log.UserID, &log.UserEmail, &log.Action,
+			&log.ResourceType, &log.ResourceID, &log.IPAddress,
+			&log.UserAgent, &log.CreatedAt,
 		); err != nil {
 			h.log.Error().Err(err).Msg("Failed to scan activity log")
 			continue
@@ -656,8 +658,26 @@ func (h *AdminHandler) GetActivityLogs(c *fiber.Ctx) error {
 	})
 }
 
-// ClearCache clears application cache
+// ClearCache clears application cache (Redis)
 func (h *AdminHandler) ClearCache(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(c.Context(), 10*time.Second)
+	defer cancel()
+
+	if h.rdb != nil {
+		// Clear known cache key patterns
+		patterns := []string{"session_valid:*", "rate_limit:*"}
+		for _, pattern := range patterns {
+			iter := h.rdb.Scan(ctx, 0, pattern, 100).Iterator()
+			var keys []string
+			for iter.Next(ctx) {
+				keys = append(keys, iter.Val())
+			}
+			if len(keys) > 0 {
+				h.rdb.Del(ctx, keys...)
+			}
+		}
+	}
+
 	h.log.Info().Msg("Cache cleared by admin")
 	return c.JSON(fiber.Map{
 		"message": "Cache cleared successfully",
@@ -676,11 +696,70 @@ func (h *AdminHandler) RunCleanup(c *fiber.Ctx) error {
 
 	sharesExpired := result.RowsAffected()
 
+	// Also clean up expired password reset tokens
+	h.db.Exec(ctx, "DELETE FROM password_reset_tokens WHERE expires_at < $1 OR used_at IS NOT NULL", time.Now())
+
 	h.log.Info().Int64("sharesExpired", sharesExpired).Msg("Cleanup completed")
 
 	return c.JSON(fiber.Map{
 		"message":       "Cleanup completed",
 		"filesRemoved":  0,
 		"sharesExpired": sharesExpired,
+	})
+}
+
+// GenerateResetLink generates a password reset link for a user (admin only)
+func (h *AdminHandler) GenerateResetLink(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(c.Context(), 10*time.Second)
+	defer cancel()
+
+	adminID := middleware.GetUserID(c)
+	targetUserID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid user ID",
+		})
+	}
+
+	// Verify target user exists
+	_, err = h.userRepo.GetByID(ctx, targetUserID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	// Generate a cryptographically random token
+	tokenBytes := make([]byte, 32)
+	if _, err := uuid.New().MarshalBinary(); err != nil {
+		// fallback
+	}
+	token := uuid.New().String() + "-" + uuid.New().String()
+	_ = tokenBytes // Using UUID-based token for simplicity
+
+	// Store token in database with 24-hour expiry
+	expiresAt := time.Now().Add(24 * time.Hour)
+	_, err = h.db.Exec(ctx,
+		`INSERT INTO password_reset_tokens (id, user_id, token, created_by, expires_at, created_at)
+		 VALUES ($1, $2, $3, $4, $5, NOW())`,
+		uuid.New(), targetUserID, token, adminID, expiresAt,
+	)
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to create reset token")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to generate reset link",
+		})
+	}
+
+	resetURL := h.cfg.Server.FrontendURL + "/reset-password?token=" + token
+
+	h.log.Info().
+		Str("admin_id", adminID.String()).
+		Str("target_user_id", targetUserID.String()).
+		Msg("Password reset link generated")
+
+	return c.JSON(fiber.Map{
+		"reset_url":  resetURL,
+		"expires_at": expiresAt,
 	})
 }

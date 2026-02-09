@@ -247,6 +247,13 @@
                         <PencilIcon class="w-5 h-5" />
                       </button>
                       <button
+                        @click="generateResetLink(user)"
+                        class="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300"
+                        title="Generate Password Reset Link"
+                      >
+                        <KeyIcon class="w-5 h-5" />
+                      </button>
+                      <button
                         @click="confirmDeleteUser(user)"
                         class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                         title="Delete"
@@ -728,6 +735,7 @@ import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAdminStore, type User } from '@/stores/admin'
 import { useModulesStore } from '@/stores/modules'
+import api from '@/api'
 import {
   ShieldCheckIcon,
   ArrowLeftIcon,
@@ -747,6 +755,7 @@ import {
   MagnifyingGlassIcon,
   PlusIcon,
   PencilIcon,
+  KeyIcon,
   PuzzlePieceIcon,
   DocumentTextIcon,
   DocumentIcon,
@@ -974,6 +983,19 @@ async function saveUser() {
     isActive: editingUser.value.isActive,
   })
   editingUser.value = null
+}
+
+async function generateResetLink(user: User) {
+  try {
+    const response = await api.post(`/admin/users/${user.id}/reset-link`)
+    const resetUrl = response.data.reset_url
+    
+    // Copy to clipboard
+    await navigator.clipboard.writeText(resetUrl)
+    alert(`Password reset link copied to clipboard!\n\nLink: ${resetUrl}\n\nThis link expires in 24 hours.`)
+  } catch (err: any) {
+    alert(err.response?.data?.error || 'Failed to generate reset link')
+  }
 }
 
 async function confirmDeleteUser(user: User) {

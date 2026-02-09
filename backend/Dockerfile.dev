@@ -10,8 +10,8 @@ RUN go install github.com/air-verse/air@v1.61.0
 RUN apk add --no-cache gcc musl-dev
 
 # Copy go mod files first for better caching
-COPY go.mod go.sum ./
-RUN go mod download
+COPY go.mod go.sum* ./
+RUN go mod download || go mod tidy
 
 # Copy source code
 COPY . .

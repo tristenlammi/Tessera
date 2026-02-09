@@ -1,10 +1,14 @@
 package handlers
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/tessera/tessera/internal/middleware"
 	"github.com/tessera/tessera/internal/services"
@@ -14,13 +18,15 @@ import (
 type AuthHandler struct {
 	authService *services.AuthService
 	log         zerolog.Logger
+	db          *pgxpool.Pool
 }
 
 // NewAuthHandler creates a new auth handler
-func NewAuthHandler(authService *services.AuthService, log zerolog.Logger) *AuthHandler {
+func NewAuthHandler(authService *services.AuthService, log zerolog.Logger, db *pgxpool.Pool) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		log:         log,
+		db:          db,
 	}
 }
 
@@ -368,7 +374,7 @@ type ForgotPasswordRequest struct {
 	Email string `json:"email" validate:"required,email"`
 }
 
-// ForgotPassword initiates password reset (placeholder)
+// ForgotPassword directs user to contact admin (homelab apps don't need email-based reset)
 func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
 	var req ForgotPasswordRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -377,10 +383,10 @@ func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Implement email sending
-	// For now, just return success (don't leak user existence)
+	// In a homelab deployment, password reset is admin-generated.
+	// Return a helpful message without leaking user existence.
 	return c.JSON(fiber.Map{
-		"message": "If an account exists with this email, a password reset link will be sent.",
+		"message": "Please contact your administrator for a password reset link.",
 	})
 }
 
@@ -390,7 +396,7 @@ type ResetPasswordRequest struct {
 	NewPassword string `json:"new_password" validate:"required,min=8"`
 }
 
-// ResetPassword completes password reset (placeholder)
+// ResetPassword completes password reset using an admin-generated token
 func (h *AuthHandler) ResetPassword(c *fiber.Ctx) error {
 	var req ResetPasswordRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -399,9 +405,84 @@ func (h *AuthHandler) ResetPassword(c *fiber.Ctx) error {
 		})
 	}
 
-	// Not implemented - return error instead of fake success
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "Password reset is not yet implemented. Please contact an administrator.",
+	if req.Token == "" || req.NewPassword == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Token and new password are required",
+		})
+	}
+
+	if len(req.NewPassword) < 8 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Password must be at least 8 characters",
+		})
+	}
+
+	ctx, cancel := context.WithTimeout(c.Context(), 10*time.Second)
+	defer cancel()
+
+	// Look up the token
+	var tokenID, userID uuid.UUID
+	var expiresAt time.Time
+	var usedAt *time.Time
+	err := h.db.QueryRow(ctx,
+		`SELECT id, user_id, expires_at, used_at FROM password_reset_tokens WHERE token = $1`,
+		req.Token,
+	).Scan(&tokenID, &userID, &expiresAt, &usedAt)
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid or expired reset link",
+		})
+	}
+
+	// Check if already used
+	if usedAt != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "This reset link has already been used",
+		})
+	}
+
+	// Check if expired
+	if time.Now().After(expiresAt) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "This reset link has expired. Please contact your administrator for a new one.",
+		})
+	}
+
+	// Hash the new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to hash password")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to reset password",
+		})
+	}
+
+	// Update the password
+	_, err = h.db.Exec(ctx,
+		`UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`,
+		string(hashedPassword), userID,
+	)
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to update password")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to reset password",
+		})
+	}
+
+	// Mark the token as used
+	now := time.Now()
+	h.db.Exec(ctx,
+		`UPDATE password_reset_tokens SET used_at = $1 WHERE id = $2`,
+		now, tokenID,
+	)
+
+	h.log.Info().
+		Str("user_id", userID.String()).
+		Msg("Password reset completed via admin link")
+
+	return c.JSON(fiber.Map{
+		"message": "Password reset successfully. You can now log in with your new password.",
 	})
 }
 

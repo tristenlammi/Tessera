@@ -1,60 +1,25 @@
 package handlers
 
 import (
-	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"github.com/tessera/tessera/internal/models"
+	"github.com/tessera/tessera/internal/repository"
 )
 
 type CalendarHandler struct {
-	log zerolog.Logger
+	log          zerolog.Logger
+	calendarRepo *repository.CalendarRepository
 }
 
-func NewCalendarHandler(log zerolog.Logger) *CalendarHandler {
-	return &CalendarHandler{log: log}
-}
-
-// CalendarEvent represents a calendar event
-type CalendarEvent struct {
-	ID           uuid.UUID       `json:"id"`
-	UserID       uuid.UUID       `json:"userId"`
-	Title        string          `json:"title"`
-	Description  string          `json:"description"`
-	StartDate    time.Time       `json:"startDate"`
-	EndDate      time.Time       `json:"endDate"`
-	AllDay       bool            `json:"allDay"`
-	Color        string          `json:"color"`
-	Recurrence   *RecurrenceRule `json:"recurrence,omitempty"`
-	Reminders    []EventReminder `json:"reminders"`
-	LinkedTaskID *string         `json:"linkedTaskId,omitempty"`
-	CreatedAt    time.Time       `json:"createdAt"`
-	UpdatedAt    time.Time       `json:"updatedAt"`
-}
-
-// EventReminder represents a reminder for an event
-type EventReminder struct {
-	ID      uuid.UUID `json:"id"`
-	Minutes int       `json:"minutes"` // Minutes before event
-}
-
-// In-memory storage for calendar events (per user)
-var (
-	calendarEvents = make(map[uuid.UUID][]CalendarEvent)
-	calendarMu     sync.RWMutex
-)
-
-// RegisterRoutes registers calendar routes
-func (h *CalendarHandler) RegisterRoutes(app *fiber.App, authMiddleware fiber.Handler) {
-	calendar := app.Group("/api/calendar", authMiddleware)
-
-	calendar.Get("/events", h.ListEvents)
-	calendar.Post("/events", h.CreateEvent)
-	calendar.Get("/events/:id", h.GetEvent)
-	calendar.Put("/events/:id", h.UpdateEvent)
-	calendar.Delete("/events/:id", h.DeleteEvent)
+func NewCalendarHandler(log zerolog.Logger, calendarRepo *repository.CalendarRepository) *CalendarHandler {
+	return &CalendarHandler{
+		log:          log,
+		calendarRepo: calendarRepo,
+	}
 }
 
 // ListEvents returns all events for a user within a date range
@@ -64,7 +29,6 @@ func (h *CalendarHandler) ListEvents(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 	}
 
-	// Parse optional date range filters
 	startStr := c.Query("start")
 	endStr := c.Query("end")
 
@@ -74,7 +38,7 @@ func (h *CalendarHandler) ListEvents(c *fiber.Ctx) error {
 	if startStr != "" {
 		startDate, err = time.Parse(time.RFC3339, startStr)
 		if err != nil {
-			startDate = time.Now().AddDate(0, -1, 0) // Default: 1 month ago
+			startDate = time.Now().AddDate(0, -1, 0)
 		}
 	} else {
 		startDate = time.Now().AddDate(0, -1, 0)
@@ -83,26 +47,19 @@ func (h *CalendarHandler) ListEvents(c *fiber.Ctx) error {
 	if endStr != "" {
 		endDate, err = time.Parse(time.RFC3339, endStr)
 		if err != nil {
-			endDate = time.Now().AddDate(0, 2, 0) // Default: 2 months from now
+			endDate = time.Now().AddDate(0, 2, 0)
 		}
 	} else {
 		endDate = time.Now().AddDate(0, 2, 0)
 	}
 
-	calendarMu.RLock()
-	userEvents := calendarEvents[userID]
-	calendarMu.RUnlock()
-
-	// Filter events within date range
-	filteredEvents := make([]CalendarEvent, 0)
-	for _, event := range userEvents {
-		// Event overlaps with range if event.start <= range.end AND event.end >= range.start
-		if !event.StartDate.After(endDate) && !event.EndDate.Before(startDate) {
-			filteredEvents = append(filteredEvents, event)
-		}
+	events, err := h.calendarRepo.ListByUser(c.Context(), userID, startDate, endDate)
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to list calendar events")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch events"})
 	}
 
-	return c.JSON(filteredEvents)
+	return c.JSON(events)
 }
 
 // CreateEvent creates a new calendar event
@@ -113,14 +70,14 @@ func (h *CalendarHandler) CreateEvent(c *fiber.Ctx) error {
 	}
 
 	var input struct {
-		Title        string          `json:"title"`
-		Description  string          `json:"description"`
-		StartDate    string          `json:"startDate"`
-		EndDate      string          `json:"endDate"`
-		AllDay       bool            `json:"allDay"`
-		Color        string          `json:"color"`
-		Recurrence   *RecurrenceRule `json:"recurrence"`
-		LinkedTaskID *string         `json:"linkedTaskId"`
+		Title        string               `json:"title"`
+		Description  string               `json:"description"`
+		StartDate    string               `json:"startDate"`
+		EndDate      string               `json:"endDate"`
+		AllDay       bool                 `json:"allDay"`
+		Color        string               `json:"color"`
+		Recurrence   *models.RecurrenceRule `json:"recurrence"`
+		LinkedTaskID *string              `json:"linkedTaskId"`
 	}
 
 	if err := c.BodyParser(&input); err != nil {
@@ -133,7 +90,6 @@ func (h *CalendarHandler) CreateEvent(c *fiber.Ctx) error {
 
 	startDate, err := time.Parse(time.RFC3339, input.StartDate)
 	if err != nil {
-		// Try parsing without timezone
 		startDate, err = time.Parse("2006-01-02T15:04:05", input.StartDate)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid start date format"})
@@ -142,7 +98,6 @@ func (h *CalendarHandler) CreateEvent(c *fiber.Ctx) error {
 
 	endDate, err := time.Parse(time.RFC3339, input.EndDate)
 	if err != nil {
-		// Try parsing without timezone
 		endDate, err = time.Parse("2006-01-02T15:04:05", input.EndDate)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid end date format"})
@@ -150,11 +105,11 @@ func (h *CalendarHandler) CreateEvent(c *fiber.Ctx) error {
 	}
 
 	if input.Color == "" {
-		input.Color = "#3b82f6" // Default blue
+		input.Color = "#3b82f6"
 	}
 
 	now := time.Now()
-	event := CalendarEvent{
+	event := &models.CalendarEvent{
 		ID:           uuid.New(),
 		UserID:       userID,
 		Title:        input.Title,
@@ -164,15 +119,16 @@ func (h *CalendarHandler) CreateEvent(c *fiber.Ctx) error {
 		AllDay:       input.AllDay,
 		Color:        input.Color,
 		Recurrence:   input.Recurrence,
-		Reminders:    []EventReminder{},
+		Reminders:    []models.EventReminder{},
 		LinkedTaskID: input.LinkedTaskID,
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
 
-	calendarMu.Lock()
-	calendarEvents[userID] = append(calendarEvents[userID], event)
-	calendarMu.Unlock()
+	if err := h.calendarRepo.Create(c.Context(), event); err != nil {
+		h.log.Error().Err(err).Msg("Failed to create calendar event")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create event"})
+	}
 
 	h.log.Info().
 		Str("event_id", event.ID.String()).
@@ -194,17 +150,12 @@ func (h *CalendarHandler) GetEvent(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid event ID"})
 	}
 
-	calendarMu.RLock()
-	userEvents := calendarEvents[userID]
-	calendarMu.RUnlock()
-
-	for _, event := range userEvents {
-		if event.ID == eventID {
-			return c.JSON(event)
-		}
+	event, err := h.calendarRepo.GetByID(c.Context(), eventID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+	return c.JSON(event)
 }
 
 // UpdateEvent updates an existing event
@@ -220,63 +171,62 @@ func (h *CalendarHandler) UpdateEvent(c *fiber.Ctx) error {
 	}
 
 	var input struct {
-		Title       string          `json:"title"`
-		Description string          `json:"description"`
-		StartDate   string          `json:"startDate"`
-		EndDate     string          `json:"endDate"`
-		AllDay      bool            `json:"allDay"`
-		Color       string          `json:"color"`
-		Recurrence  *RecurrenceRule `json:"recurrence"`
+		Title       string               `json:"title"`
+		Description string               `json:"description"`
+		StartDate   string               `json:"startDate"`
+		EndDate     string               `json:"endDate"`
+		AllDay      bool                 `json:"allDay"`
+		Color       string               `json:"color"`
+		Recurrence  *models.RecurrenceRule `json:"recurrence"`
 	}
 
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	calendarMu.Lock()
-	defer calendarMu.Unlock()
-
-	userEvents := calendarEvents[userID]
-	for i, event := range userEvents {
-		if event.ID == eventID {
-			if input.Title != "" {
-				userEvents[i].Title = input.Title
-			}
-			userEvents[i].Description = input.Description
-			userEvents[i].AllDay = input.AllDay
-			if input.Color != "" {
-				userEvents[i].Color = input.Color
-			}
-			userEvents[i].Recurrence = input.Recurrence
-
-			if input.StartDate != "" {
-				startDate, err := time.Parse(time.RFC3339, input.StartDate)
-				if err != nil {
-					startDate, _ = time.Parse("2006-01-02T15:04:05", input.StartDate)
-				}
-				userEvents[i].StartDate = startDate
-			}
-
-			if input.EndDate != "" {
-				endDate, err := time.Parse(time.RFC3339, input.EndDate)
-				if err != nil {
-					endDate, _ = time.Parse("2006-01-02T15:04:05", input.EndDate)
-				}
-				userEvents[i].EndDate = endDate
-			}
-
-			userEvents[i].UpdatedAt = time.Now()
-			calendarEvents[userID] = userEvents
-
-			h.log.Info().
-				Str("event_id", eventID.String()).
-				Msg("Calendar event updated")
-
-			return c.JSON(userEvents[i])
-		}
+	event, err := h.calendarRepo.GetByID(c.Context(), eventID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+	if input.Title != "" {
+		event.Title = input.Title
+	}
+	event.Description = input.Description
+	event.AllDay = input.AllDay
+	if input.Color != "" {
+		event.Color = input.Color
+	}
+	event.Recurrence = input.Recurrence
+
+	if input.StartDate != "" {
+		startDate, err := time.Parse(time.RFC3339, input.StartDate)
+		if err != nil {
+			startDate, _ = time.Parse("2006-01-02T15:04:05", input.StartDate)
+		}
+		event.StartDate = startDate
+	}
+
+	if input.EndDate != "" {
+		endDate, err := time.Parse(time.RFC3339, input.EndDate)
+		if err != nil {
+			endDate, _ = time.Parse("2006-01-02T15:04:05", input.EndDate)
+		}
+		event.EndDate = endDate
+	}
+
+	event.UpdatedAt = time.Now()
+
+	if err := h.calendarRepo.Update(c.Context(), event); err != nil {
+		h.log.Error().Err(err).Msg("Failed to update calendar event")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update event"})
+	}
+
+	h.log.Info().
+		Str("event_id", eventID.String()).
+		Msg("Calendar event updated")
+
+	return c.JSON(event)
 }
 
 // DeleteEvent deletes an event
@@ -291,23 +241,16 @@ func (h *CalendarHandler) DeleteEvent(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid event ID"})
 	}
 
-	calendarMu.Lock()
-	defer calendarMu.Unlock()
-
-	userEvents := calendarEvents[userID]
-	for i, event := range userEvents {
-		if event.ID == eventID {
-			calendarEvents[userID] = append(userEvents[:i], userEvents[i+1:]...)
-
-			h.log.Info().
-				Str("event_id", eventID.String()).
-				Msg("Calendar event deleted")
-
-			return c.SendStatus(fiber.StatusNoContent)
-		}
+	if err := h.calendarRepo.Delete(c.Context(), eventID, userID); err != nil {
+		h.log.Error().Err(err).Msg("Failed to delete calendar event")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to delete event"})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+	h.log.Info().
+		Str("event_id", eventID.String()).
+		Msg("Calendar event deleted")
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // DeleteEventByTask deletes all calendar events linked to a specific task
@@ -322,24 +265,15 @@ func (h *CalendarHandler) DeleteEventByTask(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Task ID is required"})
 	}
 
-	calendarMu.Lock()
-	defer calendarMu.Unlock()
-
-	userEvents := calendarEvents[userID]
-	filtered := make([]CalendarEvent, 0, len(userEvents))
-	deleted := 0
-	for _, event := range userEvents {
-		if event.LinkedTaskID != nil && *event.LinkedTaskID == taskID {
-			deleted++
-			continue
-		}
-		filtered = append(filtered, event)
+	deleted, err := h.calendarRepo.DeleteByTaskID(c.Context(), userID, taskID)
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to delete calendar events by task")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to delete events"})
 	}
-	calendarEvents[userID] = filtered
 
 	h.log.Info().
 		Str("task_id", taskID).
-		Int("deleted", deleted).
+		Int64("deleted", deleted).
 		Msg("Deleted calendar events linked to task")
 
 	return c.JSON(fiber.Map{"deleted": deleted})

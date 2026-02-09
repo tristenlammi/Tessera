@@ -7,87 +7,38 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/tessera/tessera/internal/middleware"
+	"github.com/tessera/tessera/internal/models"
+	"github.com/tessera/tessera/internal/repository"
 )
 
 // TaskHandler handles task management endpoints
 type TaskHandler struct {
-	log zerolog.Logger
+	log      zerolog.Logger
+	taskRepo *repository.TaskRepository
 }
 
 // NewTaskHandler creates a new task handler
-func NewTaskHandler(log zerolog.Logger) *TaskHandler {
+func NewTaskHandler(log zerolog.Logger, taskRepo *repository.TaskRepository) *TaskHandler {
 	return &TaskHandler{
-		log: log,
+		log:      log,
+		taskRepo: taskRepo,
 	}
 }
-
-// Task represents a task
-type Task struct {
-	ID                 uuid.UUID       `json:"id"`
-	UserID             uuid.UUID       `json:"userId"`
-	Title              string          `json:"title"`
-	Description        string          `json:"description"`
-	Status             string          `json:"status"`   // todo, in-progress, done
-	Priority           string          `json:"priority"` // low, medium, high
-	DueDate            *time.Time      `json:"dueDate"`
-	GroupID            *uuid.UUID      `json:"groupId"`
-	Recurrence         *RecurrenceRule `json:"recurrence"`
-	Checklist          []ChecklistItem `json:"checklist"`
-	Tags               []string        `json:"tags"`
-	Order              int             `json:"order"`
-	LinkedEmailID      *string         `json:"linkedEmailId"`
-	LinkedEmailSubject *string         `json:"linkedEmailSubject"`
-	CreatedAt          time.Time       `json:"createdAt"`
-	UpdatedAt          time.Time       `json:"updatedAt"`
-	CompletedAt        *time.Time      `json:"completedAt"`
-}
-
-// ChecklistItem represents a single item in a task checklist
-type ChecklistItem struct {
-	ID        uuid.UUID `json:"id"`
-	Title     string    `json:"title"`
-	Completed bool      `json:"completed"`
-	Order     int       `json:"order"`
-}
-
-// RecurrenceRule defines task recurrence
-type RecurrenceRule struct {
-	Type                 string     `json:"type"` // daily, weekly, monthly, yearly
-	Interval             int        `json:"interval"`
-	DaysOfWeek           []int      `json:"daysOfWeek,omitempty"`  // 0=Sunday, 1=Monday, ..., 6=Saturday
-	DayOfMonth           *int       `json:"dayOfMonth,omitempty"`  // 1-31 for monthly
-	EndDate              *time.Time `json:"endDate,omitempty"`     // End recurrence after this date
-	Occurrences          *int       `json:"occurrences,omitempty"` // Max number of occurrences (total)
-	OccurrencesCompleted int        `json:"occurrencesCompleted"`  // How many times completed
-}
-
-// TaskGroup represents a task group
-type TaskGroup struct {
-	ID         uuid.UUID       `json:"id"`
-	UserID     uuid.UUID       `json:"userId"`
-	Name       string          `json:"name"`
-	Color      string          `json:"color"`
-	Recurrence *RecurrenceRule `json:"recurrence"`
-	CreatedAt  time.Time       `json:"createdAt"`
-}
-
-// In-memory storage (in production, use database)
-var (
-	tasks      = make(map[uuid.UUID][]Task)
-	taskGroups = make(map[uuid.UUID][]TaskGroup)
-)
 
 // ListTasks returns all tasks for a user
 func (h *TaskHandler) ListTasks(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 
-	userTasks, exists := tasks[userID]
-	if !exists {
-		userTasks = []Task{}
+	tasks, err := h.taskRepo.ListByUser(c.Context(), userID)
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to list tasks")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch tasks",
+		})
 	}
 
 	return c.JSON(fiber.Map{
-		"tasks": userTasks,
+		"tasks": tasks,
 	})
 }
 
@@ -96,17 +47,17 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 
 	var req struct {
-		Title              string          `json:"title"`
-		Description        string          `json:"description"`
-		Status             string          `json:"status"`
-		Priority           string          `json:"priority"`
-		DueDate            *time.Time      `json:"dueDate"`
-		GroupID            *uuid.UUID      `json:"groupId"`
-		Recurrence         *RecurrenceRule `json:"recurrence"`
-		Checklist          []ChecklistItem `json:"checklist"`
-		Tags               []string        `json:"tags"`
-		LinkedEmailID      *string         `json:"linkedEmailId"`
-		LinkedEmailSubject *string         `json:"linkedEmailSubject"`
+		Title              string               `json:"title"`
+		Description        string               `json:"description"`
+		Status             string               `json:"status"`
+		Priority           string               `json:"priority"`
+		DueDate            *time.Time           `json:"dueDate"`
+		GroupID            *uuid.UUID           `json:"groupId"`
+		Recurrence         *models.RecurrenceRule `json:"recurrence"`
+		Checklist          []models.ChecklistItem `json:"checklist"`
+		Tags               []string             `json:"tags"`
+		LinkedEmailID      *string              `json:"linkedEmailId"`
+		LinkedEmailSubject *string              `json:"linkedEmailSubject"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -133,7 +84,7 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 		req.Tags = []string{}
 	}
 	if req.Checklist == nil {
-		req.Checklist = []ChecklistItem{}
+		req.Checklist = []models.ChecklistItem{}
 	}
 
 	// Assign IDs to checklist items if missing
@@ -145,16 +96,10 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 	}
 
 	// Determine order
-	userTasks := tasks[userID]
-	maxOrder := 0
-	for _, t := range userTasks {
-		if t.Status == req.Status && t.Order > maxOrder {
-			maxOrder = t.Order
-		}
-	}
+	maxOrder, _ := h.taskRepo.GetMaxOrder(c.Context(), userID, req.Status)
 
 	now := time.Now()
-	task := Task{
+	task := &models.Task{
 		ID:                 uuid.New(),
 		UserID:             userID,
 		Title:              req.Title,
@@ -173,7 +118,12 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 		UpdatedAt:          now,
 	}
 
-	tasks[userID] = append(tasks[userID], task)
+	if err := h.taskRepo.Create(c.Context(), task); err != nil {
+		h.log.Error().Err(err).Msg("Failed to create task")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to create task",
+		})
+	}
 
 	h.log.Info().
 		Str("task_id", task.ID.String()).
@@ -194,16 +144,14 @@ func (h *TaskHandler) GetTask(c *fiber.Ctx) error {
 		})
 	}
 
-	userTasks := tasks[userID]
-	for _, task := range userTasks {
-		if task.ID == taskID {
-			return c.JSON(task)
-		}
+	task, err := h.taskRepo.GetByID(c.Context(), taskID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Task not found",
+		})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-		"error": "Task not found",
-	})
+	return c.JSON(task)
 }
 
 // UpdateTask updates a task
@@ -218,17 +166,17 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 	}
 
 	var req struct {
-		Title              *string          `json:"title"`
-		Description        *string          `json:"description"`
-		Status             *string          `json:"status"`
-		Priority           *string          `json:"priority"`
-		DueDate            *time.Time       `json:"dueDate"`
-		GroupID            *uuid.UUID       `json:"groupId"`
-		Recurrence         *RecurrenceRule  `json:"recurrence"`
-		Checklist          *[]ChecklistItem `json:"checklist"`
-		Tags               []string         `json:"tags"`
-		LinkedEmailID      *string          `json:"linkedEmailId"`
-		LinkedEmailSubject *string          `json:"linkedEmailSubject"`
+		Title              *string                 `json:"title"`
+		Description        *string                 `json:"description"`
+		Status             *string                 `json:"status"`
+		Priority           *string                 `json:"priority"`
+		DueDate            *time.Time              `json:"dueDate"`
+		GroupID            *uuid.UUID              `json:"groupId"`
+		Recurrence         *models.RecurrenceRule  `json:"recurrence"`
+		Checklist          *[]models.ChecklistItem `json:"checklist"`
+		Tags               []string                `json:"tags"`
+		LinkedEmailID      *string                 `json:"linkedEmailId"`
+		LinkedEmailSubject *string                 `json:"linkedEmailSubject"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -237,70 +185,73 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 		})
 	}
 
-	userTasks := tasks[userID]
-	for i, task := range userTasks {
-		if task.ID == taskID {
-			if req.Title != nil {
-				task.Title = *req.Title
-			}
-			if req.Description != nil {
-				task.Description = *req.Description
-			}
-			if req.Status != nil {
-				// Handle completion
-				if *req.Status == "done" && task.Status != "done" {
-					now := time.Now()
-					task.CompletedAt = &now
-
-					// Handle recurrence - create new task
-					if task.Recurrence != nil {
-						h.createRecurringTask(userID, task)
-					}
-				}
-				task.Status = *req.Status
-			}
-			if req.Priority != nil {
-				task.Priority = *req.Priority
-			}
-			if req.DueDate != nil {
-				task.DueDate = req.DueDate
-			}
-			if req.GroupID != nil {
-				task.GroupID = req.GroupID
-			}
-			if req.Recurrence != nil {
-				task.Recurrence = req.Recurrence
-			}
-			if req.Checklist != nil {
-				// Assign IDs to new checklist items
-				for j := range *req.Checklist {
-					if (*req.Checklist)[j].ID == uuid.Nil {
-						(*req.Checklist)[j].ID = uuid.New()
-					}
-					(*req.Checklist)[j].Order = j
-				}
-				task.Checklist = *req.Checklist
-			}
-			if req.Tags != nil {
-				task.Tags = req.Tags
-			}
-			if req.LinkedEmailID != nil {
-				task.LinkedEmailID = req.LinkedEmailID
-			}
-			if req.LinkedEmailSubject != nil {
-				task.LinkedEmailSubject = req.LinkedEmailSubject
-			}
-
-			task.UpdatedAt = time.Now()
-			tasks[userID][i] = task
-
-			return c.JSON(task)
-		}
+	task, err := h.taskRepo.GetByID(c.Context(), taskID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Task not found",
+		})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-		"error": "Task not found",
-	})
+	if req.Title != nil {
+		task.Title = *req.Title
+	}
+	if req.Description != nil {
+		task.Description = *req.Description
+	}
+	if req.Status != nil {
+		// Handle completion
+		if *req.Status == "done" && task.Status != "done" {
+			now := time.Now()
+			task.CompletedAt = &now
+
+			// Handle recurrence - create new task
+			if task.Recurrence != nil {
+				h.createRecurringTask(c, userID, *task)
+			}
+		}
+		task.Status = *req.Status
+	}
+	if req.Priority != nil {
+		task.Priority = *req.Priority
+	}
+	if req.DueDate != nil {
+		task.DueDate = req.DueDate
+	}
+	if req.GroupID != nil {
+		task.GroupID = req.GroupID
+	}
+	if req.Recurrence != nil {
+		task.Recurrence = req.Recurrence
+	}
+	if req.Checklist != nil {
+		for j := range *req.Checklist {
+			if (*req.Checklist)[j].ID == uuid.Nil {
+				(*req.Checklist)[j].ID = uuid.New()
+			}
+			(*req.Checklist)[j].Order = j
+		}
+		task.Checklist = *req.Checklist
+	}
+	if req.Tags != nil {
+		task.Tags = req.Tags
+	}
+	if req.LinkedEmailID != nil {
+		task.LinkedEmailID = req.LinkedEmailID
+	}
+	if req.LinkedEmailSubject != nil {
+		task.LinkedEmailSubject = req.LinkedEmailSubject
+	}
+
+	task.UpdatedAt = time.Now()
+
+	if err := h.taskRepo.Update(c.Context(), task); err != nil {
+		h.log.Error().Err(err).Msg("Failed to update task")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update task",
+		})
+	}
+
+	return c.JSON(task)
 }
 
 // MoveTask moves a task to a new status/position
@@ -325,32 +276,36 @@ func (h *TaskHandler) MoveTask(c *fiber.Ctx) error {
 		})
 	}
 
-	userTasks := tasks[userID]
-	for i, task := range userTasks {
-		if task.ID == taskID {
-			oldStatus := task.Status
-			task.Status = req.Status
-			task.Order = req.Order
-			task.UpdatedAt = time.Now()
+	task, err := h.taskRepo.GetByID(c.Context(), taskID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Task not found",
+		})
+	}
 
-			// Handle completion
-			if req.Status == "done" && oldStatus != "done" {
-				now := time.Now()
-				task.CompletedAt = &now
+	oldStatus := task.Status
+	task.Status = req.Status
+	task.Order = req.Order
+	task.UpdatedAt = time.Now()
 
-				if task.Recurrence != nil {
-					h.createRecurringTask(userID, task)
-				}
-			}
+	// Handle completion
+	if req.Status == "done" && oldStatus != "done" {
+		now := time.Now()
+		task.CompletedAt = &now
 
-			tasks[userID][i] = task
-			return c.JSON(task)
+		if task.Recurrence != nil {
+			h.createRecurringTask(c, userID, *task)
 		}
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-		"error": "Task not found",
-	})
+	if err := h.taskRepo.Update(c.Context(), task); err != nil {
+		h.log.Error().Err(err).Msg("Failed to move task")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to move task",
+		})
+	}
+
+	return c.JSON(task)
 }
 
 // ReorderTasks reorders tasks in a column
@@ -368,21 +323,12 @@ func (h *TaskHandler) ReorderTasks(c *fiber.Ctx) error {
 		})
 	}
 
-	userTasks := tasks[userID]
-	taskMap := make(map[uuid.UUID]*Task)
-	for i := range userTasks {
-		taskMap[userTasks[i].ID] = &userTasks[i]
+	if err := h.taskRepo.Reorder(c.Context(), userID, req.Status, req.TaskIDs); err != nil {
+		h.log.Error().Err(err).Msg("Failed to reorder tasks")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to reorder tasks",
+		})
 	}
-
-	for order, taskID := range req.TaskIDs {
-		if task, exists := taskMap[taskID]; exists {
-			task.Status = req.Status
-			task.Order = order
-			task.UpdatedAt = time.Now()
-		}
-	}
-
-	tasks[userID] = userTasks
 
 	return c.JSON(fiber.Map{
 		"success": true,
@@ -400,36 +346,30 @@ func (h *TaskHandler) DeleteTask(c *fiber.Ctx) error {
 		})
 	}
 
-	userTasks := tasks[userID]
-	for i, task := range userTasks {
-		if task.ID == taskID {
-			tasks[userID] = append(userTasks[:i], userTasks[i+1:]...)
-
-			h.log.Info().
-				Str("task_id", taskID.String()).
-				Str("user_id", userID.String()).
-				Msg("Task deleted")
-
-			return c.SendStatus(fiber.StatusNoContent)
-		}
+	if err := h.taskRepo.Delete(c.Context(), taskID, userID); err != nil {
+		h.log.Error().Err(err).Msg("Failed to delete task")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete task",
+		})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-		"error": "Task not found",
-	})
+	h.log.Info().
+		Str("task_id", taskID.String()).
+		Str("user_id", userID.String()).
+		Msg("Task deleted")
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // createRecurringTask creates a new instance of a recurring task
-func (h *TaskHandler) createRecurringTask(userID uuid.UUID, completedTask Task) {
+func (h *TaskHandler) createRecurringTask(c *fiber.Ctx, userID uuid.UUID, completedTask models.Task) {
 	if completedTask.Recurrence == nil || completedTask.DueDate == nil {
 		return
 	}
 
-	// Copy recurrence rule to increment occurrencesCompleted
 	newRecurrence := *completedTask.Recurrence
 	newRecurrence.OccurrencesCompleted = completedTask.Recurrence.OccurrencesCompleted + 1
 
-	// Check occurrence limit
 	if newRecurrence.Occurrences != nil && newRecurrence.OccurrencesCompleted >= *newRecurrence.Occurrences {
 		h.log.Info().
 			Str("task_id", completedTask.ID.String()).
@@ -438,24 +378,16 @@ func (h *TaskHandler) createRecurringTask(userID uuid.UUID, completedTask Task) 
 		return
 	}
 
-	nextDue := h.calculateNextDueDate(*completedTask.DueDate, newRecurrence)
+	nextDue := calculateNextDueDate(*completedTask.DueDate, newRecurrence)
 	if nextDue == nil {
 		return
 	}
 
-	// Determine order
-	userTasks := tasks[userID]
-	maxOrder := 0
-	for _, t := range userTasks {
-		if t.Status == "todo" && t.Order > maxOrder {
-			maxOrder = t.Order
-		}
-	}
+	maxOrder, _ := h.taskRepo.GetMaxOrder(c.Context(), userID, "todo")
 
-	// Reset checklist items to unchecked for new recurrence
-	var newChecklist []ChecklistItem
+	var newChecklist []models.ChecklistItem
 	for _, item := range completedTask.Checklist {
-		newChecklist = append(newChecklist, ChecklistItem{
+		newChecklist = append(newChecklist, models.ChecklistItem{
 			ID:        uuid.New(),
 			Title:     item.Title,
 			Completed: false,
@@ -464,7 +396,7 @@ func (h *TaskHandler) createRecurringTask(userID uuid.UUID, completedTask Task) 
 	}
 
 	now := time.Now()
-	newTask := Task{
+	newTask := &models.Task{
 		ID:          uuid.New(),
 		UserID:      userID,
 		Title:       completedTask.Title,
@@ -481,7 +413,10 @@ func (h *TaskHandler) createRecurringTask(userID uuid.UUID, completedTask Task) 
 		UpdatedAt:   now,
 	}
 
-	tasks[userID] = append(tasks[userID], newTask)
+	if err := h.taskRepo.Create(c.Context(), newTask); err != nil {
+		h.log.Error().Err(err).Msg("Failed to create recurring task")
+		return
+	}
 
 	h.log.Info().
 		Str("task_id", newTask.ID.String()).
@@ -491,7 +426,7 @@ func (h *TaskHandler) createRecurringTask(userID uuid.UUID, completedTask Task) 
 }
 
 // calculateNextDueDate calculates the next due date based on recurrence rule
-func (h *TaskHandler) calculateNextDueDate(current time.Time, rule RecurrenceRule) *time.Time {
+func calculateNextDueDate(current time.Time, rule models.RecurrenceRule) *time.Time {
 	var next time.Time
 
 	switch rule.Type {
@@ -500,24 +435,20 @@ func (h *TaskHandler) calculateNextDueDate(current time.Time, rule RecurrenceRul
 
 	case "weekly":
 		if len(rule.DaysOfWeek) > 0 {
-			// Find next occurrence on one of the selected days
-			next = current.AddDate(0, 0, 1) // Start from tomorrow
+			next = current.AddDate(0, 0, 1)
 			weeksPassed := 0
-			for i := 0; i < 365; i++ { // Safety limit
+			for i := 0; i < 365; i++ {
 				currentWeekday := int(next.Weekday())
 				daysFromStart := int(next.Sub(current.AddDate(0, 0, 1)).Hours() / 24)
 				currentWeekNum := daysFromStart / 7
 
-				// Check if we've moved to a new week interval
 				if currentWeekNum > weeksPassed && currentWeekNum%rule.Interval != 0 {
-					// Skip to next valid week
 					daysToAdd := (rule.Interval - (currentWeekNum % rule.Interval)) * 7
 					next = next.AddDate(0, 0, daysToAdd)
 					weeksPassed = currentWeekNum + (rule.Interval - (currentWeekNum % rule.Interval))
 					continue
 				}
 
-				// Check if current day is in daysOfWeek
 				for _, day := range rule.DaysOfWeek {
 					if currentWeekday == day {
 						goto foundDay
@@ -527,13 +458,11 @@ func (h *TaskHandler) calculateNextDueDate(current time.Time, rule RecurrenceRul
 			}
 		foundDay:
 		} else {
-			// Simple weekly: just add N weeks
 			next = current.AddDate(0, 0, rule.Interval*7)
 		}
 
 	case "monthly":
 		if rule.DayOfMonth != nil {
-			// Specific day of month
 			next = time.Date(
 				current.Year(),
 				current.Month()+time.Month(rule.Interval),
@@ -544,12 +473,10 @@ func (h *TaskHandler) calculateNextDueDate(current time.Time, rule RecurrenceRul
 				0,
 				current.Location(),
 			)
-			// Handle cases where day doesn't exist in month (e.g., Feb 31)
 			for next.Day() != *rule.DayOfMonth {
 				next = next.AddDate(0, 0, -1)
 			}
 		} else {
-			// Same day of month
 			next = current.AddDate(0, rule.Interval, 0)
 		}
 
@@ -560,7 +487,6 @@ func (h *TaskHandler) calculateNextDueDate(current time.Time, rule RecurrenceRul
 		return nil
 	}
 
-	// Check end date
 	if rule.EndDate != nil && next.After(*rule.EndDate) {
 		return nil
 	}
@@ -574,13 +500,16 @@ func (h *TaskHandler) calculateNextDueDate(current time.Time, rule RecurrenceRul
 func (h *TaskHandler) ListGroups(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 
-	userGroups, exists := taskGroups[userID]
-	if !exists {
-		userGroups = []TaskGroup{}
+	groups, err := h.taskRepo.ListGroups(c.Context(), userID)
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to list task groups")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch task groups",
+		})
 	}
 
 	return c.JSON(fiber.Map{
-		"groups": userGroups,
+		"groups": groups,
 	})
 }
 
@@ -589,9 +518,9 @@ func (h *TaskHandler) CreateGroup(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 
 	var req struct {
-		Name       string          `json:"name"`
-		Color      string          `json:"color"`
-		Recurrence *RecurrenceRule `json:"recurrence"`
+		Name       string               `json:"name"`
+		Color      string               `json:"color"`
+		Recurrence *models.RecurrenceRule `json:"recurrence"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -610,7 +539,7 @@ func (h *TaskHandler) CreateGroup(c *fiber.Ctx) error {
 		req.Color = "#3b82f6"
 	}
 
-	group := TaskGroup{
+	group := &models.TaskGroup{
 		ID:         uuid.New(),
 		UserID:     userID,
 		Name:       req.Name,
@@ -619,7 +548,12 @@ func (h *TaskHandler) CreateGroup(c *fiber.Ctx) error {
 		CreatedAt:  time.Now(),
 	}
 
-	taskGroups[userID] = append(taskGroups[userID], group)
+	if err := h.taskRepo.CreateGroup(c.Context(), group); err != nil {
+		h.log.Error().Err(err).Msg("Failed to create task group")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to create task group",
+		})
+	}
 
 	return c.Status(fiber.StatusCreated).JSON(group)
 }
@@ -636,9 +570,9 @@ func (h *TaskHandler) UpdateGroup(c *fiber.Ctx) error {
 	}
 
 	var req struct {
-		Name       *string         `json:"name"`
-		Color      *string         `json:"color"`
-		Recurrence *RecurrenceRule `json:"recurrence"`
+		Name       *string               `json:"name"`
+		Color      *string               `json:"color"`
+		Recurrence *models.RecurrenceRule `json:"recurrence"`
 	}
 
 	if err := c.BodyParser(&req); err != nil {
@@ -647,27 +581,31 @@ func (h *TaskHandler) UpdateGroup(c *fiber.Ctx) error {
 		})
 	}
 
-	userGroups := taskGroups[userID]
-	for i, group := range userGroups {
-		if group.ID == groupID {
-			if req.Name != nil {
-				group.Name = *req.Name
-			}
-			if req.Color != nil {
-				group.Color = *req.Color
-			}
-			if req.Recurrence != nil {
-				group.Recurrence = req.Recurrence
-			}
-
-			taskGroups[userID][i] = group
-			return c.JSON(group)
-		}
+	group, err := h.taskRepo.GetGroupByID(c.Context(), groupID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Group not found",
+		})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-		"error": "Group not found",
-	})
+	if req.Name != nil {
+		group.Name = *req.Name
+	}
+	if req.Color != nil {
+		group.Color = *req.Color
+	}
+	if req.Recurrence != nil {
+		group.Recurrence = req.Recurrence
+	}
+
+	if err := h.taskRepo.UpdateGroup(c.Context(), group); err != nil {
+		h.log.Error().Err(err).Msg("Failed to update task group")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update task group",
+		})
+	}
+
+	return c.JSON(group)
 }
 
 // DeleteGroup deletes a task group
@@ -681,24 +619,17 @@ func (h *TaskHandler) DeleteGroup(c *fiber.Ctx) error {
 		})
 	}
 
-	userGroups := taskGroups[userID]
-	for i, group := range userGroups {
-		if group.ID == groupID {
-			taskGroups[userID] = append(userGroups[:i], userGroups[i+1:]...)
-
-			// Ungroup tasks
-			userTasks := tasks[userID]
-			for j := range userTasks {
-				if userTasks[j].GroupID != nil && *userTasks[j].GroupID == groupID {
-					userTasks[j].GroupID = nil
-				}
-			}
-
-			return c.SendStatus(fiber.StatusNoContent)
-		}
+	// Ungroup tasks first
+	if err := h.taskRepo.UngroupByGroupID(c.Context(), userID, groupID); err != nil {
+		h.log.Error().Err(err).Msg("Failed to ungroup tasks")
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-		"error": "Group not found",
-	})
+	if err := h.taskRepo.DeleteGroup(c.Context(), groupID, userID); err != nil {
+		h.log.Error().Err(err).Msg("Failed to delete task group")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete task group",
+		})
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }

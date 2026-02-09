@@ -1,4 +1,5 @@
 # Production Dockerfile - Multi-stage build
+# Build context must be the project root (not backend/) so migrations are accessible.
 FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
@@ -7,11 +8,11 @@ WORKDIR /app
 RUN apk add --no-cache gcc musl-dev
 
 # Copy go mod files
-COPY go.mod go.sum ./
+COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
-# Copy source code
-COPY . .
+# Copy backend source code
+COPY backend/ .
 
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /tessera ./cmd/server
@@ -27,6 +28,9 @@ RUN apk add --no-cache ca-certificates tzdata
 # Copy binary from builder
 COPY --from=builder /tessera /app/tessera
 
+# Copy database migrations from project root
+COPY migrations/ /app/migrations/
+
 # Create non-root user
 RUN adduser -D -g '' tessera
 USER tessera
@@ -35,8 +39,8 @@ USER tessera
 EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/ready || exit 1
 
 # Run the binary
 CMD ["/app/tessera"]

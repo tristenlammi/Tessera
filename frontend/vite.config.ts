@@ -16,8 +16,8 @@ export default defineConfig({
       '/api': {
         target: 'http://backend:8080',
         changeOrigin: true,
-        timeout: 120000, // 2 minute timeout for file downloads
-        proxyTimeout: 120000
+        timeout: 600000, // 10 minute timeout for large file uploads/downloads
+        proxyTimeout: 600000
       }
     }
   }

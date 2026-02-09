@@ -13,11 +13,13 @@
 go.work
 go.work.sum
 
-# Environment
+# Environment (keep .env.example and .env.production.example for reference)
 .env
 .env.local
 .env.*.local
-*.env
+.env.production
+!.env.example
+!.env.production.example
 
 # IDE
 .idea/
@@ -57,3 +59,11 @@ temp/
 
 # Build artifacts
 build/
+
+# Production secrets (NEVER commit)
+.env.production
+
+# Database backups
+backups/
+
+

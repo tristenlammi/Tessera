@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useFilesStore } from '@/stores/files'
 import api from '@/api'
 
@@ -16,9 +16,37 @@ const filesStore = useFilesStore()
 
 const isDragging = ref(false)
 const dragCounter = ref(0)
-const uploading = ref(false)
-const uploadProgress = ref(0)
-const uploadStatus = ref('')
+
+// --- Per-upload progress tracking ---
+interface UploadEntry {
+  id: string
+  fileName: string
+  progress: number       // 0-100
+  status: string         // 'uploading', 'creating-folders', 'done', 'error'
+  totalFiles: number
+  completedFiles: number
+}
+
+const activeUploads = ref<Map<string, UploadEntry>>(new Map())
+const hasActiveUploads = computed(() => activeUploads.value.size > 0)
+
+let uploadIdCounter = 0
+function createUploadId(): string {
+  return `upload-${++uploadIdCounter}-${Date.now()}`
+}
+
+function setUploadEntry(entry: UploadEntry) {
+  // Trigger reactivity by creating a new Map
+  const newMap = new Map(activeUploads.value)
+  newMap.set(entry.id, entry)
+  activeUploads.value = newMap
+}
+
+function removeUploadEntry(id: string) {
+  const newMap = new Map(activeUploads.value)
+  newMap.delete(id)
+  activeUploads.value = newMap
+}
 
 // Interface for file with path info
 interface FileWithPath {
@@ -178,9 +206,21 @@ async function handleFileSelect(e: Event) {
 
 // Upload files with folder structure preservation
 async function uploadFilesWithPaths(filesWithPaths: FileWithPath[]) {
-  uploading.value = true
-  uploadProgress.value = 0
-  
+  const uid = createUploadId()
+  const totalFiles = filesWithPaths.length
+  const label = totalFiles === 1
+    ? filesWithPaths[0].file.name
+    : `${totalFiles} files (folder upload)`
+
+  setUploadEntry({
+    id: uid,
+    fileName: label,
+    progress: 0,
+    status: 'creating-folders',
+    totalFiles,
+    completedFiles: 0
+  })
+
   // Extract unique folder paths and sort by depth
   const folderPaths = new Set<string>()
   for (const { relativePath } of filesWithPaths) {
@@ -202,7 +242,6 @@ async function uploadFilesWithPaths(filesWithPaths: FileWithPath[]) {
   const folderIdMap = new Map<string, string>()
   
   // Create folders
-  uploadStatus.value = 'Creating folders...'
   for (const folderPath of sortedFolders) {
     const parts = folderPath.split('/')
     const folderName = parts[parts.length - 1]
@@ -226,9 +265,15 @@ async function uploadFilesWithPaths(filesWithPaths: FileWithPath[]) {
   }
 
   // Upload files
-  uploadStatus.value = 'Uploading files...'
-  const totalFiles = filesWithPaths.length
-  
+  setUploadEntry({
+    id: uid,
+    fileName: label,
+    progress: 0,
+    status: 'uploading',
+    totalFiles,
+    completedFiles: 0
+  })
+
   for (let i = 0; i < totalFiles; i++) {
     const { file, relativePath } = filesWithPaths[i]
     
@@ -253,9 +298,17 @@ async function uploadFilesWithPaths(filesWithPaths: FileWithPath[]) {
         },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
-            uploadProgress.value = Math.round(
+            const progress = Math.round(
               ((i + progressEvent.loaded / progressEvent.total) / totalFiles) * 100
             )
+            setUploadEntry({
+              id: uid,
+              fileName: label,
+              progress,
+              status: 'uploading',
+              totalFiles,
+              completedFiles: i
+            })
           }
         }
       })
@@ -264,18 +317,28 @@ async function uploadFilesWithPaths(filesWithPaths: FileWithPath[]) {
     }
   }
 
-  uploading.value = false
-  uploadProgress.value = 0
-  uploadStatus.value = ''
+  removeUploadEntry(uid)
   filesStore.fetchFiles(props.folderId)
   filesStore.fetchStorageStats()
 }
 
 async function uploadFiles(files: FileList) {
-  uploading.value = true
-  uploadProgress.value = 0
+  const uid = createUploadId()
+  const totalFiles = files.length
+  const label = totalFiles === 1
+    ? files[0].name
+    : `${totalFiles} files`
 
-  for (let i = 0; i < files.length; i++) {
+  setUploadEntry({
+    id: uid,
+    fileName: label,
+    progress: 0,
+    status: 'uploading',
+    totalFiles,
+    completedFiles: 0
+  })
+
+  for (let i = 0; i < totalFiles; i++) {
     const file = files[i]
     const formData = new FormData()
     formData.append('file', file)
@@ -290,9 +353,17 @@ async function uploadFiles(files: FileList) {
         },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
-            uploadProgress.value = Math.round(
-              ((i + progressEvent.loaded / progressEvent.total) / files.length) * 100
+            const progress = Math.round(
+              ((i + progressEvent.loaded / progressEvent.total) / totalFiles) * 100
             )
+            setUploadEntry({
+              id: uid,
+              fileName: label,
+              progress,
+              status: 'uploading',
+              totalFiles,
+              completedFiles: i
+            })
           }
         }
       })
@@ -301,8 +372,7 @@ async function uploadFiles(files: FileList) {
     }
   }
 
-  uploading.value = false
-  uploadProgress.value = 0
+  removeUploadEntry(uid)
   filesStore.fetchFiles(props.folderId)
   filesStore.fetchStorageStats()
 }
@@ -332,20 +402,30 @@ async function uploadFiles(files: FileList) {
       </div>
     </div>
 
-    <!-- Upload progress -->
+    <!-- Upload progress panels -->
     <div
-      v-if="uploading"
-      class="absolute bottom-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 p-4 z-20 w-72"
+      v-if="hasActiveUploads"
+      class="absolute bottom-4 right-4 z-20 flex flex-col gap-2 w-72"
     >
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-sm font-medium">{{ uploadStatus || 'Uploading...' }}</span>
-        <span class="text-sm text-gray-500 dark:text-gray-400">{{ uploadProgress }}%</span>
-      </div>
-      <div class="h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-        <div
-          class="h-full bg-blue-600 transition-all"
-          :style="{ width: `${uploadProgress}%` }"
-        ></div>
+      <div
+        v-for="[id, entry] in activeUploads"
+        :key="id"
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 p-4"
+      >
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-sm font-medium truncate mr-2" :title="entry.fileName">{{ entry.fileName }}</span>
+          <span class="text-sm text-gray-500 dark:text-gray-400 shrink-0">{{ entry.progress }}%</span>
+        </div>
+        <div class="text-xs text-gray-400 dark:text-gray-500 mb-2">
+          <template v-if="entry.status === 'creating-folders'">Creating folders…</template>
+          <template v-else>{{ entry.completedFiles }} / {{ entry.totalFiles }} files</template>
+        </div>
+        <div class="h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+          <div
+            class="h-full bg-blue-600 transition-all"
+            :style="{ width: `${entry.progress}%` }"
+          ></div>
+        </div>
       </div>
     </div>
 

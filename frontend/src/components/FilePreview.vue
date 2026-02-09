@@ -12,6 +12,7 @@ const emit = defineEmits<{
 }>()
 
 const blobUrl = ref<string | null>(null)
+const streamUrl = ref<string | null>(null)
 const textContent = ref<string | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -27,6 +28,8 @@ const previewType = computed(() => {
   return 'unknown'
 })
 
+const isStreamable = computed(() => previewType.value === 'video' || previewType.value === 'audio')
+
 // Fetch file with auth and create blob URL for preview
 async function fetchFileForPreview() {
   loading.value = true
@@ -37,27 +40,32 @@ async function fetchFileForPreview() {
     URL.revokeObjectURL(blobUrl.value)
     blobUrl.value = null
   }
+  streamUrl.value = null
   textContent.value = null
   
   try {
-    const response = await api.get(`/files/${props.file.id}/download`, {
-      responseType: previewType.value === 'text' ? 'text' : 'blob'
-    })
-    
-    // For text files, read as text
-    if (previewType.value === 'text') {
-      textContent.value = response.data
+    // For video/audio, use streaming URL with short-lived token
+    if (isStreamable.value) {
+      const tokenRes = await api.get(`/files/${props.file.id}/stream-token`)
+      const token = tokenRes.data.token
+      streamUrl.value = `/api/files/${props.file.id}/stream?token=${encodeURIComponent(token)}`
     } else {
-      // For other types, create blob URL
-      // Explicitly set the MIME type on the Blob to ensure the browser
-      // correctly identifies the content (e.g. PDF viewer for application/pdf)
-      const mimeType = props.file.mime_type || response.headers?.['content-type'] || ''
-      const blob = new Blob([response.data], { type: mimeType })
-      blobUrl.value = URL.createObjectURL(blob)
+      const response = await api.get(`/files/${props.file.id}/download`, {
+        responseType: previewType.value === 'text' ? 'text' : 'blob'
+      })
+      
+      // For text files, read as text
+      if (previewType.value === 'text') {
+        textContent.value = response.data
+      } else {
+        // For other types, create blob URL
+        const mimeType = props.file.mime_type || response.headers?.['content-type'] || ''
+        const blob = new Blob([response.data], { type: mimeType })
+        blobUrl.value = URL.createObjectURL(blob)
+      }
     }
   } catch (err: any) {
     console.error('Failed to load file for preview:', err)
-    // When responseType is 'blob', error response data is also a Blob - read it as text
     if (err.response?.data instanceof Blob) {
       try {
         const text = await err.response.data.text()
@@ -201,18 +209,21 @@ function handleKeydown(e: KeyboardEvent) {
 
         <!-- Video preview -->
         <video
-          v-else-if="previewType === 'video' && blobUrl"
-          :src="blobUrl"
+          v-else-if="previewType === 'video' && streamUrl"
+          :src="streamUrl"
           controls
+          preload="metadata"
           class="max-w-full max-h-full"
-        />
+        >
+          Your browser does not support video playback.
+        </video>
 
         <!-- Audio preview -->
-        <div v-else-if="previewType === 'audio' && blobUrl" class="text-center">
+        <div v-else-if="previewType === 'audio' && streamUrl" class="text-center">
           <svg class="w-24 h-24 mx-auto text-purple-500 mb-4" fill="currentColor" viewBox="0 0 20 20">
             <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
           </svg>
-          <audio :src="blobUrl" controls class="mx-auto" />
+          <audio :src="streamUrl" controls preload="metadata" class="mx-auto" />
         </div>
 
         <!-- Text preview -->

@@ -28,6 +28,15 @@ func main() {
 		Int("port", cfg.Server.Port).
 		Msg("Starting Tessera")
 
+	// Run database migrations before connecting the pool
+	migrationsPath := "file:///app/migrations"
+	if p := os.Getenv("MIGRATIONS_PATH"); p != "" {
+		migrationsPath = p
+	}
+	if err := database.RunMigrations(cfg.Database, migrationsPath, log); err != nil {
+		log.Fatal().Err(err).Msg("Failed to run database migrations")
+	}
+
 	// Connect to database
 	db, err := database.Connect(cfg.Database)
 	if err != nil {

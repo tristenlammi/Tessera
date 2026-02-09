@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>Tessera</Name>
+  <Repository>ghcr.io/tessera/tessera:latest</Repository>
+  <Registry>https://github.com/tessera/tessera</Registry>
+  <Network>bridge</Network>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/tessera/tessera/issues</Support>
+  <Project>https://github.com/tessera/tessera</Project>
+  <Overview>
+    Tessera is a self-hosted productivity platform combining file management,
+    documents, tasks, calendar, contacts, and email into one cohesive app.
+
+    All-in-one container — includes PostgreSQL, Redis, MinIO, and the application
+    server. No external dependencies required.
+
+    Features:
+    - File storage with versioning, sharing, and WebDAV
+    - Rich text document editor with real-time collaboration
+    - Kanban task management with recurring tasks
+    - Calendar with events and reminders
+    - Contact management
+    - IMAP/SMTP email client
+    - Two-factor authentication (TOTP)
+    - Dark mode and mobile-friendly UI
+    - Automatic daily database backups
+  </Overview>
+  <Category>Productivity: Cloud:</Category>
+  <WebUI>http://[IP]:[PORT:8080]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/tessera/tessera/main/tessera.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/tessera/tessera/main/frontend/public/icons/icon-512x512.png</Icon>
+  <ExtraParams>--restart unless-stopped</ExtraParams>
+  <Description>
+    Tessera — Self-hosted productivity platform. All-in-one container that includes
+    PostgreSQL, Redis, MinIO object storage, Go backend, and Nginx frontend.
+    Combines file management (with WebDAV), documents, tasks, calendar, contacts,
+    and email into a single app. No external databases or services required.
+  </Description>
+
+  <!-- Port -->
+  <Config
+    Name="Web UI Port"
+    Target="8080"
+    Default="8080"
+    Mode="tcp"
+    Description="Port for the Tessera web interface."
+    Type="Port"
+    Display="always"
+    Required="true"
+    Mask="false">8080</Config>
+
+  <!-- Single data volume — contains postgres, redis, minio, backups, secrets -->
+  <Config
+    Name="Data"
+    Target="/data"
+    Default="/mnt/user/appdata/tessera"
+    Mode="rw"
+    Description="All persistent data (database, files, cache, backups). Back up this directory."
+    Type="Path"
+    Display="always"
+    Required="true"
+    Mask="false">/mnt/user/appdata/tessera</Config>
+
+  <!-- Optional: customize the public URL (for CORS and links) -->
+  <Config
+    Name="FRONTEND_URL"
+    Target="FRONTEND_URL"
+    Default="http://localhost:8080"
+    Description="Public URL of your Tessera instance (e.g., http://192.168.1.50:8080 or https://tessera.yourdomain.com). Used for CORS and generated links."
+    Type="Variable"
+    Display="always"
+    Required="false"
+    Mask="false">http://localhost:8080</Config>
+
+  <!-- Optional: override auto-generated secrets (advanced) -->
+  <Config
+    Name="JWT_SECRET"
+    Target="JWT_SECRET"
+    Default=""
+    Description="(Optional) JWT signing secret. Leave blank to auto-generate on first run."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="true"></Config>
+
+  <Config
+    Name="ENCRYPTION_KEY"
+    Target="ENCRYPTION_KEY"
+    Default=""
+    Description="(Optional) AES-256 encryption key (base64). Leave blank to auto-generate on first run."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="true"></Config>
+
+  <Config
+    Name="DB_PASSWORD"
+    Target="DB_PASSWORD"
+    Default=""
+    Description="(Optional) PostgreSQL password. Leave blank to auto-generate on first run."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="true"></Config>
+
+  <Config
+    Name="REDIS_PASSWORD"
+    Target="REDIS_PASSWORD"
+    Default=""
+    Description="(Optional) Redis password. Leave blank to auto-generate on first run."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="true"></Config>
+
+  <Config
+    Name="MINIO_SECRET_KEY"
+    Target="MINIO_SECRET_KEY"
+    Default=""
+    Description="(Optional) MinIO secret key. Leave blank to auto-generate on first run."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="true"></Config>
+
+  <Config
+    Name="MAX_UPLOAD_SIZE"
+    Target="MAX_UPLOAD_SIZE"
+    Default="10737418240"
+    Description="Maximum upload size in bytes (default: 10 GB)."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false">10737418240</Config>
+</Container>

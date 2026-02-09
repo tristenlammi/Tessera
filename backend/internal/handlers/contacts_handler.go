@@ -1,56 +1,25 @@
 package handlers
 
 import (
-	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"github.com/tessera/tessera/internal/models"
+	"github.com/tessera/tessera/internal/repository"
 )
 
 type ContactsHandler struct {
-	log zerolog.Logger
+	log         zerolog.Logger
+	contactRepo *repository.ContactRepository
 }
 
-func NewContactsHandler(log zerolog.Logger) *ContactsHandler {
-	return &ContactsHandler{log: log}
-}
-
-// Contact represents a contact entry
-type Contact struct {
-	ID        uuid.UUID  `json:"id"`
-	UserID    uuid.UUID  `json:"userId"`
-	FirstName string     `json:"firstName"`
-	LastName  string     `json:"lastName"`
-	Email     string     `json:"email"`
-	Phone     string     `json:"phone"`
-	Company   string     `json:"company"`
-	JobTitle  string     `json:"jobTitle"`
-	Birthday  *time.Time `json:"birthday,omitempty"`
-	Notes     string     `json:"notes"`
-	Avatar    *string    `json:"avatar,omitempty"`
-	Favorite  bool       `json:"favorite"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-}
-
-// In-memory storage for contacts (per user)
-var (
-	contactsList = make(map[uuid.UUID][]Contact)
-	contactsMu   sync.RWMutex
-)
-
-// RegisterRoutes registers contacts routes
-func (h *ContactsHandler) RegisterRoutes(app *fiber.App, authMiddleware fiber.Handler) {
-	contacts := app.Group("/api/contacts", authMiddleware)
-
-	contacts.Get("/", h.ListContacts)
-	contacts.Post("/", h.CreateContact)
-	contacts.Get("/:id", h.GetContact)
-	contacts.Put("/:id", h.UpdateContact)
-	contacts.Patch("/:id/favorite", h.ToggleFavorite)
-	contacts.Delete("/:id", h.DeleteContact)
+func NewContactsHandler(log zerolog.Logger, contactRepo *repository.ContactRepository) *ContactsHandler {
+	return &ContactsHandler{
+		log:         log,
+		contactRepo: contactRepo,
+	}
 }
 
 // ListContacts returns all contacts for a user
@@ -60,15 +29,13 @@ func (h *ContactsHandler) ListContacts(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 	}
 
-	contactsMu.RLock()
-	userContacts := contactsList[userID]
-	contactsMu.RUnlock()
-
-	if userContacts == nil {
-		userContacts = []Contact{}
+	contacts, err := h.contactRepo.ListByUser(c.Context(), userID)
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to list contacts")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch contacts"})
 	}
 
-	return c.JSON(userContacts)
+	return c.JSON(contacts)
 }
 
 // CreateContact creates a new contact
@@ -98,7 +65,7 @@ func (h *ContactsHandler) CreateContact(c *fiber.Ctx) error {
 	}
 
 	now := time.Now()
-	contact := Contact{
+	contact := &models.Contact{
 		ID:        uuid.New(),
 		UserID:    userID,
 		FirstName: input.FirstName,
@@ -114,9 +81,10 @@ func (h *ContactsHandler) CreateContact(c *fiber.Ctx) error {
 		UpdatedAt: now,
 	}
 
-	contactsMu.Lock()
-	contactsList[userID] = append(contactsList[userID], contact)
-	contactsMu.Unlock()
+	if err := h.contactRepo.Create(c.Context(), contact); err != nil {
+		h.log.Error().Err(err).Msg("Failed to create contact")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create contact"})
+	}
 
 	h.log.Info().
 		Str("contact_id", contact.ID.String()).
@@ -138,17 +106,12 @@ func (h *ContactsHandler) GetContact(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid contact ID"})
 	}
 
-	contactsMu.RLock()
-	userContacts := contactsList[userID]
-	contactsMu.RUnlock()
-
-	for _, contact := range userContacts {
-		if contact.ID == contactID {
-			return c.JSON(contact)
-		}
+	contact, err := h.contactRepo.GetByID(c.Context(), contactID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Contact not found"})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Contact not found"})
+	return c.JSON(contact)
 }
 
 // UpdateContact updates an existing contact
@@ -178,33 +141,31 @@ func (h *ContactsHandler) UpdateContact(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	contactsMu.Lock()
-	defer contactsMu.Unlock()
-
-	userContacts := contactsList[userID]
-	for i, contact := range userContacts {
-		if contact.ID == contactID {
-			userContacts[i].FirstName = input.FirstName
-			userContacts[i].LastName = input.LastName
-			userContacts[i].Email = input.Email
-			userContacts[i].Phone = input.Phone
-			userContacts[i].Company = input.Company
-			userContacts[i].JobTitle = input.JobTitle
-			userContacts[i].Birthday = input.Birthday
-			userContacts[i].Notes = input.Notes
-			userContacts[i].UpdatedAt = time.Now()
-
-			contactsList[userID] = userContacts
-
-			h.log.Info().
-				Str("contact_id", contactID.String()).
-				Msg("Contact updated")
-
-			return c.JSON(userContacts[i])
-		}
+	contact, err := h.contactRepo.GetByID(c.Context(), contactID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Contact not found"})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Contact not found"})
+	contact.FirstName = input.FirstName
+	contact.LastName = input.LastName
+	contact.Email = input.Email
+	contact.Phone = input.Phone
+	contact.Company = input.Company
+	contact.JobTitle = input.JobTitle
+	contact.Birthday = input.Birthday
+	contact.Notes = input.Notes
+	contact.UpdatedAt = time.Now()
+
+	if err := h.contactRepo.Update(c.Context(), contact); err != nil {
+		h.log.Error().Err(err).Msg("Failed to update contact")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update contact"})
+	}
+
+	h.log.Info().
+		Str("contact_id", contactID.String()).
+		Msg("Contact updated")
+
+	return c.JSON(contact)
 }
 
 // ToggleFavorite toggles the favorite status of a contact
@@ -227,22 +188,17 @@ func (h *ContactsHandler) ToggleFavorite(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	contactsMu.Lock()
-	defer contactsMu.Unlock()
-
-	userContacts := contactsList[userID]
-	for i, contact := range userContacts {
-		if contact.ID == contactID {
-			userContacts[i].Favorite = input.Favorite
-			userContacts[i].UpdatedAt = time.Now()
-
-			contactsList[userID] = userContacts
-
-			return c.JSON(userContacts[i])
-		}
+	if err := h.contactRepo.ToggleFavorite(c.Context(), contactID, userID, input.Favorite); err != nil {
+		h.log.Error().Err(err).Msg("Failed to toggle favorite")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update contact"})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Contact not found"})
+	contact, err := h.contactRepo.GetByID(c.Context(), contactID, userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Contact not found"})
+	}
+
+	return c.JSON(contact)
 }
 
 // DeleteContact deletes a contact
@@ -257,21 +213,14 @@ func (h *ContactsHandler) DeleteContact(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid contact ID"})
 	}
 
-	contactsMu.Lock()
-	defer contactsMu.Unlock()
-
-	userContacts := contactsList[userID]
-	for i, contact := range userContacts {
-		if contact.ID == contactID {
-			contactsList[userID] = append(userContacts[:i], userContacts[i+1:]...)
-
-			h.log.Info().
-				Str("contact_id", contactID.String()).
-				Msg("Contact deleted")
-
-			return c.SendStatus(fiber.StatusNoContent)
-		}
+	if err := h.contactRepo.Delete(c.Context(), contactID, userID); err != nil {
+		h.log.Error().Err(err).Msg("Failed to delete contact")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to delete contact"})
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Contact not found"})
+	h.log.Info().
+		Str("contact_id", contactID.String()).
+		Msg("Contact deleted")
+
+	return c.SendStatus(fiber.StatusNoContent)
 }

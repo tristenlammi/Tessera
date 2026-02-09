@@ -47,11 +47,12 @@ type Server struct {
 func New(cfg *config.Config, db *pgxpool.Pool, rdb *redis.Client, store *storage.MinIOStorage, log zerolog.Logger) *Server {
 	app := fiber.New(fiber.Config{
 		AppName:               "Tessera API",
-		ReadTimeout:           10 * time.Second,
-		WriteTimeout:          10 * time.Second,
+		ReadTimeout:           10 * time.Minute,
+		WriteTimeout:          10 * time.Minute,
 		IdleTimeout:           120 * time.Second,
 		BodyLimit:             int(cfg.Upload.MaxSize),
 		DisableStartupMessage: false,
+		StreamRequestBody:     true,
 		ErrorHandler:          customErrorHandler,
 	})
 
@@ -106,11 +107,18 @@ func (s *Server) setupMiddleware() {
 	// Prometheus metrics middleware
 	s.app.Use(middleware.Metrics())
 
-	// Logger
-	s.app.Use(logger.New(logger.Config{
-		Format:     "${time} | ${status} | ${latency} | ${ip} | ${method} | ${path}\n",
-		TimeFormat: "15:04:05",
-	}))
+	// Logger — JSON format in production, pretty text in development
+	if s.cfg.App.Env == "production" {
+		s.app.Use(logger.New(logger.Config{
+			Format:     `{"time":"${time}","status":${status},"latency":"${latency}","ip":"${ip}","method":"${method}","path":"${path}","request_id":"${locals:requestid}","bytes_sent":${bytesSent},"bytes_received":${bytesReceived}}` + "\n",
+			TimeFormat: time.RFC3339,
+		}))
+	} else {
+		s.app.Use(logger.New(logger.Config{
+			Format:     "${time} | ${status} | ${latency} | ${ip} | ${method} | ${path}\n",
+			TimeFormat: "15:04:05",
+		}))
+	}
 
 	// CORS
 	s.app.Use(cors.New(cors.Config{
@@ -145,6 +153,10 @@ func (s *Server) setupRoutes() {
 	activityRepo := repository.NewActivityRepository(s.db)
 	settingsRepo := repository.NewSettingsRepository(s.db)
 	emailRepo := repository.NewEmailRepository(s.db)
+	taskRepo := repository.NewTaskRepository(s.db)
+	calendarRepo := repository.NewCalendarRepository(s.db)
+	contactRepo := repository.NewContactRepository(s.db)
+	documentRepo := repository.NewDocumentRepository(s.db)
 
 	// Initialize encryptor for sensitive data (email passwords, etc.)
 	var encryptor *security.Encryptor
@@ -170,18 +182,18 @@ func (s *Server) setupRoutes() {
 	s.scheduler.SetEmailService(emailService)
 
 	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(authService, s.log)
-	fileHandler := handlers.NewFileHandler(fileService, s.log, s.hub)
+	authHandler := handlers.NewAuthHandler(authService, s.log, s.db)
+	fileHandler := handlers.NewFileHandler(fileService, s.log, s.hub, s.cfg.JWT.Secret, s.store)
 	healthHandler := handlers.NewHealthHandler(s.log, s.db, s.rdb, s.store.Client())
 	wsHandler := ws.NewHandler(s.hub, s.log)
 	webdavServer := webdav.NewServer(fileRepo, s.store, authService, fileService, s.log)
-	adminHandler := handlers.NewAdminHandler(s.db, userRepo, fileRepo, activityRepo, s.log)
+	adminHandler := handlers.NewAdminHandler(s.db, s.rdb, userRepo, fileRepo, activityRepo, settingsRepo, s.cfg, s.log)
 	moduleHandler := handlers.NewModuleHandler(s.log, settingsRepo)
-	taskHandler := handlers.NewTaskHandler(s.log)
-	documentHandler := handlers.NewDocumentHandler(s.log)
+	taskHandler := handlers.NewTaskHandler(s.log, taskRepo)
+	documentHandler := handlers.NewDocumentHandler(s.log, documentRepo, userRepo)
 	emailHandler := handlers.NewEmailHandler(emailService)
-	calendarHandler := handlers.NewCalendarHandler(s.log)
-	contactsHandler := handlers.NewContactsHandler(s.log)
+	calendarHandler := handlers.NewCalendarHandler(s.log, calendarRepo)
+	contactsHandler := handlers.NewContactsHandler(s.log, contactRepo)
 
 	// Auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService, s.cfg.JWT)
@@ -236,6 +248,7 @@ func (s *Server) setupRoutes() {
 	files.Post("/:id/restore", fileHandler.Restore)
 	files.Post("/:id/copy", fileHandler.Copy)
 	files.Get("/:id/download", fileHandler.Download)
+	files.Get("/:id/stream-token", fileHandler.StreamToken)
 	files.Get("/:id/versions", fileHandler.GetVersions)
 	files.Post("/:id/versions/:version/restore", fileHandler.RestoreVersion)
 	files.Post("/:id/share", fileHandler.CreateShare)
@@ -286,6 +299,7 @@ func (s *Server) setupRoutes() {
 	admin.Get("/logs", adminHandler.GetActivityLogs)
 	admin.Post("/cache/clear", adminHandler.ClearCache)
 	admin.Post("/cleanup", adminHandler.RunCleanup)
+	admin.Post("/users/:id/reset-link", adminHandler.GenerateResetLink)
 	admin.Get("/modules", moduleHandler.GetAdminModules)
 	admin.Put("/modules/:id", moduleHandler.UpdateModule)
 	admin.Put("/modules", moduleHandler.UpdateAllModules)
@@ -412,6 +426,9 @@ func (s *Server) setupRoutes() {
 	// Public share access (no auth required)
 	api.Get("/share/:token", fileHandler.GetShare)
 	api.Get("/share/:token/download", fileHandler.DownloadShare)
+
+	// File streaming (auth via short-lived query token for <video>/<audio> src)
+	api.Get("/files/:id/stream", fileHandler.StreamFile)
 
 	// WebSocket endpoint (requires authentication via short-lived ticket)
 	api.Use("/ws", func(c *fiber.Ctx) error {
