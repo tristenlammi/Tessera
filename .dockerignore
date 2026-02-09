@@ -1,0 +1,23 @@
+# Dependencies (installed inside Docker)
+**/node_modules
+frontend/node_modules
+
+# Local dev data
+.docker-data
+.git
+
+# Build artifacts
+frontend/dist
+backend/tmp
+backend/bin
+
+# IDE / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Environment files with secrets
+.env
+.env.local
+.env.production

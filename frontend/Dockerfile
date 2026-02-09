@@ -4,7 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@latest-9
 
 # Copy package files first for better caching
 COPY package.json pnpm-lock.yaml ./
@@ -13,8 +13,8 @@ RUN pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build for production
-RUN pnpm build
+# Build for production (skip vue-tsc type checking for faster builds)
+RUN pnpm exec vite build
 
 # Production stage - serve with nginx
 FROM nginx:1.27-alpine

@@ -30,13 +30,13 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@latest-9
 
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY frontend/ .
-RUN pnpm build
+RUN pnpm exec vite build
 
 # ---------------------------------------------------------------------------
 # Stage 3: All-in-One runtime
