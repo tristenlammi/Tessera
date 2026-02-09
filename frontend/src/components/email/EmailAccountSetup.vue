@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useEmailStore } from '@/stores/email'
 
 const emit = defineEmits<{
@@ -14,6 +14,9 @@ const viewMode = ref<'overview' | 'add' | 'edit'>('overview')
 
 // Sync confirmation modal
 const showSyncConfirmation = ref(false)
+
+// Track whether the form was auto-prefilled from setup
+const prefilled = ref(false)
 
 const form = reactive({
   name: '',
@@ -33,6 +36,35 @@ const form = reactive({
 const loading = ref(false)
 const error = ref<string | null>(null)
 const showAdvanced = ref(false)
+
+// On mount, check if there's an email provider hint from initial setup
+// and no accounts exist yet — if so, jump straight to add mode with prefilled data
+onMounted(() => {
+  if (emailStore.accounts.length === 0) {
+    const hintJSON = localStorage.getItem('email_provider_hint')
+    if (hintJSON) {
+      try {
+        const hint = JSON.parse(hintJSON)
+        // Pre-fill the form with the hint data
+        form.name = hint.provider || 'Personal'
+        form.email_address = hint.email_address || ''
+        form.imap_host = hint.imap_host || ''
+        form.imap_port = hint.imap_port || 993
+        form.imap_username = hint.imap_username || ''
+        form.smtp_host = hint.smtp_host || ''
+        form.smtp_port = hint.smtp_port || 587
+        form.smtp_username = hint.smtp_username || ''
+        form.imap_use_tls = true
+        form.smtp_use_tls = true
+        prefilled.value = true
+        // Jump straight to add mode so the user sees the prefilled form
+        viewMode.value = 'add'
+      } catch {
+        // Ignore malformed hint
+      }
+    }
+  }
+})
 
 // Common email provider presets
 const presets = [
@@ -178,6 +210,9 @@ async function handleSubmit() {
   loading.value = true
   try {
     await emailStore.createAccount(form)
+    // Clear the provider hint now that the account has been created
+    localStorage.removeItem('email_provider_hint')
+    prefilled.value = false
     emit('saved')
   } catch (e: any) {
     error.value = e.response?.data?.error || 'Failed to add account'
@@ -321,6 +356,14 @@ async function handleSubmit() {
         <!-- Error message -->
         <div v-if="error" class="p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
           {{ error }}
+        </div>
+
+        <!-- Prefilled hint banner -->
+        <div v-if="prefilled" class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm flex items-start gap-2">
+          <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>We've pre-filled your email settings based on your admin account. Just add your password and you're good to go!</span>
         </div>
 
         <!-- Quick setup presets -->

@@ -106,11 +106,16 @@ async function handleSetup() {
 
   try {
     // Register the first admin account
-    await api.post('/auth/register', {
+    const response = await api.post('/auth/register', {
       name: name.value,
       email: email.value,
       password: password.value
     })
+
+    // If the backend returned an email provider hint, save it for the email module
+    if (response.data.email_provider_hint) {
+      localStorage.setItem('email_provider_hint', JSON.stringify(response.data.email_provider_hint))
+    }
 
     // Log in with the new account
     await authStore.login(email.value, password.value)

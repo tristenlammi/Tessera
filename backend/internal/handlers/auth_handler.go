@@ -37,6 +37,61 @@ type RegisterRequest struct {
 	Name     string `json:"name" validate:"required,min=2"`
 }
 
+// emailProviderPreset holds IMAP/SMTP defaults for well-known email providers
+type emailProviderPreset struct {
+	Name     string `json:"name"`
+	IMAPHost string `json:"imap_host"`
+	IMAPPort int    `json:"imap_port"`
+	SMTPHost string `json:"smtp_host"`
+	SMTPPort int    `json:"smtp_port"`
+}
+
+// detectEmailProvider returns a provider preset based on the email domain, or nil if unknown
+func detectEmailProvider(email string) *emailProviderPreset {
+	// Extract domain from email
+	parts := splitEmailDomain(email)
+	if parts == "" {
+		return nil
+	}
+
+	providers := map[string]emailProviderPreset{
+		"gmail.com":        {Name: "Gmail", IMAPHost: "imap.gmail.com", IMAPPort: 993, SMTPHost: "smtp.gmail.com", SMTPPort: 587},
+		"googlemail.com":   {Name: "Gmail", IMAPHost: "imap.gmail.com", IMAPPort: 993, SMTPHost: "smtp.gmail.com", SMTPPort: 587},
+		"outlook.com":      {Name: "Outlook", IMAPHost: "outlook.office365.com", IMAPPort: 993, SMTPHost: "smtp.office365.com", SMTPPort: 587},
+		"hotmail.com":      {Name: "Outlook", IMAPHost: "outlook.office365.com", IMAPPort: 993, SMTPHost: "smtp.office365.com", SMTPPort: 587},
+		"live.com":         {Name: "Outlook", IMAPHost: "outlook.office365.com", IMAPPort: 993, SMTPHost: "smtp.office365.com", SMTPPort: 587},
+		"yahoo.com":        {Name: "Yahoo", IMAPHost: "imap.mail.yahoo.com", IMAPPort: 993, SMTPHost: "smtp.mail.yahoo.com", SMTPPort: 587},
+		"yahoo.co.uk":      {Name: "Yahoo", IMAPHost: "imap.mail.yahoo.com", IMAPPort: 993, SMTPHost: "smtp.mail.yahoo.com", SMTPPort: 587},
+		"icloud.com":       {Name: "iCloud", IMAPHost: "imap.mail.me.com", IMAPPort: 993, SMTPHost: "smtp.mail.me.com", SMTPPort: 587},
+		"me.com":           {Name: "iCloud", IMAPHost: "imap.mail.me.com", IMAPPort: 993, SMTPHost: "smtp.mail.me.com", SMTPPort: 587},
+		"mac.com":          {Name: "iCloud", IMAPHost: "imap.mail.me.com", IMAPPort: 993, SMTPHost: "smtp.mail.me.com", SMTPPort: 587},
+		"protonmail.com":   {Name: "ProtonMail", IMAPHost: "127.0.0.1", IMAPPort: 1143, SMTPHost: "127.0.0.1", SMTPPort: 1025},
+		"proton.me":        {Name: "ProtonMail", IMAPHost: "127.0.0.1", IMAPPort: 1143, SMTPHost: "127.0.0.1", SMTPPort: 1025},
+		"zoho.com":         {Name: "Zoho", IMAPHost: "imap.zoho.com", IMAPPort: 993, SMTPHost: "smtp.zoho.com", SMTPPort: 587},
+		"aol.com":          {Name: "AOL", IMAPHost: "imap.aol.com", IMAPPort: 993, SMTPHost: "smtp.aol.com", SMTPPort: 587},
+		"fastmail.com":     {Name: "Fastmail", IMAPHost: "imap.fastmail.com", IMAPPort: 993, SMTPHost: "smtp.fastmail.com", SMTPPort: 587},
+		"yandex.com":       {Name: "Yandex", IMAPHost: "imap.yandex.com", IMAPPort: 993, SMTPHost: "smtp.yandex.com", SMTPPort: 587},
+		"mail.com":         {Name: "Mail.com", IMAPHost: "imap.mail.com", IMAPPort: 993, SMTPHost: "smtp.mail.com", SMTPPort: 587},
+		"gmx.com":          {Name: "GMX", IMAPHost: "imap.gmx.com", IMAPPort: 993, SMTPHost: "mail.gmx.com", SMTPPort: 587},
+		"gmx.net":          {Name: "GMX", IMAPHost: "imap.gmx.net", IMAPPort: 993, SMTPHost: "mail.gmx.net", SMTPPort: 587},
+	}
+
+	if preset, ok := providers[parts]; ok {
+		return &preset
+	}
+	return nil
+}
+
+// splitEmailDomain extracts the domain part from an email address
+func splitEmailDomain(email string) string {
+	for i := len(email) - 1; i >= 0; i-- {
+		if email[i] == '@' {
+			return email[i+1:]
+		}
+	}
+	return ""
+}
+
 // Register handles user registration
 func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	var req RegisterRequest
@@ -64,14 +119,40 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+	response := fiber.Map{
 		"message": "Account created successfully",
 		"user": fiber.Map{
 			"id":    user.ID,
 			"email": user.Email,
 			"name":  user.Name,
 		},
-	})
+	}
+
+	// If this was the first user (admin), include email provider hint
+	// so the frontend can pre-fill the email module setup
+	if user.Role == "admin" {
+		if preset := detectEmailProvider(req.Email); preset != nil {
+			response["email_provider_hint"] = fiber.Map{
+				"provider":      preset.Name,
+				"email_address": req.Email,
+				"imap_host":     preset.IMAPHost,
+				"imap_port":     preset.IMAPPort,
+				"smtp_host":     preset.SMTPHost,
+				"smtp_port":     preset.SMTPPort,
+				"imap_username": req.Email,
+				"smtp_username": req.Email,
+			}
+		} else {
+			// Even for unknown providers, hint the email address and username
+			response["email_provider_hint"] = fiber.Map{
+				"email_address": req.Email,
+				"imap_username": req.Email,
+				"smtp_username": req.Email,
+			}
+		}
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(response)
 }
 
 // LoginRequest represents the login payload
