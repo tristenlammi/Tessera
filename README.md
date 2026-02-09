@@ -28,7 +28,7 @@ docker run -d \
   -p 8080:8080 \
   -v /path/to/data:/data \
   --restart unless-stopped \
-  ghcr.io/tessera/tessera:latest
+  ghcr.io/tristenlammi/tessera:latest
 ```
 
 Open `http://localhost:8080` and create your admin account.
@@ -92,7 +92,7 @@ That's it. Everything runs in containers.
 ### Getting Started
 
 ```bash
-git clone https://github.com/tessera/tessera.git
+git clone https://github.com/tristenlammi/Tessera.git
 cd tessera
 docker compose up --build -d
 ```

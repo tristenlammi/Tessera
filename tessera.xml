@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>Tessera</Name>
-  <Repository>ghcr.io/tessera/tessera:latest</Repository>
-  <Registry>https://github.com/tessera/tessera</Registry>
+  <Repository>ghcr.io/tristenlammi/tessera:latest</Repository>
+  <Registry>https://github.com/tristenlammi/Tessera</Registry>
   <Network>bridge</Network>
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
-  <Support>https://github.com/tessera/tessera/issues</Support>
-  <Project>https://github.com/tessera/tessera</Project>
+  <Support>https://github.com/tristenlammi/Tessera/issues</Support>
+  <Project>https://github.com/tristenlammi/Tessera</Project>
   <Overview>
     Tessera is a self-hosted productivity platform combining file management,
     documents, tasks, calendar, contacts, and email into one cohesive app.
@@ -28,8 +28,8 @@
   </Overview>
   <Category>Productivity: Cloud:</Category>
   <WebUI>http://[IP]:[PORT:8080]</WebUI>
-  <TemplateURL>https://raw.githubusercontent.com/tessera/tessera/main/tessera.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/tessera/tessera/main/frontend/public/icons/icon-512x512.png</Icon>
+  <TemplateURL>https://raw.githubusercontent.com/tristenlammi/Tessera/main/tessera.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/tristenlammi/Tessera/main/frontend/public/icons/icon-512x512.png</Icon>
   <ExtraParams>--restart unless-stopped</ExtraParams>
   <Description>
     Tessera — Self-hosted productivity platform. All-in-one container that includes

@@ -43,7 +43,7 @@ RUN pnpm build
 # ---------------------------------------------------------------------------
 FROM alpine:3.20
 
-LABEL maintainer="Tessera <https://github.com/tessera/tessera>"
+LABEL maintainer="Tessera <https://github.com/tristenlammi/Tessera>"
 LABEL org.opencontainers.image.title="Tessera"
 LABEL org.opencontainers.image.description="Self-hosted productivity platform — all-in-one"
 
