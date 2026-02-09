@@ -182,8 +182,14 @@ func connectIMAP(account *models.EmailAccount) (*imapclient.Client, error) {
 	var err error
 
 	if account.IMAPUseTLS {
+		// Explicitly set NextProtos to nil to avoid ALPN negotiation issues
+		// with providers like Gmail. The go-imap DialTLS sets NextProtos
+		// to []string{"imap"} by default, which some servers reject.
 		client, err = imapclient.DialTLS(addr, &imapclient.Options{
-			TLSConfig: &tls.Config{ServerName: account.IMAPHost},
+			TLSConfig: &tls.Config{
+				ServerName: account.IMAPHost,
+				NextProtos: []string{},
+			},
 		})
 	} else {
 		client, err = imapclient.DialInsecure(addr, nil)
