@@ -5,6 +5,7 @@ import { useEditor, EditorContent } from '@tiptap/vue-3'
 import { createEditorExtensions } from '@/extensions/editorConfig'
 import { useEditorPrefsStore } from '@/stores/editorPrefs'
 import { useDocumentsStore } from '@/stores/documents'
+import { useEditorPasteImage } from '@/composables/useEditorPasteImage'
 import EditorToolbar from '@/components/EditorToolbar.vue'
 
 const route = useRoute()
@@ -27,6 +28,9 @@ const editor = useEditor({
     enabledToolbarIds: editorPrefsStore.enabledIds,
   }),
   content: '',
+  editorProps: {
+    handlePaste: useEditorPasteImage(),
+  },
   onUpdate: () => {
     documentsStore.markUnsavedChanges()
   }

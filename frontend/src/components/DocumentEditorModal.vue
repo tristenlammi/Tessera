@@ -66,6 +66,7 @@ import { ref, watch, onUnmounted } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import { createEditorExtensions } from '@/extensions/editorConfig'
 import { useEditorPrefsStore } from '@/stores/editorPrefs'
+import { useEditorPasteImage } from '@/composables/useEditorPasteImage'
 import EditorToolbar from './EditorToolbar.vue'
 import api from '@/api'
 
@@ -96,6 +97,9 @@ const editor = useEditor({
     enabledToolbarIds: editorPrefsStore.enabledIds,
   }),
   content: '',
+  editorProps: {
+    handlePaste: useEditorPasteImage(),
+  },
   onUpdate: ({ editor: ed }) => {
     if (ed && props.isOpen) {
       isDirty.value = true

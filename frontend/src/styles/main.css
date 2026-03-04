@@ -146,3 +146,51 @@ body {
   margin: 1rem 0;
   border-radius: 0.5rem;
 }
+
+/* Tables – consistent in modal and full editor, light + dark */
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1em 0;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.ProseMirror th,
+.ProseMirror td {
+  border: 1px solid #d6d3d1;
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+  min-width: 1em;
+}
+
+.ProseMirror th {
+  background-color: #f5f5f4;
+  font-weight: 600;
+  text-align: left;
+}
+
+.dark .ProseMirror th,
+.dark .ProseMirror td {
+  border-color: #404040;
+}
+
+.dark .ProseMirror th {
+  background-color: #262626;
+}
+
+.dark .ProseMirror td {
+  background-color: transparent;
+}
+
+.ProseMirror .tableWrapper {
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+}
