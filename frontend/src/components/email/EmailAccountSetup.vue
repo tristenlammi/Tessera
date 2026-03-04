@@ -333,7 +333,7 @@ async function handleSubmit() {
           <button
             @click="requestSync"
             :disabled="emailStore.syncing"
-            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg
               :class="['w-4 h-4', emailStore.syncing && 'animate-spin']"
@@ -570,7 +570,7 @@ async function handleSubmit() {
           <button
             type="submit"
             :disabled="loading"
-            class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -605,7 +605,7 @@ async function handleSubmit() {
           </button>
           <button
             @click="confirmSync"
-            class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg transition-colors"
+            class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg transition-colors"
           >
             Yes, Sync Now
           </button>

@@ -103,7 +103,7 @@ function getFolderIcon(folder: any): string {
       <button
         @click="confirm"
         :disabled="saving"
-        class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 flex items-center gap-2"
+        class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 flex items-center gap-2"
       >
         <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

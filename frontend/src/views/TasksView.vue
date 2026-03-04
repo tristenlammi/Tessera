@@ -542,7 +542,7 @@ onMounted(async () => {
           </button>
           <button
             @click="openNewTaskModal"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -939,7 +939,7 @@ onMounted(async () => {
                     :class="[
                       'px-3 py-1 text-sm rounded-full transition-colors',
                       recurrenceForm.daysOfWeek.includes(day.value)
-                        ? 'bg-neutral-800 dark:bg-neutral-200 text-white'
+                        ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800'
                         : 'bg-stone-200 dark:bg-neutral-600 text-stone-700 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-500'
                     ]"
                   >
@@ -1013,7 +1013,7 @@ onMounted(async () => {
             </button>
             <button
               @click="saveTask"
-              class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+              class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               {{ editingTask ? 'Save' : 'Create' }}
             </button>
@@ -1075,7 +1075,7 @@ onMounted(async () => {
           </button>
           <button
             @click="saveGroup"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             {{ editingGroup ? 'Save' : 'Create' }}
           </button>

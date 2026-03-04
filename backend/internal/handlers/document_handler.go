@@ -96,10 +96,10 @@ func (h *DocumentHandler) CreateDocument(c *fiber.Ctx) error {
 		req.Title = "Untitled Document"
 	}
 	if req.Format == "" {
-		req.Format = "tiptap"
+		req.Format = "markdown"
 	}
 	if req.Content == "" {
-		req.Content = `{"type":"doc","content":[{"type":"paragraph"}]}`
+		req.Content = ""
 	}
 
 	// Get owner name

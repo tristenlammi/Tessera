@@ -2,23 +2,15 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
-import Highlight from '@tiptap/extension-highlight'
-import Underline from '@tiptap/extension-underline'
-import TextAlign from '@tiptap/extension-text-align'
-import Image from '@tiptap/extension-image'
-import Link from '@tiptap/extension-link'
-import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
-import { TextStyle } from '@tiptap/extension-text-style'
-import Color from '@tiptap/extension-color'
+import { createEditorExtensions } from '@/extensions/editorConfig'
+import { useEditorPrefsStore } from '@/stores/editorPrefs'
 import { useDocumentsStore } from '@/stores/documents'
-import { useFilesStore } from '@/stores/files'
+import EditorToolbar from '@/components/EditorToolbar.vue'
 
 const route = useRoute()
 const router = useRouter()
+const editorPrefsStore = useEditorPrefsStore()
 const documentsStore = useDocumentsStore()
-const filesStore = useFilesStore()
 
 const showNewDocModal = ref(false)
 const newDocTitle = ref('')
@@ -30,130 +22,29 @@ const autoSaveInterval = ref<number | null>(null)
 const documentId = computed(() => route.params.id as string | undefined)
 
 const editor = useEditor({
-  extensions: [
-    StarterKit.configure({
-      heading: {
-        levels: [1, 2, 3]
-      }
-    }),
-    Placeholder.configure({
-      placeholder: 'Start writing...'
-    }),
-    Highlight.configure({
-      multicolor: true
-    }),
-    Underline,
-    TextAlign.configure({
-      types: ['heading', 'paragraph']
-    }),
-    Image.configure({
-      inline: true,
-      allowBase64: true
-    }),
-    Link.configure({
-      openOnClick: false
-    }),
-    Table.configure({
-      resizable: true
-    }),
-    TableRow,
-    TableCell,
-    TableHeader,
-    TextStyle,
-    Color
-  ],
+  extensions: createEditorExtensions({
+    placeholder: "Type '/' for commands...",
+    enabledToolbarIds: editorPrefsStore.enabledIds,
+  }),
   content: '',
   onUpdate: () => {
     documentsStore.markUnsavedChanges()
   }
 })
 
-// Toolbar button states
-const isActive = (type: string, attrs?: Record<string, any>) => {
-  return editor.value?.isActive(type, attrs) ?? false
-}
-
-// Formatting actions
-function toggleBold() {
-  editor.value?.chain().focus().toggleBold().run()
-}
-
-function toggleItalic() {
-  editor.value?.chain().focus().toggleItalic().run()
-}
-
-function toggleUnderline() {
-  editor.value?.chain().focus().toggleUnderline().run()
-}
-
-function toggleStrike() {
-  editor.value?.chain().focus().toggleStrike().run()
-}
-
-function toggleHighlight() {
-  editor.value?.chain().focus().toggleHighlight().run()
-}
-
-function setHeading(level: 1 | 2 | 3) {
-  editor.value?.chain().focus().toggleHeading({ level }).run()
-}
-
-function toggleBulletList() {
-  editor.value?.chain().focus().toggleBulletList().run()
-}
-
-function toggleOrderedList() {
-  editor.value?.chain().focus().toggleOrderedList().run()
-}
-
-function toggleBlockquote() {
-  editor.value?.chain().focus().toggleBlockquote().run()
-}
-
-function toggleCodeBlock() {
-  editor.value?.chain().focus().toggleCodeBlock().run()
-}
-
-function setTextAlign(align: 'left' | 'center' | 'right' | 'justify') {
-  editor.value?.chain().focus().setTextAlign(align).run()
-}
-
-function insertTable() {
-  editor.value?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-}
-
-function addLink() {
-  const url = window.prompt('Enter URL:')
-  if (url) {
-    editor.value?.chain().focus().setLink({ href: url }).run()
-  }
-}
-
-function removeLink() {
-  editor.value?.chain().focus().unsetLink().run()
-}
-
-function insertImage() {
-  const url = window.prompt('Enter image URL:')
-  if (url) {
-    editor.value?.chain().focus().setImage({ src: url }).run()
-  }
-}
-
-function undo() {
-  editor.value?.chain().focus().undo().run()
-}
-
-function redo() {
-  editor.value?.chain().focus().redo().run()
-}
-
 // Document operations
 async function loadDocument(id: string) {
   try {
     const doc = await documentsStore.fetchDocument(id)
     if (editor.value && doc.content) {
-      editor.value.commands.setContent(JSON.parse(doc.content))
+      const format = doc.format || 'tiptap'
+      if (format === 'markdown') {
+        editor.value.commands.setContent(doc.content)
+      } else if (format === 'html') {
+        editor.value.commands.setContent(doc.content)
+      } else {
+        editor.value.commands.setContent(JSON.parse(doc.content))
+      }
     }
   } catch (err) {
     console.error('Failed to load document:', err)
@@ -164,7 +55,15 @@ async function saveDocument() {
   if (!documentsStore.currentDocument || !editor.value) return
   
   try {
-    const content = JSON.stringify(editor.value.getJSON())
+    const format = documentsStore.currentDocument.format || 'markdown'
+    let content: string
+    if (format === 'markdown') {
+      content = (editor.value.storage.markdown as any).getMarkdown()
+    } else if (format === 'html') {
+      content = editor.value.getHTML()
+    } else {
+      content = JSON.stringify(editor.value.getJSON())
+    }
     await documentsStore.saveDocument(
       documentsStore.currentDocument.id,
       content,
@@ -181,8 +80,8 @@ async function createNewDocument() {
   try {
     const doc = await documentsStore.createDocument({
       title: newDocTitle.value,
-      content: JSON.stringify({ type: 'doc', content: [{ type: 'paragraph' }] }),
-      format: 'tiptap'
+      content: '',
+      format: 'markdown'
     })
     
     showNewDocModal.value = false
@@ -268,7 +167,7 @@ onUnmounted(() => {
           <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Documents</h1>
           <button
             @click="showNewDocModal = true"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -311,7 +210,7 @@ onUnmounted(() => {
           <p class="text-stone-500 dark:text-stone-400 mb-4">Create your first document to get started</p>
           <button
             @click="showNewDocModal = true"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             Create Document
           </button>
@@ -355,204 +254,10 @@ onUnmounted(() => {
 
           <div class="flex-1"></div>
 
-          <!-- Undo/Redo -->
-          <button @click="undo" class="p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700" title="Undo (Ctrl+Z)">
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-            </svg>
-          </button>
-          <button @click="redo" class="p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700" title="Redo (Ctrl+Y)">
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
-            </svg>
-          </button>
-
-          <div class="h-6 w-px bg-stone-300 dark:bg-neutral-600 mx-1"></div>
-
-          <!-- Text formatting -->
-          <button 
-            @click="toggleBold" 
-            :class="['p-2 rounded', isActive('bold') ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Bold (Ctrl+B)"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13.5 15.5H10V12.5H13.5A1.5 1.5 0 0115 14A1.5 1.5 0 0113.5 15.5M10 6.5H13A1.5 1.5 0 0114.5 8A1.5 1.5 0 0113 9.5H10M15.6 10.79C16.57 10.11 17.25 9 17.25 8C17.25 5.74 15.5 4 13.25 4H7V18H14.04C16.14 18 17.75 16.3 17.75 14.21C17.75 12.69 16.89 11.39 15.6 10.79Z" />
-            </svg>
-          </button>
-          <button 
-            @click="toggleItalic" 
-            :class="['p-2 rounded', isActive('italic') ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Italic (Ctrl+I)"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10,4V7H12.21L8.79,15H6V18H14V15H11.79L15.21,7H18V4H10Z" />
-            </svg>
-          </button>
-          <button 
-            @click="toggleUnderline" 
-            :class="['p-2 rounded', isActive('underline') ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Underline (Ctrl+U)"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M5,21H19V19H5V21M12,17A6,6 0 0,0 18,11V3H15.5V11A3.5,3.5 0 0,1 12,14.5A3.5,3.5 0 0,1 8.5,11V3H6V11A6,6 0 0,0 12,17Z" />
-            </svg>
-          </button>
-          <button 
-            @click="toggleStrike" 
-            :class="['p-2 rounded', isActive('strike') ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Strikethrough"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3,14H21V12H3M5,4V7H10V10H14V7H19V4M10,19H14V16H10V19Z" />
-            </svg>
-          </button>
-          <button 
-            @click="toggleHighlight" 
-            :class="['p-2 rounded', isActive('highlight') ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Highlight"
-          >
-            <svg class="w-5 h-5 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M15.243 3.343l5.414 5.414-1.414 1.414-5.414-5.414 1.414-1.414zm-1.414 1.414L4.1 14.486l-.707 6.364 6.364-.707 9.728-9.728-5.657-5.657zM5.686 18.313l-.465-4.187 4.652 4.652-4.187-.465z" />
-            </svg>
-          </button>
-
-          <div class="h-6 w-px bg-stone-300 dark:bg-neutral-600 mx-1"></div>
-
-          <!-- Headings -->
-          <button 
-            @click="setHeading(1)" 
-            :class="['p-2 rounded text-sm font-bold', isActive('heading', { level: 1 }) ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Heading 1"
-          >
-            H1
-          </button>
-          <button 
-            @click="setHeading(2)" 
-            :class="['p-2 rounded text-sm font-bold', isActive('heading', { level: 2 }) ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Heading 2"
-          >
-            H2
-          </button>
-          <button 
-            @click="setHeading(3)" 
-            :class="['p-2 rounded text-sm font-bold', isActive('heading', { level: 3 }) ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Heading 3"
-          >
-            H3
-          </button>
-
-          <div class="h-6 w-px bg-stone-300 dark:bg-neutral-600 mx-1"></div>
-
-          <!-- Lists -->
-          <button 
-            @click="toggleBulletList" 
-            :class="['p-2 rounded', isActive('bulletList') ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Bullet List"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z" />
-            </svg>
-          </button>
-          <button 
-            @click="toggleOrderedList" 
-            :class="['p-2 rounded', isActive('orderedList') ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Numbered List"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M7,13V11H21V13H7M7,19V17H21V19H7M7,7V5H21V7H7M3,8V5H2V4H4V8H3M2,17V16H5V20H2V19H4V18.5H3V17.5H4V17H2M4.25,10A0.75,0.75 0 0,1 5,10.75C5,10.95 4.92,11.14 4.79,11.27L3.12,13H5V14H2V13.08L4,11H2V10H4.25Z" />
-            </svg>
-          </button>
-
-          <div class="h-6 w-px bg-stone-300 dark:bg-neutral-600 mx-1"></div>
-
-          <!-- Alignment -->
-          <button 
-            @click="setTextAlign('left')" 
-            :class="['p-2 rounded', isActive({ textAlign: 'left' }) ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Align Left"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3,3H21V5H3V3M3,7H15V9H3V7M3,11H21V13H3V11M3,15H15V17H3V15M3,19H21V21H3V19Z" />
-            </svg>
-          </button>
-          <button 
-            @click="setTextAlign('center')" 
-            :class="['p-2 rounded', isActive({ textAlign: 'center' }) ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Align Center"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3,3H21V5H3V3M7,7H17V9H7V7M3,11H21V13H3V11M7,15H17V17H7V15M3,19H21V21H3V19Z" />
-            </svg>
-          </button>
-          <button 
-            @click="setTextAlign('right')" 
-            :class="['p-2 rounded', isActive({ textAlign: 'right' }) ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Align Right"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3,3H21V5H3V3M9,7H21V9H9V7M3,11H21V13H3V11M9,15H21V17H9V15M3,19H21V21H3V19Z" />
-            </svg>
-          </button>
-
-          <div class="h-6 w-px bg-stone-300 dark:bg-neutral-600 mx-1"></div>
-
-          <!-- Quote, Code, Table -->
-          <button 
-            @click="toggleBlockquote" 
-            :class="['p-2 rounded', isActive('blockquote') ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Quote"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
-            </svg>
-          </button>
-          <button 
-            @click="toggleCodeBlock" 
-            :class="['p-2 rounded', isActive('codeBlock') ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Code Block"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14.6,16.6L19.2,12L14.6,7.4L16,6L22,12L16,18L14.6,16.6M9.4,16.6L4.8,12L9.4,7.4L8,6L2,12L8,18L9.4,16.6Z" />
-            </svg>
-          </button>
-          <button 
-            @click="insertTable" 
-            class="p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700"
-            title="Insert Table"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M5,4H19A2,2 0 0,1 21,6V18A2,2 0 0,1 19,20H5A2,2 0 0,1 3,18V6A2,2 0 0,1 5,4M5,8V12H11V8H5M13,8V12H19V8H13M5,14V18H11V14H5M13,14V18H19V14H13Z" />
-            </svg>
-          </button>
-
-          <div class="h-6 w-px bg-stone-300 dark:bg-neutral-600 mx-1"></div>
-
-          <!-- Link, Image -->
-          <button 
-            @click="addLink" 
-            :class="['p-2 rounded', isActive('link') ? 'bg-stone-200 dark:bg-neutral-600' : 'hover:bg-stone-100 dark:hover:bg-neutral-700']"
-            title="Add Link"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
-            </svg>
-          </button>
-          <button 
-            @click="insertImage" 
-            class="p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700"
-            title="Insert Image"
-          >
-            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21,3H3C2,3 1,4 1,5V19A2,2 0 0,0 3,21H21C22,21 23,20 23,19V5C23,4 22,3 21,3M5,17L8.5,12.5L11,15.5L14.5,11L19,17H5Z" />
-            </svg>
-          </button>
-
-          <div class="flex-1"></div>
-
           <!-- Share button -->
           <button
             @click="showShareModal = true"
-            class="px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
+            class="px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -571,6 +276,11 @@ onUnmounted(() => {
             </svg>
             Save
           </button>
+        </div>
+
+        <!-- Editor Toolbar -->
+        <div class="mt-2 pt-2 border-t border-stone-100 dark:border-neutral-700">
+          <EditorToolbar :editor="editor" />
         </div>
       </div>
 
@@ -618,7 +328,7 @@ onUnmounted(() => {
           </button>
           <button
             @click="createNewDocument"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             Create
           </button>
@@ -692,7 +402,7 @@ onUnmounted(() => {
           </button>
           <button
             @click="shareDocument"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             Share
           </button>

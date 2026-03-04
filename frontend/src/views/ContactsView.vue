@@ -233,7 +233,7 @@ onMounted(() => {
         <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Contacts</h1>
         <button
           @click="openNewContactModal"
-          class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
+          class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -459,7 +459,7 @@ onMounted(() => {
               <button
                 @click="saveContact"
                 :disabled="!contactForm.firstName && !contactForm.lastName"
-                class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ editingContact ? 'Save' : 'Create' }}
               </button>

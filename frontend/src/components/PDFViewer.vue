@@ -515,7 +515,7 @@ onUnmounted(() => {
             </button>
             <button
               @click="addComment"
-              class="px-2 py-1 text-xs bg-neutral-800 dark:bg-neutral-200 text-white rounded hover:bg-neutral-700 dark:hover:bg-neutral-300"
+              class="px-2 py-1 text-xs bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               Add
             </button>

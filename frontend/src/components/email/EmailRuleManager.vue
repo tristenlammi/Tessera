@@ -230,7 +230,7 @@ function getFolderName(id: string): string {
         <div class="p-4 border-b dark:border-neutral-700">
           <button
             @click="openCreateForm"
-            class="flex items-center gap-2 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors text-sm font-medium"
+            class="flex items-center gap-2 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors text-sm font-medium"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -519,7 +519,7 @@ function getFolderName(id: string): string {
           <button
             @click="saveRule"
             :disabled="loading"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 transition-colors font-medium"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 transition-colors font-medium"
           >
             {{ editingRule ? 'Save Changes' : 'Create Rule' }}
           </button>

@@ -170,20 +170,23 @@ func (h *FileHandler) CreateDocumentFile(c *fiber.Ctx) error {
 		})
 	}
 
-	// Ensure filename ends with .tdoc
-	if !strings.HasSuffix(req.Name, ".tdoc") {
-		req.Name = req.Name + ".tdoc"
+	// Ensure filename ends with a document extension
+	if !strings.HasSuffix(req.Name, ".tdoc") && !strings.HasSuffix(req.Name, ".md") {
+		req.Name = req.Name + ".md"
 	}
 
 	// Set defaults
 	if req.Title == "" {
-		req.Title = strings.TrimSuffix(req.Name, ".tdoc")
+		title := req.Name
+		title = strings.TrimSuffix(title, ".tdoc")
+		title = strings.TrimSuffix(title, ".md")
+		req.Title = title
 	}
 	if req.Format == "" {
-		req.Format = "html"
+		req.Format = "markdown"
 	}
 	if req.Content == "" {
-		req.Content = "<p></p>"
+		req.Content = ""
 	}
 
 	var parentID *uuid.UUID
@@ -257,7 +260,7 @@ func (h *FileHandler) GetDocumentContent(c *fiber.Ctx) error {
 	}
 
 	// Verify it's a document file
-	if !strings.HasSuffix(file.Name, ".tdoc") {
+	if !strings.HasSuffix(file.Name, ".tdoc") && !strings.HasSuffix(file.Name, ".md") {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Not a document file",
 		})
@@ -276,10 +279,13 @@ func (h *FileHandler) GetDocumentContent(c *fiber.Ctx) error {
 	var docContent map[string]interface{}
 	if err := json.NewDecoder(reader).Decode(&docContent); err != nil {
 		// If parsing fails, return empty content (legacy file)
+		title := file.Name
+		title = strings.TrimSuffix(title, ".tdoc")
+		title = strings.TrimSuffix(title, ".md")
 		return c.JSON(fiber.Map{
-			"title":   strings.TrimSuffix(file.Name, ".tdoc"),
+			"title":   title,
 			"content": "",
-			"format":  "html",
+			"format":  "markdown",
 		})
 	}
 
@@ -325,7 +331,7 @@ func (h *FileHandler) UpdateDocumentContent(c *fiber.Ctx) error {
 	}
 
 	// Verify it's a document file
-	if !strings.HasSuffix(file.Name, ".tdoc") {
+	if !strings.HasSuffix(file.Name, ".tdoc") && !strings.HasSuffix(file.Name, ".md") {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Not a document file",
 		})
@@ -333,7 +339,7 @@ func (h *FileHandler) UpdateDocumentContent(c *fiber.Ctx) error {
 
 	// Create updated content
 	if req.Format == "" {
-		req.Format = "html"
+		req.Format = "markdown"
 	}
 	docContent := map[string]interface{}{
 		"title":   req.Title,

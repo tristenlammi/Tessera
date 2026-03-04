@@ -77,7 +77,7 @@ function goToLogin() {
           </p>
           <button
             @click="goToLogin"
-            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 font-medium transition-colors"
+            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 font-medium transition-colors"
           >
             Go to Login
           </button>
@@ -122,7 +122,7 @@ function goToLogin() {
           <button
             type="submit"
             :disabled="loading"
-            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 font-medium transition-colors"
+            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 font-medium transition-colors"
           >
             {{ loading ? 'Resetting...' : 'Reset Password' }}
           </button>
@@ -138,7 +138,7 @@ function goToLogin() {
           <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">{{ error }}</p>
           <button
             @click="goToLogin"
-            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 font-medium transition-colors"
+            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 font-medium transition-colors"
           >
             Go to Login
           </button>

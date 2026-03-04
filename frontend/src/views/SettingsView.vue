@@ -74,10 +74,73 @@
         <button
           @click="startTOTPSetup"
           :disabled="settingUp2FA"
-          class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+          class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
         >
           {{ settingUp2FA ? 'Loading...' : 'Enable 2FA' }}
         </button>
+      </div>
+    </div>
+
+    <!-- Editor Toolbar -->
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-stone-900 dark:text-stone-100">Editor Toolbar</h2>
+          <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
+            Choose which toolbar buttons appear in the document editor.
+          </p>
+        </div>
+        <button
+          @click="editorPrefsStore.resetToDefaults()"
+          class="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 underline"
+        >
+          Reset to defaults
+        </button>
+      </div>
+
+      <div class="space-y-6">
+        <div v-for="[group, extensions] in editorPrefsStore.groupedExtensions" :key="group">
+          <h3 class="text-sm font-medium text-stone-600 dark:text-stone-300 mb-3 uppercase tracking-wider">
+            {{ groupLabels[group] }}
+          </h3>
+          <div class="space-y-2">
+            <label
+              v-for="ext in extensions"
+              :key="ext.id"
+              class="flex items-center justify-between p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700/50 transition-colors cursor-pointer"
+            >
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-stone-100 dark:bg-neutral-700 text-sm font-medium text-stone-700 dark:text-stone-300">
+                  {{ ext.icon }}
+                </span>
+                <div>
+                  <span class="text-sm font-medium text-stone-900 dark:text-stone-100">{{ ext.name }}</span>
+                  <p class="text-xs text-stone-500 dark:text-stone-400">{{ ext.description }}</p>
+                </div>
+              </div>
+              <button
+                @click.prevent="editorPrefsStore.toggle(ext.id, !editorPrefsStore.isEnabled(ext.id))"
+                :class="[
+                  'relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2',
+                  editorPrefsStore.isEnabled(ext.id) ? 'bg-neutral-800 dark:bg-neutral-200' : 'bg-stone-200 dark:bg-neutral-600'
+                ]"
+              >
+                <span
+                  :class="[
+                    'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                    editorPrefsStore.isEnabled(ext.id) ? 'translate-x-4' : 'translate-x-0'
+                  ]"
+                />
+              </button>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+        <p class="text-xs text-amber-800 dark:text-amber-200">
+          <strong>Note:</strong> Changes take effect the next time you open a document editor. Core formatting (bold, italic, headings, lists) is always available regardless of toolbar visibility.
+        </p>
       </div>
     </div>
 
@@ -144,7 +207,7 @@
             </button>
             <button
               @click="setupStep = 2"
-              class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+              class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               Next
             </button>
@@ -186,7 +249,7 @@
             <button
               @click="verifyAndEnable"
               :disabled="verifying || verifyCode.length !== 6"
-              class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+              class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
             >
               {{ verifying ? 'Verifying...' : 'Enable 2FA' }}
             </button>
@@ -222,7 +285,7 @@
           <div class="flex justify-end pt-4">
             <button
               @click="finishSetup"
-              class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+              class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               I've saved my backup codes
             </button>
@@ -310,7 +373,7 @@
             <button
               @click="regenerateBackupCodes"
               :disabled="regenerating || !regeneratePassword"
-              class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+              class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
             >
               {{ regenerating ? 'Regenerating...' : 'Regenerate' }}
             </button>
@@ -338,7 +401,7 @@
           <div class="flex justify-end">
             <button
               @click="closeRegenerateModal"
-              class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+              class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               Done
             </button>
@@ -348,7 +411,7 @@
     </div>
 
     <!-- Save indicator -->
-    <div v-if="saving" class="fixed bottom-4 right-4 bg-neutral-800 dark:bg-neutral-200 text-white px-4 py-2 rounded-lg shadow-lg">
+    <div v-if="saving" class="fixed bottom-4 right-4 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 px-4 py-2 rounded-lg shadow-lg">
       Saving...
     </div>
     <div v-if="saved" class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg">
@@ -363,8 +426,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useEditorPrefsStore } from '@/stores/editorPrefs'
+import { GROUP_LABELS } from '@/extensions/toolbarRegistry'
 
 const authStore = useAuthStore()
+const editorPrefsStore = useEditorPrefsStore()
+const groupLabels = GROUP_LABELS
 
 const selectedTimezone = ref(authStore.user?.timezone || 'UTC')
 const saving = ref(false)

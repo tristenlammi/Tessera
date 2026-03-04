@@ -170,7 +170,7 @@
           </div>
           <button
             @click="showCreateUserModal = true"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors flex items-center gap-2"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors flex items-center gap-2"
           >
             <PlusIcon class="w-5 h-5" />
             Add User
@@ -358,7 +358,7 @@
               <button
                 type="submit"
                 :disabled="loading"
-                class="px-6 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50"
+                class="px-6 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50"
               >
                 Save Settings
               </button>
@@ -413,7 +413,7 @@
               <button
                 type="submit"
                 :disabled="loading"
-                class="px-6 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50"
+                class="px-6 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50"
               >
                 Save SMTP Settings
               </button>
@@ -519,7 +519,7 @@
           />
           <button
             @click="loadLogs(1)"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
           >
             Filter
           </button>
@@ -642,7 +642,7 @@
             <button
               type="submit"
               :disabled="loading"
-              class="flex-1 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+              class="flex-1 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
             >
               Save
             </button>
@@ -719,7 +719,7 @@
             <button
               type="submit"
               :disabled="loading"
-              class="flex-1 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+              class="flex-1 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
             >
               Create User
             </button>

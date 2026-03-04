@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFilesStore, type FileItem } from '@/stores/files'
 import FileGrid from '@/components/FileGrid.vue'
@@ -8,7 +8,9 @@ import ContextMenu from '@/components/ContextMenu.vue'
 
 const router = useRouter()
 const filesStore = useFilesStore()
-const viewMode = ref<'grid' | 'list'>('grid')
+const viewMode = ref<'grid' | 'list'>((localStorage.getItem('tessera-view-mode') as 'grid' | 'list') || 'grid')
+
+watch(viewMode, (v) => localStorage.setItem('tessera-view-mode', v))
 const contextMenu = ref<{ file: FileItem; x: number; y: number } | null>(null)
 
 onMounted(() => {

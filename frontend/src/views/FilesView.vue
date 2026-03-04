@@ -25,7 +25,9 @@ const router = useRouter()
 const filesStore = useFilesStore()
 const modulesStore = useModulesStore()
 
-const viewMode = ref<'grid' | 'list'>('grid')
+const viewMode = ref<'grid' | 'list'>((localStorage.getItem('tessera-view-mode') as 'grid' | 'list') || 'grid')
+
+watch(viewMode, (v) => localStorage.setItem('tessera-view-mode', v))
 const showCreateFolder = ref(false)
 const showCommandPalette = ref(false)
 const showInfoPanel = ref(false)
@@ -95,7 +97,7 @@ function openFile(file: FileItem) {
   if (file.is_folder) {
     filesStore.navigateToFolder(file)
     router.push({ name: 'folder', params: { id: file.id } })
-  } else if (file.name.endsWith('.tdoc')) {
+  } else if (file.name.endsWith('.tdoc') || file.name.endsWith('.md')) {
     // Open document in editor modal
     editingDocumentId.value = file.id
     showDocumentEditor.value = true
@@ -310,7 +312,7 @@ function triggerFolderUpload() {
         <div class="relative">
           <button
             @click="showUploadMenu = !showUploadMenu"
-            class="flex items-center gap-1 px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            class="flex items-center gap-1 px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -424,7 +426,7 @@ function triggerFolderUpload() {
         <p class="text-lg font-medium">No files yet</p>
         <p class="text-sm mb-4">Drop files or folders here, or click to upload</p>
         <div class="flex gap-2">
-          <label for="file-upload" class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 cursor-pointer">
+          <label for="file-upload" class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 cursor-pointer">
             Upload Files
           </label>
           <label for="folder-upload" class="px-4 py-2 border border-neutral-800 dark:border-neutral-200 text-stone-800 dark:text-stone-200 rounded-lg hover:bg-stone-100 cursor-pointer">

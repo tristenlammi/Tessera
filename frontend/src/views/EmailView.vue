@@ -827,7 +827,7 @@ function closeConversation() {
         </p>
         <button
           @click="showAccountSetup = true"
-          class="inline-flex items-center gap-2 px-6 py-3 bg-neutral-800 dark:bg-neutral-200 text-white font-medium rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-medium rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -845,7 +845,7 @@ function closeConversation() {
         <div class="p-3">
           <button
             @click="openCompose('new')"
-            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-neutral-800 dark:bg-neutral-200 text-white font-medium rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
+            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-medium rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -1677,7 +1677,7 @@ function closeConversation() {
             </div>
 
             <div class="flex items-start gap-4 mb-6">
-              <div class="w-10 h-10 rounded-full bg-neutral-700 dark:bg-neutral-300 flex items-center justify-center text-white font-medium flex-shrink-0">
+              <div class="w-10 h-10 rounded-full bg-neutral-700 dark:bg-neutral-300 flex items-center justify-center text-white dark:text-neutral-800 font-medium flex-shrink-0">
                 {{ (currentEmail.from_name || currentEmail.from_address).charAt(0).toUpperCase() }}
               </div>
               <div class="flex-1 min-w-0">
@@ -1863,7 +1863,7 @@ function closeConversation() {
             <button
               @click="saveFolderModal"
               :disabled="!folderModalName.trim()"
-              class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ folderModalMode === 'create' ? 'Create' : 'Save' }}
             </button>
@@ -2135,7 +2135,7 @@ function closeConversation() {
             <button
               @click="saveTaskFromEmail"
               :disabled="!newTaskForm.title.trim()"
-              class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Create Task
             </button>
@@ -2155,7 +2155,7 @@ function closeConversation() {
           <span class="text-sm flex-1">Sending "{{ item.subject }}"...</span>
           <button
             @click="emailStore.cancelSend(item.sendId)"
-            class="px-3 py-1 bg-neutral-700 dark:bg-neutral-300 hover:bg-stone-300 text-white text-sm font-medium rounded-lg transition-colors"
+            class="px-3 py-1 bg-neutral-700 dark:bg-neutral-300 hover:bg-stone-300 text-white dark:text-neutral-800 text-sm font-medium rounded-lg transition-colors"
           >
             Undo
           </button>

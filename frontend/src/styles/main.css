@@ -45,3 +45,104 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-stone-400 dark:bg-neutral-500;
 }
+
+/* Task list checkboxes */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+  appearance: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid #d6d3d1;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: all 0.15s ease;
+}
+
+.dark .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+  border-color: #525252;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
+  background-color: #37352f;
+  border-color: #37352f;
+}
+
+.dark .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
+  background-color: #ebebeb;
+  border-color: #ebebeb;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
+  content: '✓';
+  font-size: 0.75rem;
+  color: white;
+}
+
+.dark .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
+  color: #191919;
+}
+
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+.ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div p {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* Slash command menu (tippy popup) */
+.tippy-box[data-theme~='slash-commands'] {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.tippy-box {
+  max-width: none !important;
+}
+
+/* YouTube embeds */
+.ProseMirror div[data-youtube-video] {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+  margin: 1rem 0;
+}
+
+.ProseMirror div[data-youtube-video] iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.5rem;
+}
+
+/* Audio embeds */
+.ProseMirror audio {
+  display: block;
+  width: 100%;
+  max-width: 500px;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+}
