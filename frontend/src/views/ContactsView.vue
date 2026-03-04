@@ -96,7 +96,7 @@ function getInitials(contact: Contact): string {
 
 function getAvatarColor(contact: Contact): string {
   const colors = [
-    'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500',
+    'bg-stone-1000', 'bg-green-500', 'bg-yellow-500', 'bg-red-500',
     'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'
   ]
   const hash = (contact.firstName + contact.lastName).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
@@ -226,14 +226,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+  <div class="h-full flex flex-col bg-stone-50 dark:bg-neutral-900">
     <!-- Header -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+    <div class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700 px-6 py-4">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Contacts</h1>
+        <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Contacts</h1>
         <button
           @click="openNewContactModal"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -245,14 +245,14 @@ onMounted(() => {
       <!-- Search -->
       <div class="mt-4">
         <div class="relative">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search contacts..."
-            class="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            class="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
           />
         </div>
       </div>
@@ -261,13 +261,13 @@ onMounted(() => {
     <!-- Contacts List -->
     <div class="flex-1 overflow-y-auto p-6">
       <div v-if="loading" class="flex items-center justify-center h-64">
-        <svg class="w-8 h-8 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
+        <svg class="w-8 h-8 text-stone-800 dark:text-stone-200 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
       </div>
 
-      <div v-else-if="filteredContacts.length === 0" class="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+      <div v-else-if="filteredContacts.length === 0" class="flex flex-col items-center justify-center h-64 text-stone-500 dark:text-stone-400">
         <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
@@ -277,15 +277,15 @@ onMounted(() => {
 
       <div v-else class="space-y-6">
         <div v-for="(groupContacts, letter) in groupedContacts" :key="letter">
-          <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 sticky top-0 bg-gray-50 dark:bg-gray-900 py-1">
+          <h3 class="text-sm font-semibold text-stone-500 dark:text-stone-400 mb-2 sticky top-0 bg-stone-50 dark:bg-neutral-900 py-1">
             {{ letter }}
           </h3>
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm divide-y divide-gray-100 dark:divide-gray-700">
+          <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-sm divide-y divide-stone-100 dark:divide-neutral-700">
             <div
               v-for="contact in groupContacts"
               :key="contact.id"
               @click="openEditContactModal(contact)"
-              class="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+              class="flex items-center gap-4 p-4 hover:bg-stone-50 dark:hover:bg-neutral-700 cursor-pointer transition-colors"
             >
               <!-- Avatar -->
               <div
@@ -297,12 +297,12 @@ onMounted(() => {
               <!-- Info -->
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                  <h4 class="font-medium text-gray-900 dark:text-white truncate">
+                  <h4 class="font-medium text-stone-900 dark:text-stone-100 truncate">
                     {{ contact.firstName }} {{ contact.lastName }}
                   </h4>
                   <button
                     @click.stop="toggleFavorite(contact)"
-                    :class="contact.favorite ? 'text-yellow-500' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-500'"
+                    :class="contact.favorite ? 'text-yellow-500' : 'text-stone-300 dark:text-stone-600 hover:text-yellow-500'"
                   >
                     <svg class="w-5 h-5" :fill="contact.favorite ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -310,10 +310,10 @@ onMounted(() => {
                   </button>
                 </div>
                 <!-- Email with mail icon -->
-                <div v-if="contact.email" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <div v-if="contact.email" class="flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
                   <button
                     @click="openEmailCompose(contact, $event)"
-                    class="flex items-center gap-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    class="flex items-center gap-1.5 hover:text-stone-800 dark:text-stone-200 dark:hover:text-stone-600 dark:text-stone-400 transition-colors"
                     title="Send email"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,13 +322,13 @@ onMounted(() => {
                     <span class="truncate">{{ contact.email }}</span>
                   </button>
                 </div>
-                <p v-if="contact.company" class="text-sm text-gray-400 dark:text-gray-500 truncate">
+                <p v-if="contact.company" class="text-sm text-stone-400 dark:text-stone-500 truncate">
                   {{ contact.company }}{{ contact.jobTitle ? ` · ${contact.jobTitle}` : '' }}
                 </p>
               </div>
 
               <!-- Phone -->
-              <div v-if="contact.phone" class="text-sm text-gray-500 dark:text-gray-400">
+              <div v-if="contact.phone" class="text-sm text-stone-500 dark:text-stone-400">
                 {{ contact.phone }}
               </div>
             </div>
@@ -344,10 +344,10 @@ onMounted(() => {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
         @click.self="showContactModal = false"
       >
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
           <div class="p-6">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+              <h2 class="text-xl font-bold text-stone-900 dark:text-stone-100">
                 {{ editingContact ? 'Edit Contact' : 'New Contact' }}
               </h2>
               <button
@@ -364,20 +364,20 @@ onMounted(() => {
             <!-- Name -->
             <div class="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">First Name</label>
                 <input
                   v-model="contactForm.firstName"
                   type="text"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="John"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Last Name</label>
                 <input
                   v-model="contactForm.lastName"
                   type="text"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="Doe"
                 />
               </div>
@@ -386,20 +386,20 @@ onMounted(() => {
             <!-- Email & Phone -->
             <div class="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Email</label>
                 <input
                   v-model="contactForm.email"
                   type="email"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="john@example.com"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Phone</label>
                 <input
                   v-model="contactForm.phone"
                   type="tel"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="+1 234 567 8900"
                 />
               </div>
@@ -408,20 +408,20 @@ onMounted(() => {
             <!-- Company & Job Title -->
             <div class="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Company</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Company</label>
                 <input
                   v-model="contactForm.company"
                   type="text"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="Acme Inc."
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Job Title</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Job Title</label>
                 <input
                   v-model="contactForm.jobTitle"
                   type="text"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="Software Engineer"
                 />
               </div>
@@ -429,37 +429,37 @@ onMounted(() => {
 
             <!-- Birthday -->
             <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Birthday</label>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Birthday</label>
               <input
                 v-model="contactForm.birthday"
                 type="date"
-                class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
               />
             </div>
 
             <!-- Notes -->
             <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Notes</label>
               <textarea
                 v-model="contactForm.notes"
                 rows="3"
-                class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+                class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100 resize-none"
                 placeholder="Additional notes..."
               ></textarea>
             </div>
 
             <!-- Actions -->
-            <div class="flex justify-end gap-2 pt-4 border-t dark:border-gray-700">
+            <div class="flex justify-end gap-2 pt-4 border-t dark:border-neutral-700">
               <button
                 @click="showContactModal = false"
-                class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
               >
                 Cancel
               </button>
               <button
                 @click="saveContact"
                 :disabled="!contactForm.firstName && !contactForm.lastName"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ editingContact ? 'Save' : 'Create' }}
               </button>
@@ -476,7 +476,7 @@ onMounted(() => {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
         @click.self="showDeleteConfirm = false"
       >
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6">
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md p-6">
           <div class="flex items-center gap-3 mb-4">
             <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-red-100 dark:bg-red-900/30 rounded-full">
               <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -484,19 +484,19 @@ onMounted(() => {
               </svg>
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Delete Contact</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone.</p>
+              <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">Delete Contact</h3>
+              <p class="text-sm text-stone-500 dark:text-stone-400">This action cannot be undone.</p>
             </div>
           </div>
           
-          <p class="text-gray-700 dark:text-gray-300 mb-6">
+          <p class="text-stone-700 dark:text-stone-300 mb-6">
             Are you sure you want to delete <span class="font-medium">{{ contactToDelete?.firstName }} {{ contactToDelete?.lastName }}</span>?
           </p>
           
           <div class="flex justify-end gap-3">
             <button
               @click="showDeleteConfirm = false"
-              class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               Cancel
             </button>

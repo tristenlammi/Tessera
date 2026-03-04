@@ -44,11 +44,11 @@ async function handleRegister() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-neutral-900 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div>
-        <h1 class="text-center text-4xl font-bold text-blue-600">Tessera</h1>
-        <h2 class="mt-6 text-center text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 class="text-center text-4xl font-bold text-stone-800 dark:text-stone-200">Tessera</h1>
+        <h2 class="mt-6 text-center text-2xl font-semibold text-stone-900 dark:text-stone-100">
           Create your account
         </h2>
       </div>
@@ -60,7 +60,7 @@ async function handleRegister() {
 
         <div class="space-y-4">
           <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="name" class="block text-sm font-medium text-stone-700 dark:text-stone-300">
               Full name
             </label>
             <input
@@ -69,12 +69,12 @@ async function handleRegister() {
               type="text"
               autocomplete="name"
               required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+              class="mt-1 block w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-800 dark:text-stone-100"
             />
           </div>
 
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="email" class="block text-sm font-medium text-stone-700 dark:text-stone-300">
               Email address
             </label>
             <input
@@ -83,12 +83,12 @@ async function handleRegister() {
               type="email"
               autocomplete="email"
               required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+              class="mt-1 block w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-800 dark:text-stone-100"
             />
           </div>
 
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="password" class="block text-sm font-medium text-stone-700 dark:text-stone-300">
               Password
             </label>
             <input
@@ -97,12 +97,12 @@ async function handleRegister() {
               type="password"
               autocomplete="new-password"
               required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+              class="mt-1 block w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-800 dark:text-stone-100"
             />
           </div>
 
           <div>
-            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="confirmPassword" class="block text-sm font-medium text-stone-700 dark:text-stone-300">
               Confirm password
             </label>
             <input
@@ -111,7 +111,7 @@ async function handleRegister() {
               type="password"
               autocomplete="new-password"
               required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+              class="mt-1 block w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-800 dark:text-stone-100"
             />
           </div>
         </div>
@@ -119,15 +119,15 @@ async function handleRegister() {
         <button
           type="submit"
           :disabled="loading"
-          class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 hover:bg-neutral-700 dark:hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span v-if="loading">Creating account...</span>
           <span v-else>Create account</span>
         </button>
 
-        <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-center text-sm text-stone-600 dark:text-stone-400">
           Already have an account?
-          <router-link to="/login" class="font-medium text-blue-600 hover:text-blue-500">
+          <router-link to="/login" class="font-medium text-stone-800 dark:text-stone-200 hover:text-stone-700 dark:text-stone-300">
             Sign in
           </router-link>
         </p>

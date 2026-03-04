@@ -62,8 +62,8 @@ function getFileIcon(file: SharedFile): string {
 
 function getPermissionBadge(permission: string) {
   const badges: Record<string, { text: string; class: string }> = {
-    view: { text: 'View', class: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' },
-    edit: { text: 'Edit', class: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
+    view: { text: 'View', class: 'bg-stone-100 dark:bg-neutral-700 text-stone-700 dark:text-stone-300' },
+    edit: { text: 'Edit', class: 'bg-stone-100 dark:bg-neutral-700/30 text-stone-800 dark:text-stone-200 dark:text-stone-300' },
     admin: { text: 'Full Access', class: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' }
   }
   return badges[permission] || badges.view
@@ -81,17 +81,17 @@ function openFile(file: SharedFile) {
 <template>
   <div class="h-full flex flex-col">
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
-      <h1 class="text-xl font-semibold dark:text-white">Shared with Me</h1>
+    <div class="flex items-center justify-between p-4 border-b dark:border-neutral-700">
+      <h1 class="text-xl font-semibold dark:text-stone-100">Shared with Me</h1>
     </div>
 
     <!-- Content -->
     <div class="flex-1 overflow-auto p-4">
       <div v-if="loading" class="flex items-center justify-center h-64">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-800 dark:border-neutral-200"></div>
       </div>
 
-      <div v-else-if="files.length === 0" class="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+      <div v-else-if="files.length === 0" class="flex flex-col items-center justify-center h-64 text-stone-500 dark:text-stone-400">
         <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
@@ -104,15 +104,15 @@ function openFile(file: SharedFile) {
           v-for="file in files"
           :key="file.id"
           @click="openFile(file)"
-          class="flex items-center gap-4 p-3 rounded-lg border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+          class="flex items-center gap-4 p-3 rounded-lg border dark:border-neutral-700 hover:bg-stone-50 dark:hover:bg-neutral-700/50 cursor-pointer transition-colors"
         >
           <!-- Icon -->
           <div class="text-2xl">{{ getFileIcon(file) }}</div>
 
           <!-- Details -->
           <div class="flex-1 min-w-0">
-            <div class="font-medium truncate dark:text-white">{{ file.name }}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">
+            <div class="font-medium truncate dark:text-stone-100">{{ file.name }}</div>
+            <div class="text-sm text-stone-500 dark:text-stone-400">
               Shared by {{ file.owner_name || file.owner_email }} · {{ formatDate(file.shared_at) }}
             </div>
           </div>
@@ -126,7 +126,7 @@ function openFile(file: SharedFile) {
           </span>
 
           <!-- Size -->
-          <div v-if="!file.is_folder" class="text-sm text-gray-500 dark:text-gray-400 w-20 text-right">
+          <div v-if="!file.is_folder" class="text-sm text-stone-500 dark:text-stone-400 w-20 text-right">
             {{ formatBytes(file.size) }}
           </div>
         </div>

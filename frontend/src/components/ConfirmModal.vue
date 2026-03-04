@@ -38,22 +38,22 @@ onUnmounted(() => {
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
     @click.self="emit('cancel')"
   >
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm mx-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-sm mx-4">
       <!-- Header -->
-      <div class="px-4 py-3 border-b dark:border-gray-700">
-        <h3 class="font-medium text-lg dark:text-white">{{ title }}</h3>
+      <div class="px-4 py-3 border-b dark:border-neutral-700">
+        <h3 class="font-medium text-lg dark:text-stone-100">{{ title }}</h3>
       </div>
 
       <!-- Content -->
       <div class="px-4 py-4">
-        <p class="text-gray-600 dark:text-gray-300">{{ message }}</p>
+        <p class="text-stone-600 dark:text-stone-300">{{ message }}</p>
       </div>
 
       <!-- Actions -->
-      <div class="flex justify-end gap-2 px-4 py-3 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-lg">
+      <div class="flex justify-end gap-2 px-4 py-3 border-t dark:border-neutral-700 bg-stone-50 dark:bg-neutral-800/50 rounded-b-lg">
         <button
           @click="emit('cancel')"
-          class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600"
+          class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-white dark:bg-neutral-700 border border-stone-300 dark:border-neutral-700 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-600"
         >
           {{ cancelText }}
         </button>
@@ -63,7 +63,7 @@ onUnmounted(() => {
             'px-4 py-2 text-sm font-medium text-white rounded-lg',
             danger
               ? 'bg-red-600 hover:bg-red-700'
-              : 'bg-blue-600 hover:bg-blue-700'
+              : 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-300'
           ]"
         >
           {{ confirmText }}

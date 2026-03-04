@@ -1,21 +1,21 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen bg-stone-50 dark:bg-neutral-900">
     <!-- Admin Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <header class="bg-white dark:bg-neutral-800 shadow-sm border-b border-stone-200 dark:border-neutral-700">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <ShieldCheckIcon class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div class="p-2 bg-stone-100 dark:bg-neutral-800 rounded-lg">
+              <ShieldCheckIcon class="w-6 h-6 text-stone-800 dark:text-stone-200 dark:text-stone-400" />
             </div>
             <div>
-              <h1 class="text-xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-              <p class="text-sm text-gray-500 dark:text-gray-400">System management and monitoring</p>
+              <h1 class="text-xl font-bold text-stone-900 dark:text-stone-100">Admin Dashboard</h1>
+              <p class="text-sm text-stone-500 dark:text-stone-400">System management and monitoring</p>
             </div>
           </div>
           <router-link
             to="/files"
-            class="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+            class="text-sm text-stone-800 dark:text-stone-200 dark:text-stone-400 hover:underline flex items-center gap-1"
           >
             <ArrowLeftIcon class="w-4 h-4" />
             Back to Files
@@ -25,7 +25,7 @@
     </header>
 
     <!-- Navigation Tabs -->
-    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <nav class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex space-x-8">
           <button
@@ -35,8 +35,8 @@
             :class="[
               'py-4 px-1 border-b-2 font-medium text-sm transition-colors',
               activeTab === tab.id
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                ? 'border-neutral-700 dark:border-neutral-300 text-stone-800 dark:text-stone-200 dark:text-stone-400'
+                : 'border-transparent text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300'
             ]"
           >
             <component :is="tab.icon" class="w-5 h-5 inline-block mr-2" />
@@ -55,12 +55,12 @@
           <div
             v-for="stat in statsCards"
             :key="stat.label"
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
+            class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm p-6 border border-stone-200 dark:border-neutral-700"
           >
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ stat.label }}</p>
-                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ stat.value }}</p>
+                <p class="text-sm text-stone-500 dark:text-stone-400">{{ stat.label }}</p>
+                <p class="text-2xl font-bold text-stone-900 dark:text-stone-100 mt-1">{{ stat.value }}</p>
               </div>
               <div :class="['p-3 rounded-lg', stat.bgColor]">
                 <component :is="stat.icon" :class="['w-6 h-6', stat.iconColor]" />
@@ -70,7 +70,7 @@
               <span :class="stat.change > 0 ? 'text-green-600' : 'text-red-600'">
                 {{ stat.change > 0 ? '+' : '' }}{{ stat.change }}%
               </span>
-              <span class="text-gray-500 dark:text-gray-400 ml-2">from last week</span>
+              <span class="text-stone-500 dark:text-stone-400 ml-2">from last week</span>
             </div>
           </div>
         </div>
@@ -78,21 +78,21 @@
         <!-- Charts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Storage Distribution -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Storage Distribution</h3>
+          <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm p-6 border border-stone-200 dark:border-neutral-700">
+            <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Storage Distribution</h3>
             <div class="space-y-4">
               <div>
                 <div class="flex justify-between text-sm mb-1">
-                  <span class="text-gray-600 dark:text-gray-400">Used Storage</span>
-                  <span class="text-gray-900 dark:text-white font-medium">{{ formatBytes(systemStats?.usedStorage || 0) }}</span>
+                  <span class="text-stone-600 dark:text-stone-400">Used Storage</span>
+                  <span class="text-stone-900 dark:text-stone-100 font-medium">{{ formatBytes(systemStats?.usedStorage || 0) }}</span>
                 </div>
-                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                <div class="w-full bg-stone-200 dark:bg-neutral-700 rounded-full h-3">
                   <div
-                    class="bg-blue-600 h-3 rounded-full transition-all"
+                    class="bg-neutral-800 dark:bg-neutral-200 h-3 rounded-full transition-all"
                     :style="{ width: storagePercentage + '%' }"
                   ></div>
                 </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p class="text-xs text-stone-500 dark:text-stone-400 mt-1">
                   {{ storagePercentage.toFixed(1) }}% of {{ formatBytes(systemStats?.totalStorage || 0) }} used
                 </p>
               </div>
@@ -100,31 +100,31 @@
           </div>
 
           <!-- Activity Summary -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Today's Activity</h3>
+          <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm p-6 border border-stone-200 dark:border-neutral-700">
+            <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Today's Activity</h3>
             <div class="grid grid-cols-2 gap-4">
               <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <ArrowUpTrayIcon class="w-8 h-8 text-green-600 dark:text-green-400 mb-2" />
-                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ systemStats?.uploadsToday || 0 }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Uploads</p>
+                <p class="text-2xl font-bold text-stone-900 dark:text-stone-100">{{ systemStats?.uploadsToday || 0 }}</p>
+                <p class="text-sm text-stone-500 dark:text-stone-400">Uploads</p>
               </div>
               <div class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                 <ArrowDownTrayIcon class="w-8 h-8 text-purple-600 dark:text-purple-400 mb-2" />
-                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ systemStats?.downloadsToday || 0 }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Downloads</p>
+                <p class="text-2xl font-bold text-stone-900 dark:text-stone-100">{{ systemStats?.downloadsToday || 0 }}</p>
+                <p class="text-sm text-stone-500 dark:text-stone-400">Downloads</p>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Quick Actions -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm p-6 border border-stone-200 dark:border-neutral-700">
+          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Quick Actions</h3>
           <div class="flex flex-wrap gap-3">
             <button
               @click="handleClearCache"
               :disabled="loading"
-              class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              class="px-4 py-2 bg-stone-100 dark:bg-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600 transition-colors"
             >
               <TrashIcon class="w-4 h-4 inline-block mr-2" />
               Clear Cache
@@ -132,7 +132,7 @@
             <button
               @click="handleRunCleanup"
               :disabled="loading"
-              class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              class="px-4 py-2 bg-stone-100 dark:bg-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600 transition-colors"
             >
               <ArrowPathIcon class="w-4 h-4 inline-block mr-2" />
               Run Cleanup
@@ -159,18 +159,18 @@
         <!-- Search and Filters -->
         <div class="flex flex-col sm:flex-row gap-4">
           <div class="relative flex-1">
-            <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
             <input
               v-model="userSearch"
               @input="debouncedSearchUsers"
               type="text"
               placeholder="Search users by name or email..."
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full pl-10 pr-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
             />
           </div>
           <button
             @click="showCreateUserModal = true"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors flex items-center gap-2"
           >
             <PlusIcon class="w-5 h-5" />
             Add User
@@ -178,29 +178,29 @@
         </div>
 
         <!-- Users Table -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-stone-200 dark:border-neutral-700 overflow-hidden">
           <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead class="bg-gray-50 dark:bg-gray-900">
+            <table class="min-w-full divide-y divide-stone-200 dark:divide-neutral-700">
+              <thead class="bg-stone-50 dark:bg-neutral-900">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Storage</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Login</th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">User</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Role</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Storage</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Last Login</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+              <tbody class="bg-white dark:bg-neutral-800 divide-y divide-stone-200 dark:divide-neutral-700">
+                <tr v-for="user in users" :key="user.id" class="hover:bg-stone-50 dark:hover:bg-neutral-700/50">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
-                      <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                        <span class="text-blue-600 dark:text-blue-400 font-medium">{{ user.name.charAt(0).toUpperCase() }}</span>
+                      <div class="w-10 h-10 rounded-full bg-stone-100 dark:bg-neutral-800 flex items-center justify-center">
+                        <span class="text-stone-800 dark:text-stone-200 dark:text-stone-400 font-medium">{{ user.name.charAt(0).toUpperCase() }}</span>
                       </div>
                       <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ user.name }}</div>
-                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ user.email }}</div>
+                        <div class="text-sm font-medium text-stone-900 dark:text-stone-100">{{ user.name }}</div>
+                        <div class="text-sm text-stone-500 dark:text-stone-400">{{ user.email }}</div>
                       </div>
                     </div>
                   </td>
@@ -209,17 +209,17 @@
                       'px-2 py-1 text-xs font-medium rounded-full',
                       user.role === 'admin'
                         ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                        : 'bg-stone-100 dark:bg-neutral-700 text-stone-800 dark:text-stone-200'
                     ]">
                       {{ user.role }}
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900 dark:text-white">{{ formatBytes(user.storageUsed) }}</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">of {{ formatBytes(user.storageQuota) }}</div>
-                    <div class="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-1">
+                    <div class="text-sm text-stone-900 dark:text-stone-100">{{ formatBytes(user.storageUsed) }}</div>
+                    <div class="text-xs text-stone-500 dark:text-stone-400">of {{ formatBytes(user.storageQuota) }}</div>
+                    <div class="w-24 bg-stone-200 dark:bg-neutral-700 rounded-full h-1.5 mt-1">
                       <div
-                        class="bg-blue-600 h-1.5 rounded-full"
+                        class="bg-neutral-800 dark:bg-neutral-200 h-1.5 rounded-full"
                         :style="{ width: Math.min((user.storageUsed / user.storageQuota) * 100, 100) + '%' }"
                       ></div>
                     </div>
@@ -234,14 +234,14 @@
                       {{ user.isActive ? 'Active' : 'Disabled' }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
                     {{ user.lastLoginAt ? formatDate(user.lastLoginAt) : 'Never' }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex items-center justify-end gap-2">
                       <button
                         @click="editUser(user)"
-                        class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+                        class="text-stone-800 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-300"
                         title="Edit"
                       >
                         <PencilIcon class="w-5 h-5" />
@@ -268,22 +268,22 @@
           </div>
 
           <!-- Pagination -->
-          <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <p class="text-sm text-gray-500 dark:text-gray-400">
+          <div class="px-6 py-4 border-t border-stone-200 dark:border-neutral-700 flex items-center justify-between">
+            <p class="text-sm text-stone-500 dark:text-stone-400">
               Showing {{ (usersPage - 1) * 20 + 1 }} to {{ Math.min(usersPage * 20, usersTotal) }} of {{ usersTotal }} users
             </p>
             <div class="flex gap-2">
               <button
                 @click="loadUsers(usersPage - 1)"
                 :disabled="usersPage <= 1"
-                class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                class="px-3 py-1 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-stone-50 dark:hover:bg-neutral-700"
               >
                 Previous
               </button>
               <button
                 @click="loadUsers(usersPage + 1)"
                 :disabled="usersPage >= totalPages"
-                class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                class="px-3 py-1 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-stone-50 dark:hover:bg-neutral-700"
               >
                 Next
               </button>
@@ -294,43 +294,43 @@
 
       <!-- Settings Tab -->
       <div v-else-if="activeTab === 'settings'" class="space-y-6">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">General Settings</h3>
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-stone-200 dark:border-neutral-700 p-6">
+          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-6">General Settings</h3>
           
           <form @submit.prevent="saveSettings" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Site Name</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">Site Name</label>
                 <input
                   v-model="settingsForm.siteName"
                   type="text"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Site URL</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">Site URL</label>
                 <input
                   v-model="settingsForm.siteUrl"
                   type="url"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Storage Quota (GB)</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">Default Storage Quota (GB)</label>
                 <input
                   v-model.number="settingsForm.defaultQuotaGB"
                   type="number"
                   min="1"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max Upload Size (MB)</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">Max Upload Size (MB)</label>
                 <input
                   v-model.number="settingsForm.maxUploadSizeMB"
                   type="number"
                   min="1"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
             </div>
@@ -340,25 +340,25 @@
                 <input
                   v-model="settingsForm.allowRegistration"
                   type="checkbox"
-                  class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  class="w-4 h-4 text-stone-800 dark:text-stone-200 rounded border-stone-300 focus:ring-stone-400"
                 />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Allow public registration</span>
+                <span class="text-sm text-stone-700 dark:text-stone-300">Allow public registration</span>
               </label>
               <label class="flex items-center gap-3">
                 <input
                   v-model="settingsForm.requireEmailVerification"
                   type="checkbox"
-                  class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  class="w-4 h-4 text-stone-800 dark:text-stone-200 rounded border-stone-300 focus:ring-stone-400"
                 />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Require email verification</span>
+                <span class="text-sm text-stone-700 dark:text-stone-300">Require email verification</span>
               </label>
             </div>
 
-            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="pt-4 border-t border-stone-200 dark:border-neutral-700">
               <button
                 type="submit"
                 :disabled="loading"
-                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                class="px-6 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50"
               >
                 Save Settings
               </button>
@@ -367,53 +367,53 @@
         </div>
 
         <!-- SMTP Settings -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Email Settings (SMTP)</h3>
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-stone-200 dark:border-neutral-700 p-6">
+          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-6">Email Settings (SMTP)</h3>
           
           <form @submit.prevent="saveSmtpSettings" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SMTP Host</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">SMTP Host</label>
                 <input
                   v-model="smtpForm.smtpHost"
                   type="text"
                   placeholder="smtp.example.com"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SMTP Port</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">SMTP Port</label>
                 <input
                   v-model.number="smtpForm.smtpPort"
                   type="number"
                   placeholder="587"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SMTP Username</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">SMTP Username</label>
                 <input
                   v-model="smtpForm.smtpUser"
                   type="text"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">From Address</label>
+                <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">From Address</label>
                 <input
                   v-model="smtpForm.smtpFrom"
                   type="email"
                   placeholder="noreply@example.com"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
             </div>
 
-            <div class="pt-4 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+            <div class="pt-4 border-t border-stone-200 dark:border-neutral-700 flex gap-3">
               <button
                 type="submit"
                 :disabled="loading"
-                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                class="px-6 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50"
               >
                 Save SMTP Settings
               </button>
@@ -421,7 +421,7 @@
                 type="button"
                 @click="testSmtp"
                 :disabled="loading"
-                class="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                class="px-6 py-2 border border-stone-300 dark:border-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50"
               >
                 Send Test Email
               </button>
@@ -432,14 +432,14 @@
 
       <!-- Modules Tab -->
       <div v-else-if="activeTab === 'modules'" class="space-y-6">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Optional Modules</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-stone-200 dark:border-neutral-700">
+          <div class="p-6 border-b border-stone-200 dark:border-neutral-700">
+            <h2 class="text-lg font-semibold text-stone-900 dark:text-stone-100">Optional Modules</h2>
+            <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
               Enable or disable optional features. Disabled modules will be hidden from the navigation sidebar.
             </p>
           </div>
-          <div class="divide-y divide-gray-200 dark:divide-gray-700">
+          <div class="divide-y divide-stone-200 dark:divide-neutral-700">
             <div
               v-for="module in modules"
               :key="module.id"
@@ -449,22 +449,22 @@
                 <div :class="[
                   'p-3 rounded-lg',
                   module.enabled
-                    ? 'bg-blue-100 dark:bg-blue-900/30'
-                    : 'bg-gray-100 dark:bg-gray-700'
+                    ? 'bg-stone-100 dark:bg-neutral-700/30'
+                    : 'bg-stone-100 dark:bg-neutral-700'
                 ]">
                   <component
                     :is="moduleIcons[module.id] || PuzzlePieceIcon"
                     :class="[
                       'w-6 h-6',
                       module.enabled
-                        ? 'text-blue-600 dark:text-blue-400'
-                        : 'text-gray-400 dark:text-gray-500'
+                        ? 'text-stone-800 dark:text-stone-200 dark:text-stone-400'
+                        : 'text-stone-400 dark:text-stone-500'
                     ]"
                   />
                 </div>
                 <div>
-                  <h3 class="font-medium text-gray-900 dark:text-white">{{ module.name }}</h3>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  <h3 class="font-medium text-stone-900 dark:text-stone-100">{{ module.name }}</h3>
+                  <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
                     {{ moduleDescriptions[module.id] || module.description }}
                   </p>
                 </div>
@@ -472,8 +472,8 @@
               <button
                 @click="toggleModule(module.id)"
                 :class="[
-                  'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-                  module.enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
+                  'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2',
+                  module.enabled ? 'bg-neutral-800 dark:bg-neutral-200' : 'bg-stone-200 dark:bg-neutral-600'
                 ]"
               >
                 <span
@@ -501,7 +501,7 @@
         <div class="flex flex-col sm:flex-row gap-4">
           <select
             v-model="logFilters.action"
-            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            class="px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
           >
             <option value="">All Actions</option>
             <option value="login">Login</option>
@@ -515,35 +515,35 @@
             v-model="logFilters.userId"
             type="text"
             placeholder="Filter by user ID..."
-            class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            class="flex-1 px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
           />
           <button
             @click="loadLogs(1)"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
           >
             Filter
           </button>
         </div>
 
         <!-- Logs Table -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-stone-200 dark:border-neutral-700 overflow-hidden">
           <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead class="bg-gray-50 dark:bg-gray-900">
+            <table class="min-w-full divide-y divide-stone-200 dark:divide-neutral-700">
+              <thead class="bg-stone-50 dark:bg-neutral-900">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Time</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">User</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Action</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Resource</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">IP Address</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">Time</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">User</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">Action</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">Resource</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">IP Address</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                <tr v-for="log in activityLogs" :key="log.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+              <tbody class="divide-y divide-stone-200 dark:divide-neutral-700">
+                <tr v-for="log in activityLogs" :key="log.id" class="hover:bg-stone-50 dark:hover:bg-neutral-700/50">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
                     {{ formatDateTime(log.createdAt) }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-900 dark:text-stone-100">
                     {{ log.userEmail }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
@@ -554,10 +554,10 @@
                       {{ log.action }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
                     {{ log.resourceType }}: {{ log.resourceId?.slice(0, 8) }}...
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
                     {{ log.ipAddress }}
                   </td>
                 </tr>
@@ -566,22 +566,22 @@
           </div>
 
           <!-- Pagination -->
-          <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <p class="text-sm text-gray-500 dark:text-gray-400">
+          <div class="px-6 py-4 border-t border-stone-200 dark:border-neutral-700 flex items-center justify-between">
+            <p class="text-sm text-stone-500 dark:text-stone-400">
               Page {{ logsPage }} of {{ logsTotalPages }}
             </p>
             <div class="flex gap-2">
               <button
                 @click="loadLogs(logsPage - 1)"
                 :disabled="logsPage <= 1"
-                class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm disabled:opacity-50"
+                class="px-3 py-1 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50"
               >
                 Previous
               </button>
               <button
                 @click="loadLogs(logsPage + 1)"
                 :disabled="logsPage >= logsTotalPages"
-                class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm disabled:opacity-50"
+                class="px-3 py-1 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50"
               >
                 Next
               </button>
@@ -593,56 +593,56 @@
 
     <!-- Edit User Modal -->
     <div v-if="editingUser" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Edit User</h3>
+      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Edit User</h3>
         <form @submit.prevent="saveUser" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Name</label>
             <input
               v-model="editingUser.name"
               type="text"
               required
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Role</label>
             <select
               v-model="editingUser.role"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
             >
               <option value="user">User</option>
               <option value="admin">Admin</option>
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Storage Quota (GB)</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Storage Quota (GB)</label>
             <input
               v-model.number="editUserQuotaGB"
               type="number"
               min="1"
               required
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
             />
           </div>
           <div>
             <label class="flex items-center gap-2">
-              <input v-model="editingUser.isActive" type="checkbox" class="w-4 h-4 text-blue-600 rounded" />
-              <span class="text-sm text-gray-700 dark:text-gray-300">Active</span>
+              <input v-model="editingUser.isActive" type="checkbox" class="w-4 h-4 text-stone-800 dark:text-stone-200 rounded" />
+              <span class="text-sm text-stone-700 dark:text-stone-300">Active</span>
             </label>
           </div>
           <div class="flex gap-3 pt-4">
             <button
               type="button"
               @click="editingUser = null"
-              class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg"
+              class="flex-1 px-4 py-2 border border-stone-300 dark:border-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
               :disabled="loading"
-              class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              class="flex-1 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
             >
               Save
             </button>
@@ -653,58 +653,58 @@
 
     <!-- Create User Modal -->
     <div v-if="showCreateUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Create New User</h3>
+      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Create New User</h3>
         <form @submit.prevent="handleCreateUser" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email *</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Email *</label>
             <input
               v-model="newUserForm.email"
               type="email"
               required
               placeholder="user@example.com"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Name *</label>
             <input
               v-model="newUserForm.name"
               type="text"
               required
               placeholder="Full Name"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password *</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Password *</label>
             <input
               v-model="newUserForm.password"
               type="password"
               required
               minlength="8"
               placeholder="Minimum 8 characters"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Role</label>
             <select
               v-model="newUserForm.role"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
             >
               <option value="user">User</option>
               <option value="admin">Admin</option>
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Storage Quota (GB)</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Storage Quota (GB)</label>
             <input
               v-model.number="newUserForm.storageQuotaGB"
               type="number"
               min="1"
               required
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
             />
           </div>
           <p v-if="createUserError" class="text-sm text-red-600 dark:text-red-400">{{ createUserError }}</p>
@@ -712,14 +712,14 @@
             <button
               type="button"
               @click="closeCreateUserModal"
-              class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              class="flex-1 px-4 py-2 border border-stone-300 dark:border-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700"
             >
               Cancel
             </button>
             <button
               type="submit"
               :disabled="loading"
-              class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              class="flex-1 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
             >
               Create User
             </button>
@@ -886,8 +886,8 @@ const statsCards = computed(() => [
     label: 'Total Users',
     value: systemStats.value?.totalUsers || 0,
     icon: UserGroupIcon,
-    bgColor: 'bg-blue-100 dark:bg-blue-900',
-    iconColor: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-stone-100 dark:bg-neutral-800',
+    iconColor: 'text-stone-800 dark:text-stone-200 dark:text-stone-400',
     change: 12,
   },
   {
@@ -941,13 +941,13 @@ function formatDateTime(date: string): string {
 function getActionColor(action: string): string {
   const colors: Record<string, string> = {
     login: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
-    logout: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
-    upload: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+    logout: 'bg-stone-100 dark:bg-neutral-700 text-stone-800 dark:text-stone-200',
+    upload: 'bg-stone-100 dark:bg-neutral-800 text-stone-800 dark:text-stone-200',
     download: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
     delete: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
     share: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200',
   }
-  return colors[action] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+  return colors[action] || 'bg-stone-100 dark:bg-neutral-700 text-stone-800 dark:text-stone-200'
 }
 
 // Debounced search

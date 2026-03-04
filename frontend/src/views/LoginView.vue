@@ -130,31 +130,31 @@ async function handleSetup() {
 
 <template>
   <!-- Loading state -->
-  <div v-if="checkingSetup" class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+  <div v-if="checkingSetup" class="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-neutral-900">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800 dark:border-stone-200"></div>
   </div>
 
   <!-- First Time Setup -->
-  <div v-else-if="isFirstTimeSetup" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+  <div v-else-if="isFirstTimeSetup" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-50 to-stone-100 dark:from-neutral-900 dark:to-neutral-800 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div class="text-center">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
-          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-neutral-800 dark:bg-neutral-200 rounded-2xl mb-4">
+          <svg class="w-10 h-10 text-white dark:text-neutral-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
           </svg>
         </div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome to Tessera</h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-400">Create your administrator account to get started</p>
+        <h1 class="text-3xl font-bold text-stone-900 dark:text-stone-100">Welcome to Tessera</h1>
+        <p class="mt-2 text-stone-600 dark:text-stone-400">Create your administrator account to get started</p>
       </div>
 
-      <form class="mt-8 space-y-6 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl" @submit.prevent="handleSetup">
+      <form class="mt-8 space-y-6 bg-white dark:bg-neutral-800 p-8 rounded-2xl shadow-xl" @submit.prevent="handleSetup">
         <div v-if="error" class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm">
           {{ error }}
         </div>
 
         <div class="space-y-4">
           <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="name" class="block text-sm font-medium text-stone-700 dark:text-stone-300">
               Your Name
             </label>
             <input
@@ -164,12 +164,12 @@ async function handleSetup() {
               autocomplete="name"
               required
               placeholder="John Doe"
-              class="mt-1 block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="mt-1 block w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
 
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="email" class="block text-sm font-medium text-stone-700 dark:text-stone-300">
               Email Address
             </label>
             <input
@@ -179,12 +179,12 @@ async function handleSetup() {
               autocomplete="email"
               required
               placeholder="admin@example.com"
-              class="mt-1 block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="mt-1 block w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
 
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="password" class="block text-sm font-medium text-stone-700 dark:text-stone-300">
               Password
             </label>
             <input
@@ -194,12 +194,12 @@ async function handleSetup() {
               autocomplete="new-password"
               required
               placeholder="Minimum 8 characters"
-              class="mt-1 block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="mt-1 block w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
 
           <div>
-            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="confirmPassword" class="block text-sm font-medium text-stone-700 dark:text-stone-300">
               Confirm Password
             </label>
             <input
@@ -209,7 +209,7 @@ async function handleSetup() {
               autocomplete="new-password"
               required
               placeholder="Confirm your password"
-              class="mt-1 block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="mt-1 block w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
         </div>
@@ -217,7 +217,7 @@ async function handleSetup() {
         <button
           type="submit"
           :disabled="loading"
-          class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-800 dark:hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg v-if="loading" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -227,18 +227,18 @@ async function handleSetup() {
         </button>
       </form>
 
-      <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+      <p class="text-center text-sm text-stone-500 dark:text-stone-400">
         This account will have full administrative access to Tessera.
       </p>
     </div>
   </div>
 
   <!-- Normal Login -->
-  <div v-else class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+  <div v-else class="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-neutral-900 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div>
-        <h1 class="text-center text-4xl font-bold text-blue-600">Tessera</h1>
-        <h2 class="mt-6 text-center text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 class="text-center text-4xl font-bold text-stone-800 dark:text-stone-200">Tessera</h1>
+        <h2 class="mt-6 text-center text-2xl font-semibold text-stone-900 dark:text-stone-100">
           {{ showTOTPInput ? 'Two-Factor Authentication' : 'Sign in to your account' }}
         </h2>
       </div>
@@ -249,7 +249,7 @@ async function handleSetup() {
           {{ error }}
         </div>
 
-        <div class="text-center text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <div class="text-center text-sm text-stone-600 dark:text-stone-400 mb-4">
           <p>Enter the 6-digit code from your authenticator app</p>
           <p class="mt-1 text-xs">or use one of your backup codes</p>
         </div>
@@ -264,7 +264,7 @@ async function handleSetup() {
             autocomplete="one-time-code"
             maxlength="20"
             placeholder="Enter code"
-            class="block w-full px-3 py-3 text-center text-2xl tracking-widest border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="block w-full px-3 py-3 text-center text-2xl tracking-widest border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             autofocus
           />
         </div>
@@ -273,14 +273,14 @@ async function handleSetup() {
           <button
             type="button"
             @click="cancelTOTP"
-            class="flex-1 py-2.5 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+            class="flex-1 py-2.5 px-4 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm font-medium text-stone-700 dark:text-stone-300 bg-white dark:bg-neutral-700 hover:bg-stone-50 dark:hover:bg-neutral-600"
           >
             Back
           </button>
           <button
             type="submit"
             :disabled="loading"
-            class="flex-1 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex-1 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-800 dark:hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ loading ? 'Verifying...' : 'Verify' }}
           </button>
@@ -295,7 +295,7 @@ async function handleSetup() {
 
         <div class="space-y-4">
           <div>
-            <label for="login-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="login-email" class="block text-sm font-medium text-stone-700 dark:text-stone-300">
               Email address
             </label>
             <input
@@ -304,12 +304,12 @@ async function handleSetup() {
               type="email"
               autocomplete="email"
               required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="mt-1 block w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
 
           <div>
-            <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label for="login-password" class="block text-sm font-medium text-stone-700 dark:text-stone-300">
               Password
             </label>
             <input
@@ -318,7 +318,7 @@ async function handleSetup() {
               type="password"
               autocomplete="current-password"
               required
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="mt-1 block w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
         </div>
@@ -326,15 +326,15 @@ async function handleSetup() {
         <button
           type="submit"
           :disabled="loading"
-          class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-800 dark:hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span v-if="loading">Signing in...</span>
           <span v-else>Sign in</span>
         </button>
 
-        <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-center text-sm text-stone-600 dark:text-stone-400">
           Don't have an account?
-          <router-link to="/register" class="font-medium text-blue-600 hover:text-blue-500">
+          <router-link to="/register" class="font-medium text-stone-800 dark:text-stone-200 hover:text-stone-600 dark:hover:text-stone-300">
             Create one
           </router-link>
         </p>

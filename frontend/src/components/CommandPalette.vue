@@ -153,10 +153,10 @@ onUnmounted(() => {
     class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50"
     @click.self="emit('close')"
   >
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-xl mx-4 overflow-hidden">
+    <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl w-full max-w-xl mx-4 overflow-hidden">
       <!-- Search Input -->
-      <div class="flex items-center gap-3 px-4 py-3 border-b dark:border-gray-700">
-        <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="flex items-center gap-3 px-4 py-3 border-b dark:border-neutral-700">
+        <svg class="w-5 h-5 text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
@@ -164,23 +164,23 @@ onUnmounted(() => {
           v-model="query"
           type="text"
           placeholder="Search files or type a command..."
-          class="flex-1 text-lg outline-none placeholder-gray-400 bg-transparent dark:text-white"
+          class="flex-1 text-lg outline-none placeholder-stone-400 bg-transparent dark:text-stone-100"
         />
-        <kbd class="hidden sm:inline-flex px-2 py-1 text-xs font-medium text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400 rounded">ESC</kbd>
+        <kbd class="hidden sm:inline-flex px-2 py-1 text-xs font-medium text-stone-500 bg-stone-100 dark:bg-neutral-700 dark:text-stone-400 rounded">ESC</kbd>
       </div>
 
       <!-- Results -->
       <div class="max-h-96 overflow-auto">
         <!-- Loading -->
         <div v-if="loading" class="flex items-center justify-center py-8">
-          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-neutral-800 dark:border-neutral-200"></div>
         </div>
 
         <!-- Results List -->
         <div v-else-if="allResults.length > 0" class="py-2">
           <!-- Commands Section -->
           <div v-if="filteredCommands.length > 0 && !query.trim()">
-            <div class="px-4 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Quick Actions</div>
+            <div class="px-4 py-1 text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">Quick Actions</div>
           </div>
 
           <template v-for="(item, index) in allResults" :key="item.type + '-' + (item.data.id || index)">
@@ -191,7 +191,7 @@ onUnmounted(() => {
               @mouseenter="selectedIndex = index"
               :class="[
                 'w-full flex items-center gap-3 px-4 py-2 text-left',
-                selectedIndex === index ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
+                selectedIndex === index ? 'bg-stone-100 dark:bg-neutral-700/30 text-stone-800 dark:text-stone-200' : 'hover:bg-stone-50 dark:hover:bg-neutral-700 dark:text-stone-200'
               ]"
             >
               <!-- Command Icons -->
@@ -216,7 +216,7 @@ onUnmounted(() => {
               </svg>
               
               <span class="flex-1">{{ item.data.name }}</span>
-              <kbd v-if="item.data.shortcut" class="px-2 py-0.5 text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 rounded">
+              <kbd v-if="item.data.shortcut" class="px-2 py-0.5 text-xs text-stone-400 bg-stone-100 dark:bg-neutral-700 rounded">
                 {{ item.data.shortcut }}
               </kbd>
             </button>
@@ -228,11 +228,11 @@ onUnmounted(() => {
               @mouseenter="selectedIndex = index"
               :class="[
                 'w-full flex items-center gap-3 px-4 py-2 text-left',
-                selectedIndex === index ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
+                selectedIndex === index ? 'bg-stone-100 dark:bg-neutral-700/30 text-stone-800 dark:text-stone-200' : 'hover:bg-stone-50 dark:hover:bg-neutral-700 dark:text-stone-200'
               ]"
             >
               <!-- File Icons -->
-              <svg v-if="getFileIcon(item.data) === 'folder'" class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg v-if="getFileIcon(item.data) === 'folder'" class="w-5 h-5 text-stone-700 dark:text-stone-300" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
               <svg v-else-if="getFileIcon(item.data) === 'image'" class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -244,7 +244,7 @@ onUnmounted(() => {
               <svg v-else-if="getFileIcon(item.data) === 'pdf'" class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
               </svg>
-              <svg v-else class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <svg v-else class="w-5 h-5 text-stone-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
               </svg>
 
@@ -256,29 +256,29 @@ onUnmounted(() => {
         </div>
 
         <!-- Empty State -->
-        <div v-else-if="query.trim()" class="py-8 text-center text-gray-500 dark:text-gray-400">
+        <div v-else-if="query.trim()" class="py-8 text-center text-stone-500 dark:text-stone-400">
           No results found for "{{ query }}"
         </div>
 
         <!-- Initial State -->
-        <div v-else class="py-6 text-center text-gray-400 text-sm">
+        <div v-else class="py-6 text-center text-stone-400 text-sm">
           Start typing to search files or commands
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="flex items-center gap-4 px-4 py-2 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500 dark:text-gray-400">
+      <div class="flex items-center gap-4 px-4 py-2 border-t dark:border-neutral-700 bg-stone-50 dark:bg-neutral-800/50 text-xs text-stone-500 dark:text-stone-400">
         <span class="flex items-center gap-1">
-          <kbd class="px-1.5 py-0.5 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded shadow-sm">↑</kbd>
-          <kbd class="px-1.5 py-0.5 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded shadow-sm">↓</kbd>
+          <kbd class="px-1.5 py-0.5 bg-white dark:bg-neutral-700 border dark:border-neutral-700 rounded shadow-sm">↑</kbd>
+          <kbd class="px-1.5 py-0.5 bg-white dark:bg-neutral-700 border dark:border-neutral-700 rounded shadow-sm">↓</kbd>
           to navigate
         </span>
         <span class="flex items-center gap-1">
-          <kbd class="px-1.5 py-0.5 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded shadow-sm">↵</kbd>
+          <kbd class="px-1.5 py-0.5 bg-white dark:bg-neutral-700 border dark:border-neutral-700 rounded shadow-sm">↵</kbd>
           to select
         </span>
         <span class="flex items-center gap-1">
-          <kbd class="px-1.5 py-0.5 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded shadow-sm">esc</kbd>
+          <kbd class="px-1.5 py-0.5 bg-white dark:bg-neutral-700 border dark:border-neutral-700 rounded shadow-sm">esc</kbd>
           to close
         </span>
       </div>

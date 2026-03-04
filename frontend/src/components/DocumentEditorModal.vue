@@ -3,20 +3,20 @@
     v-if="isOpen" 
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
   >
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-5xl h-[85vh] flex flex-col mx-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-5xl h-[85vh] flex flex-col mx-4">
       <!-- Header -->
-      <div class="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
+      <div class="flex items-center justify-between px-4 py-3 border-b dark:border-neutral-700">
         <div class="flex items-center gap-3">
           <input
             v-model="documentTitle"
             @input="handleTitleChange"
-            class="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 dark:text-white"
+            class="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-stone-400 rounded px-2 py-1 dark:text-stone-100"
             placeholder="Untitled Document"
           />
-          <span v-if="saving" class="text-sm text-gray-500 dark:text-gray-400">
+          <span v-if="saving" class="text-sm text-stone-500 dark:text-stone-400">
             Saving...
           </span>
-          <span v-else-if="lastSaved" class="text-sm text-gray-500 dark:text-gray-400">
+          <span v-else-if="lastSaved" class="text-sm text-stone-500 dark:text-stone-400">
             Saved {{ formatRelativeTime(lastSaved) }}
           </span>
           <span v-else-if="isDirty" class="text-sm text-orange-500">
@@ -27,7 +27,7 @@
           <button
             @click="saveDocument"
             :disabled="saving || !isDirty"
-            class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            class="px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
@@ -36,9 +36,9 @@
           </button>
           <button
             @click="handleClose"
-            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
           >
-            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -46,11 +46,11 @@
       </div>
 
       <!-- Toolbar -->
-      <div v-if="editor" class="flex items-center gap-1 px-4 py-2 border-b dark:border-gray-700 flex-wrap">
+      <div v-if="editor" class="flex items-center gap-1 px-4 py-2 border-b dark:border-neutral-700 flex-wrap">
         <!-- Text formatting -->
         <button
           @click="toggleBold"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', { 'bg-gray-200 dark:bg-gray-600': isActive('bold') }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700', { 'bg-stone-200 dark:bg-neutral-600': isActive('bold') }]"
           title="Bold"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,7 +59,7 @@
         </button>
         <button
           @click="toggleItalic"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', { 'bg-gray-200 dark:bg-gray-600': isActive('italic') }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700', { 'bg-stone-200 dark:bg-neutral-600': isActive('italic') }]"
           title="Italic"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,7 +68,7 @@
         </button>
         <button
           @click="toggleUnderline"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', { 'bg-gray-200 dark:bg-gray-600': isActive('underline') }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700', { 'bg-stone-200 dark:bg-neutral-600': isActive('underline') }]"
           title="Underline"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,7 +77,7 @@
         </button>
         <button
           @click="toggleStrike"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', { 'bg-gray-200 dark:bg-gray-600': isActive('strike') }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700', { 'bg-stone-200 dark:bg-neutral-600': isActive('strike') }]"
           title="Strikethrough"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,37 +85,37 @@
           </svg>
         </button>
 
-        <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+        <div class="w-px h-6 bg-stone-300 dark:bg-neutral-600 mx-1"></div>
 
         <!-- Headings -->
         <button
           @click="setHeading(1)"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-bold', { 'bg-gray-200 dark:bg-gray-600': isActive('heading', { level: 1 }) }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700 text-sm font-bold', { 'bg-stone-200 dark:bg-neutral-600': isActive('heading', { level: 1 }) }]"
           title="Heading 1"
         >
           H1
         </button>
         <button
           @click="setHeading(2)"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-bold', { 'bg-gray-200 dark:bg-gray-600': isActive('heading', { level: 2 }) }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700 text-sm font-bold', { 'bg-stone-200 dark:bg-neutral-600': isActive('heading', { level: 2 }) }]"
           title="Heading 2"
         >
           H2
         </button>
         <button
           @click="setHeading(3)"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-bold', { 'bg-gray-200 dark:bg-gray-600': isActive('heading', { level: 3 }) }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700 text-sm font-bold', { 'bg-stone-200 dark:bg-neutral-600': isActive('heading', { level: 3 }) }]"
           title="Heading 3"
         >
           H3
         </button>
 
-        <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+        <div class="w-px h-6 bg-stone-300 dark:bg-neutral-600 mx-1"></div>
 
         <!-- Lists -->
         <button
           @click="toggleBulletList"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', { 'bg-gray-200 dark:bg-gray-600': isActive('bulletList') }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700', { 'bg-stone-200 dark:bg-neutral-600': isActive('bulletList') }]"
           title="Bullet List"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +124,7 @@
         </button>
         <button
           @click="toggleOrderedList"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', { 'bg-gray-200 dark:bg-gray-600': isActive('orderedList') }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700', { 'bg-stone-200 dark:bg-neutral-600': isActive('orderedList') }]"
           title="Numbered List"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,12 +135,12 @@
           </svg>
         </button>
 
-        <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+        <div class="w-px h-6 bg-stone-300 dark:bg-neutral-600 mx-1"></div>
 
         <!-- Quote & Code -->
         <button
           @click="toggleBlockquote"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', { 'bg-gray-200 dark:bg-gray-600': isActive('blockquote') }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700', { 'bg-stone-200 dark:bg-neutral-600': isActive('blockquote') }]"
           title="Quote"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +149,7 @@
         </button>
         <button
           @click="toggleCodeBlock"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', { 'bg-gray-200 dark:bg-gray-600': isActive('codeBlock') }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700', { 'bg-stone-200 dark:bg-neutral-600': isActive('codeBlock') }]"
           title="Code Block"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,12 +157,12 @@
           </svg>
         </button>
 
-        <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+        <div class="w-px h-6 bg-stone-300 dark:bg-neutral-600 mx-1"></div>
 
         <!-- Alignment -->
         <button
           @click="setTextAlign('left')"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', { 'bg-gray-200 dark:bg-gray-600': isActive('paragraph', { textAlign: 'left' }) }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700', { 'bg-stone-200 dark:bg-neutral-600': isActive('paragraph', { textAlign: 'left' }) }]"
           title="Align Left"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +171,7 @@
         </button>
         <button
           @click="setTextAlign('center')"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', { 'bg-gray-200 dark:bg-gray-600': isActive('paragraph', { textAlign: 'center' }) }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700', { 'bg-stone-200 dark:bg-neutral-600': isActive('paragraph', { textAlign: 'center' }) }]"
           title="Align Center"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,7 +180,7 @@
         </button>
         <button
           @click="setTextAlign('right')"
-          :class="['p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700', { 'bg-gray-200 dark:bg-gray-600': isActive('paragraph', { textAlign: 'right' }) }]"
+          :class="['p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700', { 'bg-stone-200 dark:bg-neutral-600': isActive('paragraph', { textAlign: 'right' }) }]"
           title="Align Right"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,12 +188,12 @@
           </svg>
         </button>
 
-        <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+        <div class="w-px h-6 bg-stone-300 dark:bg-neutral-600 mx-1"></div>
 
         <!-- Undo/Redo -->
         <button
           @click="undo"
-          class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+          class="p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700 disabled:opacity-50"
           title="Undo"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +202,7 @@
         </button>
         <button
           @click="redo"
-          class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+          class="p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700 disabled:opacity-50"
           title="Redo"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -138,17 +138,17 @@ function handleKeydown(e: KeyboardEvent) {
     @keydown="handleKeydown"
     tabindex="0"
   >
-    <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-[95vw] h-[95vh] max-w-[1800px] flex flex-col">
+    <div class="relative bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-[95vw] h-[95vh] max-w-[1800px] flex flex-col">
       <!-- Header -->
-      <div class="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700 flex-shrink-0">
+      <div class="flex items-center justify-between px-4 py-3 border-b dark:border-neutral-700 flex-shrink-0">
         <div class="flex items-center gap-3 min-w-0">
-          <h3 class="font-medium truncate dark:text-white">{{ file.name }}</h3>
-          <span class="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">{{ formatBytes(file.size) }}</span>
+          <h3 class="font-medium truncate dark:text-stone-100">{{ file.name }}</h3>
+          <span class="text-sm text-stone-500 dark:text-stone-400 flex-shrink-0">{{ formatBytes(file.size) }}</span>
         </div>
         <div class="flex items-center gap-2">
           <button
             @click="handleDownload"
-            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400"
+            class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg text-stone-600 dark:text-stone-400"
             title="Download"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +157,7 @@ function handleKeydown(e: KeyboardEvent) {
           </button>
           <button
             @click="emit('close')"
-            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400"
+            class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg text-stone-600 dark:text-stone-400"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -167,11 +167,11 @@ function handleKeydown(e: KeyboardEvent) {
       </div>
 
       <!-- Preview content -->
-      <div class="flex-1 overflow-auto p-4 flex items-center justify-center bg-gray-50 dark:bg-gray-900 min-h-0">
+      <div class="flex-1 overflow-auto p-4 flex items-center justify-center bg-stone-50 dark:bg-neutral-900 min-h-0">
         <!-- Loading state -->
         <div v-if="loading" class="text-center">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p class="text-gray-500 dark:text-gray-400">Loading preview...</p>
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-800 dark:border-neutral-200 mx-auto mb-4"></div>
+          <p class="text-stone-500 dark:text-stone-400">Loading preview...</p>
         </div>
 
         <!-- Error state -->
@@ -182,7 +182,7 @@ function handleKeydown(e: KeyboardEvent) {
           <p class="text-red-500 mb-4">{{ error }}</p>
           <button
             @click="handleDownload"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -227,19 +227,19 @@ function handleKeydown(e: KeyboardEvent) {
         </div>
 
         <!-- Text preview -->
-        <div v-else-if="previewType === 'text' && textContent !== null" class="w-full h-full bg-white dark:bg-gray-800 rounded border dark:border-gray-700 p-4 overflow-auto">
-          <pre class="text-sm font-mono whitespace-pre-wrap break-words dark:text-gray-200">{{ textContent }}</pre>
+        <div v-else-if="previewType === 'text' && textContent !== null" class="w-full h-full bg-white dark:bg-neutral-800 rounded border dark:border-neutral-700 p-4 overflow-auto">
+          <pre class="text-sm font-mono whitespace-pre-wrap break-words dark:text-stone-200">{{ textContent }}</pre>
         </div>
 
         <!-- Unknown/no preview -->
         <div v-else class="text-center">
-          <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-24 h-24 mx-auto text-stone-300 mb-4" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
           </svg>
-          <p class="text-gray-500 dark:text-gray-400 mb-4">Preview not available for this file type</p>
+          <p class="text-stone-500 dark:text-stone-400 mb-4">Preview not available for this file type</p>
           <button
             @click="handleDownload"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

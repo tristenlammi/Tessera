@@ -329,9 +329,9 @@ onUnmounted(() => {
 <template>
   <div class="fixed inset-0 bg-black/90 z-50 flex flex-col">
     <!-- Toolbar -->
-    <div class="bg-gray-900 text-white px-4 py-2 flex items-center gap-4">
+    <div class="bg-neutral-900 text-white px-4 py-2 flex items-center gap-4">
       <!-- Close button -->
-      <button @click="emit('close')" class="p-2 hover:bg-gray-700 rounded">
+      <button @click="emit('close')" class="p-2 hover:bg-neutral-700 rounded">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -340,11 +340,11 @@ onUnmounted(() => {
       <!-- Filename -->
       <span class="text-sm font-medium truncate max-w-[200px]">{{ filename || 'PDF Document' }}</span>
 
-      <div class="h-6 w-px bg-gray-600"></div>
+      <div class="h-6 w-px bg-neutral-600"></div>
 
       <!-- Navigation -->
       <div class="flex items-center gap-2">
-        <button @click="previousPage" :disabled="currentPage <= 1" class="p-2 hover:bg-gray-700 rounded disabled:opacity-50">
+        <button @click="previousPage" :disabled="currentPage <= 1" class="p-2 hover:bg-neutral-700 rounded disabled:opacity-50">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
@@ -354,48 +354,48 @@ onUnmounted(() => {
             type="number"
             :value="currentPage"
             @change="goToPage(parseInt(($event.target as HTMLInputElement).value))"
-            class="w-12 px-2 py-1 text-center bg-gray-800 border border-gray-600 rounded"
+            class="w-12 px-2 py-1 text-center bg-neutral-800 border border-neutral-600 rounded"
             min="1"
             :max="totalPages"
           />
           / {{ totalPages }}
         </span>
-        <button @click="nextPage" :disabled="currentPage >= totalPages" class="p-2 hover:bg-gray-700 rounded disabled:opacity-50">
+        <button @click="nextPage" :disabled="currentPage >= totalPages" class="p-2 hover:bg-neutral-700 rounded disabled:opacity-50">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>
       </div>
 
-      <div class="h-6 w-px bg-gray-600"></div>
+      <div class="h-6 w-px bg-neutral-600"></div>
 
       <!-- Zoom -->
       <div class="flex items-center gap-2">
-        <button @click="zoomOut" class="p-2 hover:bg-gray-700 rounded">
+        <button @click="zoomOut" class="p-2 hover:bg-neutral-700 rounded">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
           </svg>
         </button>
         <span class="text-sm w-16 text-center">{{ Math.round(scale * 100) }}%</span>
-        <button @click="zoomIn" class="p-2 hover:bg-gray-700 rounded">
+        <button @click="zoomIn" class="p-2 hover:bg-neutral-700 rounded">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
         </button>
-        <button @click="fitWidth" class="p-2 hover:bg-gray-700 rounded" title="Fit width">
+        <button @click="fitWidth" class="p-2 hover:bg-neutral-700 rounded" title="Fit width">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
           </svg>
         </button>
       </div>
 
-      <div class="h-6 w-px bg-gray-600"></div>
+      <div class="h-6 w-px bg-neutral-600"></div>
 
       <!-- Annotation Tools -->
       <div class="flex items-center gap-1">
         <button
           @click="selectedTool = 'select'"
-          :class="['p-2 rounded', selectedTool === 'select' ? 'bg-blue-600' : 'hover:bg-gray-700']"
+          :class="['p-2 rounded', selectedTool === 'select' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
           title="Select"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -404,7 +404,7 @@ onUnmounted(() => {
         </button>
         <button
           @click="selectedTool = 'highlight'"
-          :class="['p-2 rounded', selectedTool === 'highlight' ? 'bg-blue-600' : 'hover:bg-gray-700']"
+          :class="['p-2 rounded', selectedTool === 'highlight' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
           title="Highlight"
         >
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -413,7 +413,7 @@ onUnmounted(() => {
         </button>
         <button
           @click="selectedTool = 'underline'"
-          :class="['p-2 rounded', selectedTool === 'underline' ? 'bg-blue-600' : 'hover:bg-gray-700']"
+          :class="['p-2 rounded', selectedTool === 'underline' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
           title="Underline"
         >
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -422,7 +422,7 @@ onUnmounted(() => {
         </button>
         <button
           @click="selectedTool = 'comment'"
-          :class="['p-2 rounded', selectedTool === 'comment' ? 'bg-blue-600' : 'hover:bg-gray-700']"
+          :class="['p-2 rounded', selectedTool === 'comment' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
           title="Add Comment"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -431,7 +431,7 @@ onUnmounted(() => {
         </button>
         <button
           @click="selectedTool = 'draw'"
-          :class="['p-2 rounded', selectedTool === 'draw' ? 'bg-blue-600' : 'hover:bg-gray-700']"
+          :class="['p-2 rounded', selectedTool === 'draw' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
           title="Draw"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -454,16 +454,16 @@ onUnmounted(() => {
       <div class="flex-1"></div>
 
       <!-- Actions -->
-      <button @click="clearAnnotations" class="px-3 py-1.5 text-sm bg-gray-700 rounded hover:bg-gray-600">
+      <button @click="clearAnnotations" class="px-3 py-1.5 text-sm bg-neutral-700 rounded hover:bg-neutral-600">
         Clear Page
       </button>
-      <button @click="downloadAnnotated" class="px-3 py-1.5 text-sm bg-blue-600 rounded hover:bg-blue-700">
+      <button @click="downloadAnnotated" class="px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 rounded hover:bg-neutral-700 dark:hover:bg-neutral-300">
         Download
       </button>
     </div>
 
     <!-- PDF Viewer -->
-    <div ref="containerRef" class="flex-1 overflow-auto flex justify-center p-4 bg-gray-800">
+    <div ref="containerRef" class="flex-1 overflow-auto flex justify-center p-4 bg-neutral-800">
       <!-- Loading state -->
       <div v-if="loading" class="flex items-center justify-center h-full">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
@@ -509,13 +509,13 @@ onUnmounted(() => {
           <div class="flex justify-end gap-2 mt-2">
             <button
               @click="showCommentInput = false"
-              class="px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded"
+              class="px-2 py-1 text-xs text-stone-600 hover:bg-stone-100 rounded"
             >
               Cancel
             </button>
             <button
               @click="addComment"
-              class="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+              class="px-2 py-1 text-xs bg-neutral-800 dark:bg-neutral-200 text-white rounded hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               Add
             </button>
@@ -529,12 +529,12 @@ onUnmounted(() => {
       v-if="annotations.filter(a => a.pageNumber === currentPage).length > 0"
       class="absolute right-4 top-20 w-64 bg-white rounded-lg shadow-xl max-h-96 overflow-y-auto"
     >
-      <div class="p-3 border-b font-medium text-gray-900">Annotations</div>
+      <div class="p-3 border-b font-medium text-stone-900">Annotations</div>
       <div class="p-2 space-y-2">
         <div
           v-for="annotation in annotations.filter(a => a.pageNumber === currentPage)"
           :key="annotation.id"
-          class="p-2 bg-gray-50 rounded flex items-start gap-2"
+          class="p-2 bg-stone-50 rounded flex items-start gap-2"
         >
           <div
             class="w-4 h-4 rounded-full flex-shrink-0 mt-0.5"
@@ -542,7 +542,7 @@ onUnmounted(() => {
           ></div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium capitalize">{{ annotation.type }}</div>
-            <div v-if="annotation.content" class="text-xs text-gray-600 truncate">
+            <div v-if="annotation.content" class="text-xs text-stone-600 truncate">
               {{ annotation.content }}
             </div>
           </div>

@@ -224,26 +224,26 @@ async function handleSubmit() {
 
 <template>
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
       <!-- Header -->
-      <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
+      <div class="flex items-center justify-between p-4 border-b dark:border-neutral-700">
         <div class="flex items-center gap-2">
           <button
             v-if="viewMode !== 'overview'"
             @click="goBack"
-            class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
             {{ viewMode === 'overview' ? 'Settings' : viewMode === 'add' ? 'Add Email Account' : 'Edit Account' }}
           </h2>
         </div>
         <button
           @click="emit('close')"
-          class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -255,16 +255,16 @@ async function handleSubmit() {
       <div v-if="viewMode === 'overview'" class="p-4 space-y-6">
         <!-- Connected Accounts Section -->
         <div>
-          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Connected Accounts</h3>
+          <h3 class="text-sm font-medium text-stone-700 dark:text-stone-300 mb-3">Connected Accounts</h3>
           
-          <div v-if="emailStore.accounts.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-if="emailStore.accounts.length === 0" class="text-center py-8 text-stone-500 dark:text-stone-400">
+            <svg class="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
             <p class="mb-2">No email accounts connected</p>
             <button
               @click="showAddAccount"
-              class="text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium"
+              class="text-stone-800 dark:text-stone-200 dark:text-stone-400 hover:underline text-sm font-medium"
             >
               Add your first account
             </button>
@@ -274,20 +274,20 @@ async function handleSubmit() {
             <div
               v-for="account in emailStore.accounts"
               :key="account.id"
-              class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+              class="p-4 bg-stone-50 dark:bg-neutral-700/50 rounded-lg"
             >
               <div class="flex items-start justify-between">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
-                    <h4 class="font-medium text-gray-900 dark:text-white truncate">{{ account.name }}</h4>
-                    <span v-if="account.is_default" class="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">Default</span>
+                    <h4 class="font-medium text-stone-900 dark:text-stone-100 truncate">{{ account.name }}</h4>
+                    <span v-if="account.is_default" class="px-2 py-0.5 text-xs bg-stone-100 dark:bg-neutral-700/30 text-stone-800 dark:text-stone-200 dark:text-stone-300 rounded-full">Default</span>
                   </div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ account.email_address }}</p>
-                  <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400 dark:text-gray-500">
+                  <p class="text-sm text-stone-500 dark:text-stone-400 truncate">{{ account.email_address }}</p>
+                  <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-400 dark:text-stone-500">
                     <span>IMAP: {{ account.imap_host }}:{{ account.imap_port }}</span>
                     <span>SMTP: {{ account.smtp_host }}:{{ account.smtp_port }}</span>
                   </div>
-                  <div class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                  <div class="mt-1 text-xs text-stone-400 dark:text-stone-500">
                     <span v-if="account.last_sync_at">Last synced: {{ formatDate(account.last_sync_at) }}</span>
                     <span v-else>Never synced</span>
                   </div>
@@ -300,7 +300,7 @@ async function handleSubmit() {
             
             <button
               @click="showAddAccount"
-              class="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+              class="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-stone-800 dark:text-stone-200 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-neutral-700/20 rounded-lg transition-colors"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -311,20 +311,20 @@ async function handleSubmit() {
         </div>
 
         <!-- Sync Section -->
-        <div v-if="emailStore.accounts.length > 0" class="border-t dark:border-gray-700 pt-6">
-          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Email Sync</h3>
+        <div v-if="emailStore.accounts.length > 0" class="border-t dark:border-neutral-700 pt-6">
+          <h3 class="text-sm font-medium text-stone-700 dark:text-stone-300 mb-3">Email Sync</h3>
           
           <!-- Sync progress (if syncing) -->
-          <div v-if="emailStore.syncing" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <div class="flex items-center justify-between text-sm text-blue-700 dark:text-blue-300 mb-2">
+          <div v-if="emailStore.syncing" class="mb-4 p-3 bg-stone-100 dark:bg-neutral-700/20 rounded-lg">
+            <div class="flex items-center justify-between text-sm text-stone-800 dark:text-stone-200 dark:text-stone-300 mb-2">
               <span class="truncate">{{ emailStore.syncProgress.message || 'Syncing...' }}</span>
               <span v-if="emailStore.syncProgress.totalFolders > 0">
                 {{ emailStore.syncProgress.completedFolders }}/{{ emailStore.syncProgress.totalFolders }}
               </span>
             </div>
-            <div class="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
+            <div class="w-full bg-stone-200 dark:bg-neutral-800 rounded-full h-2">
               <div 
-                class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                class="bg-neutral-800 dark:bg-neutral-200 h-2 rounded-full transition-all duration-300"
                 :style="{ width: emailStore.syncProgress.totalFolders > 0 ? `${(emailStore.syncProgress.completedFolders / emailStore.syncProgress.totalFolders) * 100}%` : '0%' }"
               ></div>
             </div>
@@ -333,7 +333,7 @@ async function handleSubmit() {
           <button
             @click="requestSync"
             :disabled="emailStore.syncing"
-            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg
               :class="['w-4 h-4', emailStore.syncing && 'animate-spin']"
@@ -345,7 +345,7 @@ async function handleSubmit() {
             </svg>
             {{ emailStore.syncing ? 'Syncing...' : 'Sync Emails Now' }}
           </button>
-          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+          <p class="mt-2 text-xs text-stone-500 dark:text-stone-400 text-center">
             This will sync all emails from your connected accounts. This may take several minutes.
           </p>
         </div>
@@ -359,7 +359,7 @@ async function handleSubmit() {
         </div>
 
         <!-- Prefilled hint banner -->
-        <div v-if="prefilled" class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg text-sm flex items-start gap-2">
+        <div v-if="prefilled" class="p-3 bg-stone-100 dark:bg-neutral-700/20 text-stone-800 dark:text-stone-200 dark:text-stone-300 rounded-lg text-sm flex items-start gap-2">
           <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -368,7 +368,7 @@ async function handleSubmit() {
 
         <!-- Quick setup presets -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
             Quick Setup
           </label>
           <div class="flex flex-wrap gap-2">
@@ -377,7 +377,7 @@ async function handleSubmit() {
               :key="preset.name"
               type="button"
               @click="applyPreset(preset)"
-              class="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              class="px-3 py-1.5 text-sm bg-stone-100 dark:bg-neutral-700 hover:bg-stone-200 dark:hover:bg-neutral-600 rounded-lg transition-colors"
             >
               {{ preset.name }}
             </button>
@@ -386,34 +386,34 @@ async function handleSubmit() {
 
         <!-- Account name -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
             Account Name
           </label>
           <input
             v-model="form.name"
             type="text"
             placeholder="e.g., Personal, Work"
-            class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700"
+            class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent bg-white dark:bg-neutral-700"
           />
         </div>
 
         <!-- Email address -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
             Email Address
           </label>
           <input
             v-model="form.email_address"
             type="email"
             placeholder="you@example.com"
-            class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700"
+            class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent bg-white dark:bg-neutral-700"
           />
         </div>
 
         <!-- Username and Password -->
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
               Username
             </label>
             <input
@@ -421,11 +421,11 @@ async function handleSubmit() {
               @blur="syncUsernames"
               type="text"
               placeholder="Username or email"
-              class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700"
+              class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent bg-white dark:bg-neutral-700"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
               Password
             </label>
             <input
@@ -433,36 +433,36 @@ async function handleSubmit() {
               @blur="syncPasswords"
               type="password"
               placeholder="App password"
-              class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700"
+              class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent bg-white dark:bg-neutral-700"
             />
           </div>
         </div>
 
-        <p class="text-xs text-gray-500 dark:text-gray-400">
+        <p class="text-xs text-stone-500 dark:text-stone-400">
           For Gmail, Outlook, and other providers with 2FA, use an app-specific password.
         </p>
 
         <!-- IMAP Settings -->
         <div class="grid grid-cols-3 gap-4">
           <div class="col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
               IMAP Server
             </label>
             <input
               v-model="form.imap_host"
               type="text"
               placeholder="imap.example.com"
-              class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700"
+              class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent bg-white dark:bg-neutral-700"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
               Port
             </label>
             <input
               v-model.number="form.imap_port"
               type="number"
-              class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700"
+              class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent bg-white dark:bg-neutral-700"
             />
           </div>
         </div>
@@ -470,24 +470,24 @@ async function handleSubmit() {
         <!-- SMTP Settings -->
         <div class="grid grid-cols-3 gap-4">
           <div class="col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
               SMTP Server
             </label>
             <input
               v-model="form.smtp_host"
               type="text"
               placeholder="smtp.example.com"
-              class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700"
+              class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent bg-white dark:bg-neutral-700"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
               Port
             </label>
             <input
               v-model.number="form.smtp_port"
               type="number"
-              class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700"
+              class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent bg-white dark:bg-neutral-700"
             />
           </div>
         </div>
@@ -496,7 +496,7 @@ async function handleSubmit() {
         <button
           type="button"
           @click="showAdvanced = !showAdvanced"
-          class="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          class="flex items-center gap-2 text-sm text-stone-800 dark:text-stone-200 dark:text-stone-400 hover:underline"
         >
           <svg
             :class="['w-4 h-4 transition-transform', showAdvanced && 'rotate-90']"
@@ -510,29 +510,29 @@ async function handleSubmit() {
         </button>
 
         <!-- Advanced settings -->
-        <div v-if="showAdvanced" class="space-y-4 pt-2 border-t dark:border-gray-700">
+        <div v-if="showAdvanced" class="space-y-4 pt-2 border-t dark:border-neutral-700">
           <!-- SMTP username/password (if different from IMAP) -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
                 SMTP Username
               </label>
               <input
                 v-model="form.smtp_username"
                 type="text"
                 placeholder="Same as IMAP"
-                class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700"
+                class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent bg-white dark:bg-neutral-700"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
                 SMTP Password
               </label>
               <input
                 v-model="form.smtp_password"
                 type="password"
                 placeholder="Same as IMAP"
-                class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700"
+                class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-transparent bg-white dark:bg-neutral-700"
               />
             </div>
           </div>
@@ -543,17 +543,17 @@ async function handleSubmit() {
               <input
                 v-model="form.imap_use_tls"
                 type="checkbox"
-                class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                class="w-4 h-4 text-stone-800 dark:text-stone-200 rounded focus:ring-stone-400"
               />
-              <span class="text-sm text-gray-700 dark:text-gray-300">IMAP Use TLS/SSL</span>
+              <span class="text-sm text-stone-700 dark:text-stone-300">IMAP Use TLS/SSL</span>
             </label>
             <label class="flex items-center gap-2">
               <input
                 v-model="form.smtp_use_tls"
                 type="checkbox"
-                class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                class="w-4 h-4 text-stone-800 dark:text-stone-200 rounded focus:ring-stone-400"
               />
-              <span class="text-sm text-gray-700 dark:text-gray-300">SMTP Use STARTTLS</span>
+              <span class="text-sm text-stone-700 dark:text-stone-300">SMTP Use STARTTLS</span>
             </label>
           </div>
         </div>
@@ -563,14 +563,14 @@ async function handleSubmit() {
           <button
             type="button"
             @click="goBack"
-            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             :disabled="loading"
-            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -584,28 +584,28 @@ async function handleSubmit() {
 
     <!-- Sync Confirmation Modal -->
     <div v-if="showSyncConfirmation" class="fixed inset-0 bg-black/50 flex items-center justify-center z-60">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 m-4">
+      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md p-6 m-4">
         <div class="flex items-center gap-3 mb-4">
-          <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="p-3 bg-stone-100 dark:bg-neutral-700/30 rounded-full">
+            <svg class="w-6 h-6 text-stone-800 dark:text-stone-200 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sync Emails?</h3>
+          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">Sync Emails?</h3>
         </div>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">
+        <p class="text-stone-600 dark:text-stone-400 mb-6">
           This will sync all emails from your connected accounts. Depending on the number of emails, this process may take several minutes to complete. Are you sure you want to continue?
         </p>
         <div class="flex justify-end gap-3">
           <button
             @click="cancelSync"
-            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
             @click="confirmSync"
-            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg transition-colors"
           >
             Yes, Sync Now
           </button>

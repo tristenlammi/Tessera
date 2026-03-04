@@ -135,14 +135,14 @@ function getFolderIcon(folderType: string | null): string {
     <!-- Drop indicator line - before -->
     <div
       v-if="isDragOver && dropPosition === 'before'"
-      class="h-0.5 bg-blue-500 mx-2 rounded-full"
+      class="h-0.5 bg-neutral-700 dark:bg-neutral-300 mx-2 rounded-full"
       :style="{ marginLeft: `${8 + level * 16}px` }"
     ></div>
     
     <div
       :class="[
         'relative transition-all',
-        isDragOver && dropPosition === 'into' && 'ring-2 ring-blue-500 ring-inset rounded-lg bg-blue-50/50 dark:bg-blue-900/20'
+        isDragOver && dropPosition === 'into' && 'ring-2 ring-stone-400 ring-inset rounded-lg bg-stone-100/50 dark:bg-neutral-700/20'
       ]"
       @dragover="handleDragOver"
       @dragleave="handleDragLeave"
@@ -156,8 +156,8 @@ function getFolderIcon(folderType: string | null): string {
         :class="[
           'w-full flex items-center gap-2 py-2 rounded-lg text-sm transition-colors',
           isSelected
-            ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
-            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
+            ? 'bg-stone-100 dark:bg-neutral-700/50 text-stone-800 dark:text-stone-200 dark:text-stone-300'
+            : 'text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700',
           isCustomFolder && draggable && 'cursor-grab active:cursor-grabbing'
         ]"
         :style="{ paddingLeft: `${12 + level * 16}px`, paddingRight: '12px' }"
@@ -166,7 +166,7 @@ function getFolderIcon(folderType: string | null): string {
         <button
           v-if="hasChildren"
           @click="toggleExpand"
-          class="w-4 h-4 flex items-center justify-center -ml-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+          class="w-4 h-4 flex items-center justify-center -ml-1 hover:bg-stone-200 dark:hover:bg-neutral-600 rounded"
         >
           <svg
             :class="['w-3 h-3 transition-transform', isExpanded ? 'rotate-90' : '']"
@@ -206,7 +206,7 @@ function getFolderIcon(folderType: string | null): string {
         
         <span
           v-if="folder.unread_count > 0"
-          class="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full"
+          class="px-2 py-0.5 text-xs font-medium bg-stone-100 dark:bg-neutral-800 text-stone-800 dark:text-stone-200 dark:text-stone-300 rounded-full"
         >
           {{ folder.unread_count }}
         </span>
@@ -216,7 +216,7 @@ function getFolderIcon(folderType: string | null): string {
     <!-- Drop indicator line - after (only show if no children or collapsed) -->
     <div
       v-if="isDragOver && dropPosition === 'after' && (!hasChildren || !isExpanded)"
-      class="h-0.5 bg-blue-500 mx-2 rounded-full"
+      class="h-0.5 bg-neutral-700 dark:bg-neutral-300 mx-2 rounded-full"
       :style="{ marginLeft: `${8 + level * 16}px` }"
     ></div>
 
@@ -243,7 +243,7 @@ function getFolderIcon(folderType: string | null): string {
     <!-- Drop indicator line - after children -->
     <div
       v-if="isDragOver && dropPosition === 'after' && hasChildren && isExpanded"
-      class="h-0.5 bg-blue-500 mx-2 rounded-full"
+      class="h-0.5 bg-neutral-700 dark:bg-neutral-300 mx-2 rounded-full"
       :style="{ marginLeft: `${8 + level * 16}px` }"
     ></div>
   </div>

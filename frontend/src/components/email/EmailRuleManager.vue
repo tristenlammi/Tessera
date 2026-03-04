@@ -204,17 +204,17 @@ function getFolderName(id: string): string {
 
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col">
+    <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col">
       <!-- Header -->
-      <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+      <div class="flex items-center justify-between p-4 border-b dark:border-neutral-700">
+        <h2 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
           {{ showCreateForm ? (editingRule ? 'Edit Rule' : 'Create Rule') : 'Email Rules' }}
         </h2>
         <button
           @click="emit('close')"
-          class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
         >
-          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -227,10 +227,10 @@ function getFolderName(id: string): string {
 
       <!-- Rule list view -->
       <template v-if="!showCreateForm">
-        <div class="p-4 border-b dark:border-gray-700">
+        <div class="p-4 border-b dark:border-neutral-700">
           <button
             @click="openCreateForm"
-            class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            class="flex items-center gap-2 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors text-sm font-medium"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -240,8 +240,8 @@ function getFolderName(id: string): string {
         </div>
 
         <div class="flex-1 overflow-y-auto p-4">
-          <div v-if="rules.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-if="rules.length === 0" class="text-center py-8 text-stone-500 dark:text-stone-400">
+            <svg class="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
             <p>No rules yet</p>
@@ -255,22 +255,22 @@ function getFolderName(id: string): string {
               :class="[
                 'p-4 rounded-lg border transition-colors',
                 rule.is_enabled
-                  ? 'border-gray-200 dark:border-gray-700'
-                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 opacity-60'
+                  ? 'border-stone-200 dark:border-neutral-700'
+                  : 'border-stone-200 dark:border-neutral-700 bg-stone-50 dark:bg-neutral-800/50 opacity-60'
               ]"
             >
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <div class="flex items-center gap-2">
-                    <h3 class="font-medium text-gray-900 dark:text-white">{{ rule.name }}</h3>
+                    <h3 class="font-medium text-stone-900 dark:text-stone-100">{{ rule.name }}</h3>
                     <span
                       v-if="!rule.is_enabled"
-                      class="px-2 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded"
+                      class="px-2 py-0.5 text-xs bg-stone-200 dark:bg-neutral-700 text-stone-600 dark:text-stone-400 rounded"
                     >
                       Disabled
                     </span>
                   </div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
                     When {{ rule.match_type === 'any' ? 'any' : 'all' }} of {{ rule.conditions.length }} condition(s) match,
                     perform {{ rule.actions.length }} action(s)
                   </p>
@@ -278,7 +278,7 @@ function getFolderName(id: string): string {
                     <span
                       v-for="(action, i) in rule.actions"
                       :key="i"
-                      class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs"
+                      class="inline-flex items-center gap-1 px-2 py-1 bg-stone-100 dark:bg-neutral-700/30 text-stone-800 dark:text-stone-200 dark:text-stone-300 rounded text-xs"
                     >
                       <template v-if="action.type === 'label'">Apply: {{ getLabelName(action.value) }}</template>
                       <template v-else-if="action.type === 'move'">Move to: {{ getFolderName(action.value) }}</template>
@@ -295,7 +295,7 @@ function getFolderName(id: string): string {
                       'p-1.5 rounded transition-colors',
                       rule.is_enabled
                         ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30'
-                        : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        : 'text-stone-400 hover:bg-stone-100 dark:hover:bg-neutral-700'
                     ]"
                     :title="rule.is_enabled ? 'Disable rule' : 'Enable rule'"
                   >
@@ -307,7 +307,7 @@ function getFolderName(id: string): string {
                   <button
                     @click="runRule(rule)"
                     :disabled="runningRuleId === rule.id"
-                    class="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded disabled:opacity-50"
+                    class="p-1.5 text-stone-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded disabled:opacity-50"
                     title="Run rule now on all emails"
                   >
                     <svg v-if="runningRuleId === rule.id" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -321,7 +321,7 @@ function getFolderName(id: string): string {
                   </button>
                   <button
                     @click="editRule(rule)"
-                    class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                    class="p-1.5 text-stone-400 hover:text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-neutral-700/30 rounded"
                     title="Edit rule"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,7 +330,7 @@ function getFolderName(id: string): string {
                   </button>
                   <button
                     @click="deleteRule(rule)"
-                    class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                    class="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                     title="Delete rule"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -349,21 +349,21 @@ function getFolderName(id: string): string {
         <div class="flex-1 overflow-y-auto p-4 space-y-4">
           <!-- Rule name -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rule name</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Rule name</label>
             <input
               v-model="ruleName"
               type="text"
               placeholder="e.g., Move newsletters to Promotions"
-              class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 text-sm focus:ring-2 focus:ring-stone-400 focus:border-transparent"
             />
           </div>
 
           <!-- Match type -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Match</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Match</label>
             <select
               v-model="matchType"
-              class="px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
+              class="px-3 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 text-sm focus:ring-2 focus:ring-stone-400"
             >
               <option value="any">Any of the following conditions</option>
               <option value="all">All of the following conditions</option>
@@ -373,10 +373,10 @@ function getFolderName(id: string): string {
           <!-- Conditions -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Conditions</label>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300">Conditions</label>
               <button
                 @click="addCondition"
-                class="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                class="text-sm text-stone-800 dark:text-stone-200 hover:text-stone-800 dark:text-stone-200 font-medium"
               >
                 + Add condition
               </button>
@@ -389,7 +389,7 @@ function getFolderName(id: string): string {
               >
                 <select
                   v-model="condition.field"
-                  class="px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
+                  class="px-3 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 text-sm focus:ring-2 focus:ring-stone-400"
                 >
                   <option v-for="opt in fieldOptions" :key="opt.value" :value="opt.value">
                     {{ opt.label }}
@@ -397,7 +397,7 @@ function getFolderName(id: string): string {
                 </select>
                 <select
                   v-model="condition.operator"
-                  class="px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
+                  class="px-3 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 text-sm focus:ring-2 focus:ring-stone-400"
                 >
                   <option v-for="opt in operatorOptions" :key="opt.value" :value="opt.value">
                     {{ opt.label }}
@@ -407,12 +407,12 @@ function getFolderName(id: string): string {
                   v-model="condition.value"
                   type="text"
                   placeholder="Value"
-                  class="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="flex-1 px-3 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 text-sm focus:ring-2 focus:ring-stone-400 focus:border-transparent"
                 />
                 <button
                   v-if="conditions.length > 1"
                   @click="removeCondition(index)"
-                  class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                  class="p-2 text-stone-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -425,10 +425,10 @@ function getFolderName(id: string): string {
           <!-- Actions -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Actions</label>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300">Actions</label>
               <button
                 @click="addAction"
-                class="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                class="text-sm text-stone-800 dark:text-stone-200 hover:text-stone-800 dark:text-stone-200 font-medium"
               >
                 + Add action
               </button>
@@ -442,7 +442,7 @@ function getFolderName(id: string): string {
                 <select
                   v-model="action.type"
                   @change="action.value = ''"
-                  class="px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
+                  class="px-3 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 text-sm focus:ring-2 focus:ring-stone-400"
                 >
                   <option v-for="opt in actionOptions" :key="opt.value" :value="opt.value">
                     {{ opt.label }}
@@ -451,7 +451,7 @@ function getFolderName(id: string): string {
                 <select
                   v-if="action.type === 'label'"
                   v-model="action.value"
-                  class="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
+                  class="flex-1 px-3 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 text-sm focus:ring-2 focus:ring-stone-400"
                 >
                   <option value="">Select label...</option>
                   <option v-for="label in labels" :key="label.id" :value="label.id">
@@ -461,7 +461,7 @@ function getFolderName(id: string): string {
                 <select
                   v-else-if="action.type === 'move'"
                   v-model="action.value"
-                  class="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
+                  class="flex-1 px-3 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 text-sm focus:ring-2 focus:ring-stone-400"
                 >
                   <option value="">Select folder...</option>
                   <option v-for="folder in folders" :key="folder.id" :value="folder.id">
@@ -470,14 +470,14 @@ function getFolderName(id: string): string {
                 </select>
                 <span
                   v-else
-                  class="flex-1 text-sm text-gray-500 dark:text-gray-400 italic"
+                  class="flex-1 text-sm text-stone-500 dark:text-stone-400 italic"
                 >
                   {{ action.type === 'star' ? 'Star the email' : action.type === 'mark_read' ? 'Mark as read' : 'Delete the email' }}
                 </span>
                 <button
                   v-if="actions.length > 1"
                   @click="removeAction(index)"
-                  class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                  class="p-2 text-stone-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -493,33 +493,33 @@ function getFolderName(id: string): string {
               <input
                 v-model="isEnabled"
                 type="checkbox"
-                class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                class="rounded border-stone-300 dark:border-neutral-700 text-stone-800 dark:text-stone-200 focus:ring-stone-400"
               />
-              <span class="text-sm text-gray-700 dark:text-gray-300">Enable rule</span>
+              <span class="text-sm text-stone-700 dark:text-stone-300">Enable rule</span>
             </label>
             <label class="flex items-center gap-2">
               <input
                 v-model="stopProcessing"
                 type="checkbox"
-                class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                class="rounded border-stone-300 dark:border-neutral-700 text-stone-800 dark:text-stone-200 focus:ring-stone-400"
               />
-              <span class="text-sm text-gray-700 dark:text-gray-300">Stop processing other rules when this matches</span>
+              <span class="text-sm text-stone-700 dark:text-stone-300">Stop processing other rules when this matches</span>
             </label>
           </div>
         </div>
 
         <!-- Form actions -->
-        <div class="flex items-center justify-end gap-3 p-4 border-t dark:border-gray-700">
+        <div class="flex items-center justify-end gap-3 p-4 border-t dark:border-neutral-700">
           <button
             @click="cancelForm"
-            class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
             @click="saveRule"
             :disabled="loading"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 transition-colors font-medium"
           >
             {{ editingRule ? 'Save Changes' : 'Create Rule' }}
           </button>

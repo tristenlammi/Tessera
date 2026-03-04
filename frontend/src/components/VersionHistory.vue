@@ -96,18 +96,18 @@ onMounted(() => {
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
     @click.self="emit('close')"
   >
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
       <!-- Header -->
-      <div class="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
+      <div class="flex items-center justify-between px-4 py-3 border-b dark:border-neutral-700">
         <div>
-          <h3 class="font-medium dark:text-white">Version History</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ fileName }}</p>
+          <h3 class="font-medium dark:text-stone-100">Version History</h3>
+          <p class="text-sm text-stone-500 dark:text-stone-400 truncate">{{ fileName }}</p>
         </div>
         <button
           @click="emit('close')"
-          class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+          class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded"
         >
-          <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -117,7 +117,7 @@ onMounted(() => {
       <div class="flex-1 overflow-auto">
         <!-- Loading -->
         <div v-if="loading" class="flex items-center justify-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-800 dark:border-neutral-200"></div>
         </div>
 
         <!-- Error -->
@@ -126,8 +126,8 @@ onMounted(() => {
         </div>
 
         <!-- Empty -->
-        <div v-else-if="versions.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
-          <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-else-if="versions.length === 0" class="p-8 text-center text-stone-500 dark:text-stone-400">
+          <svg class="w-12 h-12 mx-auto text-stone-300 dark:text-neutral-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <p>No previous versions available</p>
@@ -135,28 +135,28 @@ onMounted(() => {
         </div>
 
         <!-- Version List -->
-        <div v-else class="divide-y dark:divide-gray-700">
+        <div v-else class="divide-y dark:divide-neutral-700">
           <div
             v-for="(version, index) in versions"
             :key="version.id"
-            class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+            class="p-4 hover:bg-stone-50 dark:hover:bg-neutral-700/50"
           >
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                  <span class="font-medium dark:text-white">Version {{ version.version }}</span>
+                  <span class="font-medium dark:text-stone-100">Version {{ version.version }}</span>
                   <span v-if="index === 0" class="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
                     Current
                   </span>
                 </div>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
                   {{ formatRelativeTime(version.created_at) }} · {{ formatBytes(version.size) }}
                 </p>
               </div>
               <div class="flex items-center gap-1">
                 <button
                   @click="downloadVersion(version)"
-                  class="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                  class="p-2 text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded"
                   title="Download this version"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,7 +166,7 @@ onMounted(() => {
                 <button
                   v-if="index > 0"
                   @click="restoreVersion(version)"
-                  class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                  class="p-2 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-neutral-700/20 rounded"
                   title="Restore this version"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,7 +180,7 @@ onMounted(() => {
       </div>
 
       <!-- Footer -->
-      <div class="px-4 py-3 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500 dark:text-gray-400">
+      <div class="px-4 py-3 border-t dark:border-neutral-700 bg-stone-50 dark:bg-neutral-800/50 text-xs text-stone-500 dark:text-stone-400">
         Versions are kept for 30 days
       </div>
     </div>

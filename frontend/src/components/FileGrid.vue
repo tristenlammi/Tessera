@@ -133,10 +133,10 @@ function handleDrop(file: FileItem, event: DragEvent) {
       :class="[
         'group p-2 rounded-lg border cursor-pointer transition-all select-none',
         filesStore.selectedFiles.has(file.id)
-          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+          ? 'border-neutral-700 dark:border-neutral-300 bg-stone-100 dark:bg-neutral-700/30'
           : dragOverFolder === file.id
-            ? 'border-blue-400 bg-blue-100 dark:bg-blue-900/20 scale-105'
-            : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
+            ? 'border-stone-400 bg-stone-100 dark:bg-neutral-700/20 scale-105'
+            : 'border-transparent hover:bg-stone-100 dark:hover:bg-neutral-700'
       ]"
     >
       <!-- Icon -->
@@ -151,7 +151,7 @@ function handleDrop(file: FileItem, event: DragEvent) {
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
         <!-- Folder icon -->
-        <svg v-if="getFileIcon(file) === 'folder'" class="text-blue-500" :style="iconSizeStyle" fill="currentColor" viewBox="0 0 20 20">
+        <svg v-if="getFileIcon(file) === 'folder'" class="text-stone-700 dark:text-stone-300" :style="iconSizeStyle" fill="currentColor" viewBox="0 0 20 20">
           <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
         </svg>
         <!-- Image icon -->
@@ -167,7 +167,7 @@ function handleDrop(file: FileItem, event: DragEvent) {
           <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
         </svg>
         <!-- Generic file icon -->
-        <svg v-else class="text-gray-400" :style="iconSizeStyle" fill="currentColor" viewBox="0 0 20 20">
+        <svg v-else class="text-stone-400" :style="iconSizeStyle" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
         </svg>
       </div>
@@ -176,7 +176,7 @@ function handleDrop(file: FileItem, event: DragEvent) {
       <div class="text-xs font-medium truncate text-center pointer-events-none" :title="file.name">
         {{ file.name }}
       </div>
-      <div v-if="!file.is_folder" class="text-[10px] text-gray-500 dark:text-gray-400 text-center pointer-events-none">
+      <div v-if="!file.is_folder" class="text-[10px] text-stone-500 dark:text-stone-400 text-center pointer-events-none">
         {{ formatBytes(file.size) }}
       </div>
     </div>

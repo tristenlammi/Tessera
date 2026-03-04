@@ -24,7 +24,6 @@ const coreNavItems = [
 
 const moduleNavItems = computed(() => {
   const items = []
-  // Documents are now integrated into My Files, not shown as separate nav item
   if (modulesStore.isModuleEnabled('tasks')) {
     items.push({ name: 'Tasks', to: '/tasks', icon: 'clipboard-list' })
   }
@@ -63,24 +62,24 @@ onMounted(() => {
 </script>
 
 <template>
-  <aside class="w-64 bg-white dark:bg-gray-800 border-r dark:border-gray-700 flex flex-col">
+  <aside class="w-64 bg-notion-sidebar dark:bg-notion-dark-sidebar border-r border-notion-border dark:border-notion-dark-border flex flex-col">
     <!-- Logo -->
-    <div class="h-14 flex items-center px-4 border-b dark:border-gray-700">
-      <h1 class="text-xl font-bold text-blue-600">Tessera</h1>
+    <div class="h-14 flex items-center px-4 border-b border-notion-border dark:border-notion-dark-border">
+      <h1 class="text-xl font-bold text-notion-text dark:text-notion-dark-text">Tessera</h1>
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 p-2 space-y-1 overflow-y-auto">
+    <nav class="flex-1 p-2 space-y-0.5 overflow-y-auto">
       <!-- Core navigation -->
       <RouterLink
         v-for="item in coreNavItems"
         :key="item.to"
         :to="item.to"
         :class="[
-          'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+          'flex items-center gap-3 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
           isActive(item.to)
-            ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
-            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            ? 'bg-stone-200/70 dark:bg-neutral-700/60 text-stone-900 dark:text-stone-100'
+            : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-neutral-700/40'
         ]"
       >
         <svg v-if="item.icon === 'folder'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,16 +102,16 @@ onMounted(() => {
 
       <!-- Module navigation (only if modules enabled) -->
       <template v-if="moduleNavItems.length > 0">
-        <div class="my-3 px-3"><div class="h-px bg-gray-200 dark:bg-gray-700"></div></div>
+        <div class="my-3 px-3"><div class="h-px bg-notion-border dark:bg-notion-dark-border"></div></div>
         <RouterLink
           v-for="item in moduleNavItems"
           :key="item.to"
           :to="item.to"
           :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+            'flex items-center gap-3 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
             isActive(item.to)
-              ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
-              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              ? 'bg-stone-200/70 dark:bg-neutral-700/60 text-stone-900 dark:text-stone-100'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-neutral-700/40'
           ]"
         >
           <svg v-if="item.icon === 'document-text'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,10 +141,10 @@ onMounted(() => {
         <RouterLink
           to="/admin"
           :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+            'flex items-center gap-3 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
             isActive('/admin')
-              ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
-              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              ? 'bg-stone-200/70 dark:bg-neutral-700/60 text-stone-900 dark:text-stone-100'
+              : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-neutral-700/40'
           ]"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,22 +156,22 @@ onMounted(() => {
       </div>
 
       <!-- Storage bar -->
-      <div v-if="filesStore.storageStats" class="p-4 border-t dark:border-gray-700">
-        <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">Storage</div>
-        <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div v-if="filesStore.storageStats" class="p-4 border-t border-notion-border dark:border-notion-dark-border">
+        <div class="text-xs text-stone-500 dark:text-stone-500 mb-2">Storage</div>
+        <div class="h-1.5 bg-stone-200 dark:bg-neutral-700 rounded-full overflow-hidden">
           <div
-            class="h-full bg-blue-600 transition-all"
+            class="h-full bg-stone-500 dark:bg-stone-400 transition-all rounded-full"
             :style="{ width: `${Math.min(filesStore.storageStats.used_pct, 100)}%` }"
           ></div>
         </div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <div class="text-xs text-stone-500 dark:text-stone-500 mt-1">
           {{ formatBytes(filesStore.storageStats.used) }} of {{ formatBytes(filesStore.storageStats.limit) }}
         </div>
       </div>
 
       <!-- Theme toggle and connection status -->
-      <div class="px-4 py-2 border-t dark:border-gray-700 flex items-center justify-between">
-        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+      <div class="px-4 py-2 border-t border-notion-border dark:border-notion-dark-border flex items-center justify-between">
+        <div class="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-500">
           <span
             class="w-2 h-2 rounded-full"
             :class="isConnected ? 'bg-green-500' : 'bg-red-500'"
@@ -181,14 +180,12 @@ onMounted(() => {
         </div>
         <button
           @click="toggleTheme"
-          class="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          class="p-1.5 rounded-md text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-neutral-700 transition-colors"
           :title="theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'"
         >
-          <!-- Sun icon (show when dark mode) -->
           <svg v-if="theme === 'dark'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
-          <!-- Moon icon (show when light mode) -->
           <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
           </svg>

@@ -39,9 +39,9 @@ async function handleCreate() {
 
 <template>
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
-      <div class="px-6 py-4 border-b dark:border-gray-700">
-        <h2 class="text-lg font-semibold dark:text-white">New Folder</h2>
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+      <div class="px-6 py-4 border-b dark:border-neutral-700">
+        <h2 class="text-lg font-semibold dark:text-stone-100">New Folder</h2>
       </div>
 
       <form @submit.prevent="handleCreate" class="p-6">
@@ -50,7 +50,7 @@ async function handleCreate() {
         </div>
 
         <div class="mb-4">
-          <label for="folder-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label for="folder-name" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
             Folder name
           </label>
           <input
@@ -58,7 +58,7 @@ async function handleCreate() {
             v-model="name"
             type="text"
             autofocus
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            class="w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400 dark:bg-neutral-700 dark:text-stone-100"
             placeholder="Untitled folder"
           />
         </div>
@@ -67,14 +67,14 @@ async function handleCreate() {
           <button
             type="button"
             @click="emit('close')"
-            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
           >
             Cancel
           </button>
           <button
             type="submit"
             :disabled="loading"
-            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50"
+            class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 dark:text-neutral-800 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg disabled:opacity-50"
           >
             {{ loading ? 'Creating...' : 'Create' }}
           </button>

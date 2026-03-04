@@ -277,14 +277,14 @@ function triggerFolderUpload() {
 <template>
   <div class="h-full flex flex-col">
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
+    <div class="flex items-center justify-between p-4 border-b dark:border-neutral-700">
       <div class="flex items-center gap-2">
         <nav class="flex items-center gap-1 text-sm">
           <template v-for="(crumb, index) in filesStore.breadcrumbs" :key="crumb.id ?? 'root'">
-            <span v-if="index > 0" class="text-gray-400">/</span>
+            <span v-if="index > 0" class="text-stone-400">/</span>
             <button
               @click="navigateToBreadcrumb(index)"
-              class="hover:text-blue-600 px-1"
+              class="hover:text-stone-800 dark:text-stone-200 px-1"
               :class="{ 'font-medium': index === filesStore.breadcrumbs.length - 1 }"
             >
               {{ crumb.name }}
@@ -297,20 +297,20 @@ function triggerFolderUpload() {
         <!-- Search Button -->
         <button
           @click="showCommandPalette = true"
-          class="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+          class="flex items-center gap-2 px-3 py-1.5 text-sm text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <span class="hidden sm:inline">Search</span>
-          <kbd class="hidden sm:inline px-1.5 py-0.5 text-xs bg-white dark:bg-gray-600 dark:text-gray-300 rounded border dark:border-gray-500">⌘K</kbd>
+          <kbd class="hidden sm:inline px-1.5 py-0.5 text-xs bg-white dark:bg-neutral-600 dark:text-stone-300 rounded border dark:border-neutral-700">⌘K</kbd>
         </button>
 
         <!-- Upload Dropdown -->
         <div class="relative">
           <button
             @click="showUploadMenu = !showUploadMenu"
-            class="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            class="flex items-center gap-1 px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -324,12 +324,12 @@ function triggerFolderUpload() {
           <!-- Upload dropdown menu -->
           <div
             v-if="showUploadMenu"
-            class="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1 z-50"
+            class="absolute right-0 mt-1 w-48 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border dark:border-neutral-700 py-1 z-50"
             @click.stop
           >
             <button
               @click="triggerFileUpload"
-              class="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              class="w-full px-4 py-2 text-sm text-left text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -338,7 +338,7 @@ function triggerFolderUpload() {
             </button>
             <button
               @click="triggerFolderUpload"
-              class="w-full px-4 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              class="w-full px-4 py-2 text-sm text-left text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -356,14 +356,14 @@ function triggerFolderUpload() {
         ></div>
         <button
           @click="showCreateFolder = true"
-          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
+          class="px-3 py-1.5 text-sm border border-stone-300 rounded-lg hover:bg-stone-50 dark:border-neutral-700 dark:hover:bg-neutral-700"
         >
           New Folder
         </button>
         <button
           v-if="modulesStore.isModuleEnabled('documents')"
           @click="createNewDocument"
-          class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 flex items-center gap-1"
+          class="px-3 py-1.5 text-sm border border-stone-300 rounded-lg hover:bg-stone-50 dark:border-neutral-700 dark:hover:bg-neutral-700 flex items-center gap-1"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -373,7 +373,7 @@ function triggerFolderUpload() {
         
         <!-- Icon Size Slider (only shown in grid view) -->
         <div v-if="viewMode === 'grid'" class="flex items-center gap-2 px-2">
-          <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-3 h-3 text-stone-400" fill="currentColor" viewBox="0 0 20 20">
             <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5z" />
           </svg>
           <input
@@ -382,18 +382,18 @@ function triggerFolderUpload() {
             min="32"
             max="96"
             step="8"
-            class="w-20 h-1 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            class="w-20 h-1 bg-stone-200 dark:bg-neutral-600 rounded-lg appearance-none cursor-pointer accent-neutral-800"
             title="Icon size"
           />
-          <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-5 h-5 text-stone-400" fill="currentColor" viewBox="0 0 20 20">
             <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5z" />
           </svg>
         </div>
         
-        <div class="flex border dark:border-gray-600 rounded-lg overflow-hidden">
+        <div class="flex border dark:border-neutral-700 rounded-lg overflow-hidden">
           <button
             @click="viewMode = 'grid'"
-            :class="['px-3 py-1.5', viewMode === 'grid' ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700']"
+            :class="['px-3 py-1.5', viewMode === 'grid' ? 'bg-stone-100 dark:bg-neutral-700' : 'hover:bg-stone-50 dark:hover:bg-neutral-700']"
           >
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -401,7 +401,7 @@ function triggerFolderUpload() {
           </button>
           <button
             @click="viewMode = 'list'"
-            :class="['px-3 py-1.5', viewMode === 'list' ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700']"
+            :class="['px-3 py-1.5', viewMode === 'list' ? 'bg-stone-100 dark:bg-neutral-700' : 'hover:bg-stone-50 dark:hover:bg-neutral-700']"
           >
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
@@ -414,20 +414,20 @@ function triggerFolderUpload() {
     <!-- Upload Zone & Files -->
     <UploadZone :folder-id="currentFolderId" class="flex-1 overflow-auto" @contextmenu.prevent="showFolderContextMenu">
       <div v-if="filesStore.loading" class="flex items-center justify-center h-64">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-800 dark:border-neutral-200"></div>
       </div>
 
-      <div v-else-if="filesStore.files.length === 0" class="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+      <div v-else-if="filesStore.files.length === 0" class="flex flex-col items-center justify-center h-64 text-stone-500 dark:text-stone-400">
         <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
         </svg>
         <p class="text-lg font-medium">No files yet</p>
         <p class="text-sm mb-4">Drop files or folders here, or click to upload</p>
         <div class="flex gap-2">
-          <label for="file-upload" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer">
+          <label for="file-upload" class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 cursor-pointer">
             Upload Files
           </label>
-          <label for="folder-upload" class="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 cursor-pointer">
+          <label for="folder-upload" class="px-4 py-2 border border-neutral-800 dark:border-neutral-200 text-stone-800 dark:text-stone-200 rounded-lg hover:bg-stone-100 cursor-pointer">
             Upload Folder
           </label>
         </div>

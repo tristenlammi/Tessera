@@ -54,12 +54,12 @@ function goToLogin() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+  <div class="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-neutral-900 px-4">
     <div class="w-full max-w-md">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+      <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-8">
         <div class="text-center mb-8">
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Reset Password</h1>
-          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Reset Password</h1>
+          <p class="mt-2 text-sm text-stone-500 dark:text-stone-400">
             Enter your new password below
           </p>
         </div>
@@ -71,13 +71,13 @@ function goToLogin() {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Password Reset Successfully</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          <h3 class="text-lg font-medium text-stone-900 dark:text-stone-100 mb-2">Password Reset Successfully</h3>
+          <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">
             You can now log in with your new password.
           </p>
           <button
             @click="goToLogin"
-            class="w-full py-2.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 font-medium transition-colors"
           >
             Go to Login
           </button>
@@ -90,7 +90,7 @@ function goToLogin() {
           </div>
 
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="password" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
               New Password
             </label>
             <input
@@ -99,13 +99,13 @@ function goToLogin() {
               type="password"
               required
               minlength="8"
-              class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
               placeholder="Enter new password"
             />
           </div>
 
           <div>
-            <label for="confirm-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="confirm-password" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
               Confirm Password
             </label>
             <input
@@ -114,7 +114,7 @@ function goToLogin() {
               type="password"
               required
               minlength="8"
-              class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
               placeholder="Confirm new password"
             />
           </div>
@@ -122,7 +122,7 @@ function goToLogin() {
           <button
             type="submit"
             :disabled="loading"
-            class="w-full py-2.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
+            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 font-medium transition-colors"
           >
             {{ loading ? 'Resetting...' : 'Reset Password' }}
           </button>
@@ -135,10 +135,10 @@ function goToLogin() {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">{{ error }}</p>
+          <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">{{ error }}</p>
           <button
             @click="goToLogin"
-            class="w-full py-2.5 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 font-medium transition-colors"
           >
             Go to Login
           </button>

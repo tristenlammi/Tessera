@@ -17,18 +17,17 @@ const selectedCount = computed(() => filesStore.selectedFiles.size)
 <template>
   <div 
     v-if="selectedCount > 0"
-    class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white rounded-lg shadow-xl px-4 py-3 flex items-center gap-4 z-40"
+    class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-neutral-900 text-white rounded-lg shadow-xl px-4 py-3 flex items-center gap-4 z-40"
   >
     <span class="text-sm font-medium">
       {{ selectedCount }} item{{ selectedCount > 1 ? 's' : '' }} selected
     </span>
 
-    <div class="w-px h-6 bg-gray-700"></div>
+    <div class="w-px h-6 bg-neutral-700"></div>
 
-    <!-- Move -->
     <button
       @click="emit('move')"
-      class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-800 rounded-lg text-sm"
+      class="flex items-center gap-2 px-3 py-1.5 hover:bg-neutral-800 rounded-lg text-sm"
       title="Move"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,10 +36,9 @@ const selectedCount = computed(() => filesStore.selectedFiles.size)
       Move
     </button>
 
-    <!-- Copy -->
     <button
       @click="emit('copy')"
-      class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-800 rounded-lg text-sm"
+      class="flex items-center gap-2 px-3 py-1.5 hover:bg-neutral-800 rounded-lg text-sm"
       title="Copy"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,10 +47,9 @@ const selectedCount = computed(() => filesStore.selectedFiles.size)
       Copy
     </button>
 
-    <!-- Download -->
     <button
       @click="emit('download')"
-      class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-800 rounded-lg text-sm"
+      class="flex items-center gap-2 px-3 py-1.5 hover:bg-neutral-800 rounded-lg text-sm"
       title="Download"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,7 +58,6 @@ const selectedCount = computed(() => filesStore.selectedFiles.size)
       Download
     </button>
 
-    <!-- Delete -->
     <button
       @click="emit('delete')"
       class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-600 rounded-lg text-sm"
@@ -73,12 +69,11 @@ const selectedCount = computed(() => filesStore.selectedFiles.size)
       Delete
     </button>
 
-    <div class="w-px h-6 bg-gray-700"></div>
+    <div class="w-px h-6 bg-neutral-700"></div>
 
-    <!-- Clear Selection -->
     <button
       @click="filesStore.clearSelection()"
-      class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-800 rounded-lg text-sm"
+      class="flex items-center gap-2 px-3 py-1.5 hover:bg-neutral-800 rounded-lg text-sm"
       title="Clear selection"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -114,30 +114,30 @@ async function deleteLabel() {
 
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+    <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
       <!-- Header -->
-      <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Manage Labels</h2>
+      <div class="flex items-center justify-between p-4 border-b dark:border-neutral-700">
+        <h2 class="text-lg font-semibold text-stone-900 dark:text-stone-100">Manage Labels</h2>
         <button
           @click="emit('close')"
-          class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
         >
-          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
       <!-- Create new label -->
-      <div class="p-4 border-b dark:border-gray-700">
-        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Create new label</h3>
+      <div class="p-4 border-b dark:border-neutral-700">
+        <h3 class="text-sm font-medium text-stone-700 dark:text-stone-300 mb-3">Create new label</h3>
         <div class="flex gap-2">
           <div class="flex-1 relative">
             <input
               v-model="newLabelName"
               type="text"
               placeholder="Label name"
-              class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 text-sm focus:ring-2 focus:ring-stone-400 focus:border-transparent"
               @keyup.enter="createLabel"
             />
           </div>
@@ -145,14 +145,14 @@ async function deleteLabel() {
             <input
               v-model="newLabelColor"
               type="color"
-              class="w-10 h-10 rounded-lg border dark:border-gray-600 cursor-pointer"
+              class="w-10 h-10 rounded-lg border dark:border-neutral-700 cursor-pointer"
               title="Choose color"
             />
           </div>
           <button
             @click="createLabel"
             :disabled="loading || !newLabelName.trim()"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
           >
             Add
           </button>
@@ -165,7 +165,7 @@ async function deleteLabel() {
             @click="newLabelColor = color"
             :class="[
               'w-5 h-5 rounded-full transition-transform',
-              newLabelColor === color ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'hover:scale-110'
+              newLabelColor === color ? 'ring-2 ring-offset-2 ring-stone-400 scale-110' : 'hover:scale-110'
             ]"
             :style="{ backgroundColor: color }"
           ></button>
@@ -179,8 +179,8 @@ async function deleteLabel() {
 
       <!-- Label list -->
       <div class="flex-1 overflow-y-auto p-4">
-        <div v-if="labels.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-          <svg class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-if="labels.length === 0" class="text-center py-8 text-stone-500 dark:text-stone-400">
+          <svg class="w-12 h-12 mx-auto mb-3 text-stone-300 dark:text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
           </svg>
           <p>No labels yet</p>
@@ -191,7 +191,7 @@ async function deleteLabel() {
           <div
             v-for="label in labels"
             :key="label.id"
-            class="flex items-center gap-3 p-3 rounded-lg border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+            class="flex items-center gap-3 p-3 rounded-lg border dark:border-neutral-700 hover:bg-stone-50 dark:hover:bg-neutral-700/50"
           >
             <!-- Edit mode -->
             <template v-if="editingLabel?.id === label.id">
@@ -203,7 +203,7 @@ async function deleteLabel() {
               <input
                 v-model="editName"
                 type="text"
-                class="flex-1 px-2 py-1 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                class="flex-1 px-2 py-1 border dark:border-neutral-700 rounded bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 text-sm"
                 @keyup.enter="saveEdit"
                 @keyup.escape="cancelEdit"
               />
@@ -217,7 +217,7 @@ async function deleteLabel() {
               </button>
               <button
                 @click="cancelEdit"
-                class="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                class="p-1.5 text-stone-500 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -231,13 +231,13 @@ async function deleteLabel() {
                 class="w-4 h-4 rounded-full flex-shrink-0"
                 :style="{ backgroundColor: label.color }"
               ></span>
-              <span class="flex-1 text-gray-900 dark:text-white">{{ label.name }}</span>
-              <span class="text-xs text-gray-500 dark:text-gray-400">
+              <span class="flex-1 text-stone-900 dark:text-stone-100">{{ label.name }}</span>
+              <span class="text-xs text-stone-500 dark:text-stone-400">
                 {{ label.email_count || 0 }} emails
               </span>
               <button
                 @click="startEdit(label)"
-                class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                class="p-1.5 text-stone-400 hover:text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-neutral-700/30 rounded"
                 title="Edit label"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,7 +246,7 @@ async function deleteLabel() {
               </button>
               <button
                 @click="confirmDeleteLabel(label)"
-                class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                class="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                 title="Delete label"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,7 +261,7 @@ async function deleteLabel() {
 
     <!-- Delete confirmation modal -->
     <div v-if="showDeleteModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-sm w-full p-6">
+      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-sm w-full p-6">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
             <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,12 +269,12 @@ async function deleteLabel() {
             </svg>
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Delete Label</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
+            <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">Delete Label</h3>
+            <p class="text-sm text-stone-500 dark:text-stone-400">This action cannot be undone</p>
           </div>
         </div>
         
-        <p class="text-gray-700 dark:text-gray-300 mb-6">
+        <p class="text-stone-700 dark:text-stone-300 mb-6">
           Are you sure you want to delete the label "<strong>{{ labelToDelete?.name }}</strong>"? 
           Emails with this label will not be deleted.
         </p>
@@ -282,7 +282,7 @@ async function deleteLabel() {
         <div class="flex justify-end gap-3">
           <button
             @click="cancelDelete"
-            class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
           >
             Cancel
           </button>

@@ -302,7 +302,7 @@ async function handleSend() {
 <template>
   <div
     :class="[
-      'fixed z-50 bg-white dark:bg-gray-800 rounded-t-xl shadow-2xl border dark:border-gray-700 flex flex-col',
+      'fixed z-50 bg-white dark:bg-neutral-800 rounded-t-xl shadow-2xl border dark:border-neutral-700 flex flex-col',
       isMinimized
         ? 'bottom-0 right-4 w-80 h-10'
         : 'bottom-0 right-4 w-[560px] h-[480px]'
@@ -310,14 +310,14 @@ async function handleSend() {
   >
     <!-- Header -->
     <div
-      class="flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-t-xl cursor-pointer"
+      class="flex items-center justify-between px-4 py-2 bg-stone-100 dark:bg-neutral-700 rounded-t-xl cursor-pointer"
       @click="isMinimized = !isMinimized"
     >
-      <span class="text-sm font-medium text-gray-900 dark:text-white">{{ title }}</span>
+      <span class="text-sm font-medium text-stone-900 dark:text-stone-100">{{ title }}</span>
       <div class="flex items-center gap-1">
         <button
           @click.stop="isMinimized = !isMinimized"
-          class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+          class="p-1 hover:bg-stone-200 dark:hover:bg-neutral-600 rounded"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
@@ -325,7 +325,7 @@ async function handleSend() {
         </button>
         <button
           @click.stop="emit('close')"
-          class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+          class="p-1 hover:bg-stone-200 dark:hover:bg-neutral-600 rounded"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -342,8 +342,8 @@ async function handleSend() {
       </div>
 
       <!-- To field -->
-      <div class="relative flex items-center border-b dark:border-gray-700 px-4">
-        <span class="text-sm text-gray-500 dark:text-gray-400 w-12">To</span>
+      <div class="relative flex items-center border-b dark:border-neutral-700 px-4">
+        <span class="text-sm text-stone-500 dark:text-stone-400 w-12">To</span>
         <div class="flex-1 relative">
           <input
             v-model="form.to"
@@ -358,7 +358,7 @@ async function handleSend() {
           <!-- Contact suggestions dropdown -->
           <div 
             v-if="showSuggestions && activeField === 'to' && filteredContacts.length > 0"
-            class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden"
+            class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-neutral-800 border dark:border-neutral-700 rounded-lg shadow-lg z-50 overflow-hidden"
           >
             <div
               v-for="(contact, index) in filteredContacts"
@@ -367,18 +367,18 @@ async function handleSend() {
               :class="[
                 'px-3 py-2 cursor-pointer flex items-center gap-3',
                 index === suggestionIndex 
-                  ? 'bg-blue-50 dark:bg-blue-900/30' 
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'bg-stone-100 dark:bg-neutral-700/30' 
+                  : 'hover:bg-stone-50 dark:hover:bg-neutral-700'
               ]"
             >
-              <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xs font-medium">
+              <div class="w-8 h-8 rounded-full bg-stone-100 dark:bg-neutral-800 flex items-center justify-center text-stone-800 dark:text-stone-200 dark:text-stone-400 text-xs font-medium">
                 {{ contact.firstName?.charAt(0) || '' }}{{ contact.lastName?.charAt(0) || '' }}
               </div>
               <div class="flex-1 min-w-0">
-                <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <div class="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
                   {{ contact.firstName }} {{ contact.lastName }}
                 </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <div class="text-xs text-stone-500 dark:text-stone-400 truncate">
                   {{ contact.email }}
                 </div>
               </div>
@@ -390,14 +390,14 @@ async function handleSend() {
           <button
             v-if="!showCc"
             @click="showCc = true"
-            class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            class="text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
           >
             Cc
           </button>
           <button
             v-if="!showBcc"
             @click="showBcc = true"
-            class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            class="text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
           >
             Bcc
           </button>
@@ -405,8 +405,8 @@ async function handleSend() {
       </div>
 
       <!-- Cc field -->
-      <div v-if="showCc" class="relative flex items-center border-b dark:border-gray-700 px-4">
-        <span class="text-sm text-gray-500 dark:text-gray-400 w-12">Cc</span>
+      <div v-if="showCc" class="relative flex items-center border-b dark:border-neutral-700 px-4">
+        <span class="text-sm text-stone-500 dark:text-stone-400 w-12">Cc</span>
         <div class="flex-1 relative">
           <input
             v-model="form.cc"
@@ -421,7 +421,7 @@ async function handleSend() {
           <!-- Contact suggestions dropdown for Cc -->
           <div 
             v-if="showSuggestions && activeField === 'cc' && filteredContacts.length > 0"
-            class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden"
+            class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-neutral-800 border dark:border-neutral-700 rounded-lg shadow-lg z-50 overflow-hidden"
           >
             <div
               v-for="(contact, index) in filteredContacts"
@@ -430,18 +430,18 @@ async function handleSend() {
               :class="[
                 'px-3 py-2 cursor-pointer flex items-center gap-3',
                 index === suggestionIndex 
-                  ? 'bg-blue-50 dark:bg-blue-900/30' 
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'bg-stone-100 dark:bg-neutral-700/30' 
+                  : 'hover:bg-stone-50 dark:hover:bg-neutral-700'
               ]"
             >
-              <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xs font-medium">
+              <div class="w-8 h-8 rounded-full bg-stone-100 dark:bg-neutral-800 flex items-center justify-center text-stone-800 dark:text-stone-200 dark:text-stone-400 text-xs font-medium">
                 {{ contact.firstName?.charAt(0) || '' }}{{ contact.lastName?.charAt(0) || '' }}
               </div>
               <div class="flex-1 min-w-0">
-                <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <div class="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
                   {{ contact.firstName }} {{ contact.lastName }}
                 </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <div class="text-xs text-stone-500 dark:text-stone-400 truncate">
                   {{ contact.email }}
                 </div>
               </div>
@@ -452,8 +452,8 @@ async function handleSend() {
       </div>
 
       <!-- Bcc field -->
-      <div v-if="showBcc" class="relative flex items-center border-b dark:border-gray-700 px-4">
-        <span class="text-sm text-gray-500 dark:text-gray-400 w-12">Bcc</span>
+      <div v-if="showBcc" class="relative flex items-center border-b dark:border-neutral-700 px-4">
+        <span class="text-sm text-stone-500 dark:text-stone-400 w-12">Bcc</span>
         <div class="flex-1 relative">
           <input
             v-model="form.bcc"
@@ -468,7 +468,7 @@ async function handleSend() {
           <!-- Contact suggestions dropdown for Bcc -->
           <div 
             v-if="showSuggestions && activeField === 'bcc' && filteredContacts.length > 0"
-            class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden"
+            class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-neutral-800 border dark:border-neutral-700 rounded-lg shadow-lg z-50 overflow-hidden"
           >
             <div
               v-for="(contact, index) in filteredContacts"
@@ -477,18 +477,18 @@ async function handleSend() {
               :class="[
                 'px-3 py-2 cursor-pointer flex items-center gap-3',
                 index === suggestionIndex 
-                  ? 'bg-blue-50 dark:bg-blue-900/30' 
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'bg-stone-100 dark:bg-neutral-700/30' 
+                  : 'hover:bg-stone-50 dark:hover:bg-neutral-700'
               ]"
             >
-              <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xs font-medium">
+              <div class="w-8 h-8 rounded-full bg-stone-100 dark:bg-neutral-800 flex items-center justify-center text-stone-800 dark:text-stone-200 dark:text-stone-400 text-xs font-medium">
                 {{ contact.firstName?.charAt(0) || '' }}{{ contact.lastName?.charAt(0) || '' }}
               </div>
               <div class="flex-1 min-w-0">
-                <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <div class="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
                   {{ contact.firstName }} {{ contact.lastName }}
                 </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <div class="text-xs text-stone-500 dark:text-stone-400 truncate">
                   {{ contact.email }}
                 </div>
               </div>
@@ -499,8 +499,8 @@ async function handleSend() {
       </div>
 
       <!-- Subject field -->
-      <div class="flex items-center border-b dark:border-gray-700 px-4">
-        <span class="text-sm text-gray-500 dark:text-gray-400 w-12">Subject</span>
+      <div class="flex items-center border-b dark:border-neutral-700 px-4">
+        <span class="text-sm text-stone-500 dark:text-stone-400 w-12">Subject</span>
         <input
           v-model="form.subject"
           type="text"
@@ -519,18 +519,18 @@ async function handleSend() {
       </div>
 
       <!-- Attachments preview -->
-      <div v-if="attachmentFiles.length > 0" class="px-4 py-2 border-t dark:border-gray-700 flex flex-wrap gap-2">
+      <div v-if="attachmentFiles.length > 0" class="px-4 py-2 border-t dark:border-neutral-700 flex flex-wrap gap-2">
         <div
           v-for="(file, index) in attachmentFiles"
           :key="index"
-          class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-1 text-sm"
+          class="flex items-center gap-2 bg-stone-100 dark:bg-neutral-700 rounded-lg px-3 py-1 text-sm"
         >
-          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
           </svg>
           <span class="truncate max-w-[120px]">{{ file.name }}</span>
-          <span class="text-gray-400 text-xs">({{ formatFileSize(file.size) }})</span>
-          <button @click="removeAttachment(index)" class="text-gray-400 hover:text-red-500">
+          <span class="text-stone-400 text-xs">({{ formatFileSize(file.size) }})</span>
+          <button @click="removeAttachment(index)" class="text-stone-400 hover:text-red-500">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -548,11 +548,11 @@ async function handleSend() {
       />
 
       <!-- Footer -->
-      <div class="flex items-center justify-between px-4 py-2 border-t dark:border-gray-700">
+      <div class="flex items-center justify-between px-4 py-2 border-t dark:border-neutral-700">
         <button
           @click="handleSend"
           :disabled="loading"
-          class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+          class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white text-sm font-medium rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50 flex items-center gap-2"
         >
           <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -563,16 +563,16 @@ async function handleSend() {
 
         <div class="flex items-center gap-2">
           <!-- Attach file button -->
-          <button @click="handleAttachmentSelect" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" title="Attach files">
-            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button @click="handleAttachmentSelect" class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded" title="Attach files">
+            <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
             </svg>
           </button>
           <!-- Draft saved indicator -->
-          <span v-if="emailStore.currentDraft" class="text-xs text-gray-400">Draft saved</span>
+          <span v-if="emailStore.currentDraft" class="text-xs text-stone-400">Draft saved</span>
           <button
             @click="emit('close')"
-            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-red-500"
+            class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded text-red-500"
             title="Discard"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

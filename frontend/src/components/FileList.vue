@@ -39,7 +39,7 @@ function handleContextMenu(file: FileItem, event: MouseEvent) {
 
 <template>
   <table class="w-full">
-    <thead class="bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 uppercase">
+    <thead class="bg-stone-50 dark:bg-neutral-800 text-xs text-stone-500 dark:text-stone-400 uppercase">
       <tr>
         <th class="px-4 py-3 text-left font-medium">Name</th>
         <th class="px-4 py-3 text-left font-medium w-32">Size</th>
@@ -47,7 +47,7 @@ function handleContextMenu(file: FileItem, event: MouseEvent) {
         <th v-if="showRestore" class="px-4 py-3 text-left font-medium w-24">Actions</th>
       </tr>
     </thead>
-    <tbody class="divide-y dark:divide-gray-700">
+    <tbody class="divide-y dark:divide-neutral-700">
       <tr
         v-for="file in files"
         :key="file.id"
@@ -57,17 +57,17 @@ function handleContextMenu(file: FileItem, event: MouseEvent) {
         :class="[
           'cursor-pointer transition-colors',
           filesStore.selectedFiles.has(file.id)
-            ? 'bg-blue-50 dark:bg-blue-900/30'
-            : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+            ? 'bg-stone-100 dark:bg-neutral-700/30'
+            : 'hover:bg-stone-50 dark:hover:bg-neutral-700'
         ]"
       >
         <td class="px-4 py-2">
           <div class="flex items-center gap-3">
             <!-- Icon -->
-            <svg v-if="file.is_folder" class="w-5 h-5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <svg v-if="file.is_folder" class="w-5 h-5 text-stone-700 dark:text-stone-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
             </svg>
-            <svg v-else class="w-5 h-5 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <svg v-else class="w-5 h-5 text-stone-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
             </svg>
             <span class="truncate" :title="file.name">{{ file.name }}</span>
@@ -76,16 +76,16 @@ function handleContextMenu(file: FileItem, event: MouseEvent) {
             </svg>
           </div>
         </td>
-        <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+        <td class="px-4 py-2 text-sm text-stone-500 dark:text-stone-400">
           {{ file.is_folder ? '—' : formatBytes(file.size) }}
         </td>
-        <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+        <td class="px-4 py-2 text-sm text-stone-500 dark:text-stone-400">
           {{ formatDate(file.updated_at) }}
         </td>
         <td v-if="showRestore" class="px-4 py-2">
           <button
             @click.stop="emit('restore', file)"
-            class="text-sm text-blue-600 hover:text-blue-800"
+            class="text-sm text-stone-800 dark:text-stone-200 hover:text-stone-900 dark:hover:text-stone-100"
           >
             Restore
           </button>

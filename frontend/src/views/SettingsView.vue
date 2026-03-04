@@ -1,24 +1,24 @@
 <template>
   <div class="max-w-2xl mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">Settings</h1>
+    <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100 mb-8">Settings</h1>
 
     <!-- General Settings -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">General</h2>
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-6 mb-6">
+      <h2 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">General</h2>
       
       <!-- Timezone -->
       <div class="mb-6">
-        <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label for="timezone" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
           Timezone
         </label>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+        <p class="text-sm text-stone-500 dark:text-stone-400 mb-2">
           Choose your timezone to display dates and times correctly.
         </p>
         <select
           id="timezone"
           v-model="selectedTimezone"
           @change="saveTimezone"
-          class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+          class="w-full border border-stone-300 dark:border-neutral-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
         >
           <optgroup v-for="group in groupedTimezones" :key="group.label" :label="group.label">
             <option v-for="tz in group.timezones" :key="tz.value" :value="tz.value">
@@ -30,11 +30,11 @@
     </div>
 
     <!-- Two-Factor Authentication -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Two-Factor Authentication</h2>
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-6 mb-6">
+      <h2 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Two-Factor Authentication</h2>
       
       <div v-if="loadingTOTP" class="flex items-center justify-center py-8">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-neutral-800 dark:border-neutral-200"></div>
       </div>
 
       <!-- 2FA Enabled State -->
@@ -46,14 +46,14 @@
           <span class="font-medium">2FA is enabled</span>
         </div>
         
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-sm text-stone-600 dark:text-stone-400">
           Backup codes remaining: {{ totpStatus.backup_codes_remaining }} / 10
         </p>
         
         <div class="flex gap-3 pt-2">
           <button
             @click="showRegenerateModal = true"
-            class="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
+            class="px-4 py-2 text-sm font-medium text-stone-800 dark:text-stone-200 bg-stone-100 rounded-lg hover:bg-stone-100"
           >
             Regenerate backup codes
           </button>
@@ -68,13 +68,13 @@
 
       <!-- 2FA Disabled State -->
       <div v-else class="space-y-4">
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-sm text-stone-600 dark:text-stone-400">
           Add an extra layer of security to your account by enabling two-factor authentication.
         </p>
         <button
           @click="startTOTPSetup"
           :disabled="settingUp2FA"
-          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
         >
           {{ settingUp2FA ? 'Loading...' : 'Enable 2FA' }}
         </button>
@@ -82,21 +82,21 @@
     </div>
 
     <!-- Account Info -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Account</h2>
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Account</h2>
       
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-          <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ authStore.user?.email }}</p>
+          <label class="block text-sm font-medium text-stone-700 dark:text-stone-300">Email</label>
+          <p class="mt-1 text-sm text-stone-900 dark:text-stone-100">{{ authStore.user?.email }}</p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
-          <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ authStore.user?.name }}</p>
+          <label class="block text-sm font-medium text-stone-700 dark:text-stone-300">Name</label>
+          <p class="mt-1 text-sm text-stone-900 dark:text-stone-100">{{ authStore.user?.name }}</p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Storage Used</label>
-          <p class="mt-1 text-sm text-gray-900 dark:text-white">
+          <label class="block text-sm font-medium text-stone-700 dark:text-stone-300">Storage Used</label>
+          <p class="mt-1 text-sm text-stone-900 dark:text-stone-100">
             {{ formatBytes(authStore.user?.storage_used || 0) }} of {{ formatBytes(authStore.user?.storage_limit || 0) }}
           </p>
         </div>
@@ -105,18 +105,18 @@
 
     <!-- 2FA Setup Modal -->
     <div v-if="showSetupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Set Up Two-Factor Authentication</h3>
+      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Set Up Two-Factor Authentication</h3>
         
         <!-- Step 1: Show QR/Secret -->
         <div v-if="setupStep === 1" class="space-y-4">
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+          <p class="text-sm text-stone-600 dark:text-stone-400">
             Scan the QR code with your authenticator app (Google Authenticator, Authy, Bitwarden, etc.)
           </p>
           
           <!-- QR Code Placeholder - In production, generate QR from qrcodeUrl -->
-          <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg text-center">
-            <div class="bg-white dark:bg-gray-600 p-4 inline-block rounded-lg">
+          <div class="bg-stone-100 dark:bg-neutral-700 p-4 rounded-lg text-center">
+            <div class="bg-white dark:bg-neutral-600 p-4 inline-block rounded-lg">
               <!-- QR Code would be rendered here -->
               <img 
                 :src="`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpSetup?.qrcode_url || '')}`"
@@ -127,10 +127,10 @@
           </div>
           
           <div>
-            <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <p class="text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
               Or enter this key manually in your app:
             </p>
-            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg font-mono text-sm text-center select-all break-all dark:text-gray-200">
+            <div class="bg-stone-100 dark:bg-neutral-700 p-3 rounded-lg font-mono text-sm text-center select-all break-all dark:text-stone-200">
               {{ totpSetup?.secret }}
             </div>
           </div>
@@ -138,13 +138,13 @@
           <div class="flex justify-end gap-3 pt-4">
             <button
               @click="cancelSetup"
-              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+              class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
             >
               Cancel
             </button>
             <button
               @click="setupStep = 2"
-              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               Next
             </button>
@@ -153,7 +153,7 @@
         
         <!-- Step 2: Verify Code -->
         <div v-else-if="setupStep === 2" class="space-y-4">
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+          <p class="text-sm text-stone-600 dark:text-stone-400">
             Enter the 6-digit code from your authenticator app to verify setup.
           </p>
           
@@ -162,7 +162,7 @@
           </div>
           
           <div>
-            <label for="verify-code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label for="verify-code" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
               Verification Code
             </label>
             <input
@@ -172,21 +172,21 @@
               inputmode="numeric"
               maxlength="6"
               placeholder="000000"
-              class="w-full px-3 py-2 text-center text-lg tracking-widest border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              class="w-full px-3 py-2 text-center text-lg tracking-widest border border-stone-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
             />
           </div>
           
           <div class="flex justify-end gap-3 pt-4">
             <button
               @click="setupStep = 1"
-              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+              class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
             >
               Back
             </button>
             <button
               @click="verifyAndEnable"
               :disabled="verifying || verifyCode.length !== 6"
-              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
             >
               {{ verifying ? 'Verifying...' : 'Enable 2FA' }}
             </button>
@@ -211,9 +211,9 @@
             </p>
           </div>
           
-          <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-            <div class="grid grid-cols-2 gap-2 font-mono text-sm dark:text-gray-200">
-              <div v-for="code in backupCodes" :key="code" class="bg-white dark:bg-gray-600 px-3 py-2 rounded text-center">
+          <div class="bg-stone-100 dark:bg-neutral-700 p-4 rounded-lg">
+            <div class="grid grid-cols-2 gap-2 font-mono text-sm dark:text-stone-200">
+              <div v-for="code in backupCodes" :key="code" class="bg-white dark:bg-neutral-600 px-3 py-2 rounded text-center">
                 {{ code }}
               </div>
             </div>
@@ -222,7 +222,7 @@
           <div class="flex justify-end pt-4">
             <button
               @click="finishSetup"
-              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               I've saved my backup codes
             </button>
@@ -233,10 +233,10 @@
 
     <!-- Disable 2FA Modal -->
     <div v-if="showDisableModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Disable Two-Factor Authentication</h3>
+      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Disable Two-Factor Authentication</h3>
         
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <p class="text-sm text-stone-600 dark:text-stone-400 mb-4">
           Enter your password to disable 2FA. This will make your account less secure.
         </p>
         
@@ -245,21 +245,21 @@
         </div>
         
         <div class="mb-4">
-          <label for="disable-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label for="disable-password" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
             Password
           </label>
           <input
             id="disable-password"
             v-model="disablePassword"
             type="password"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            class="w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
           />
         </div>
         
         <div class="flex justify-end gap-3">
           <button
             @click="closeDisableModal"
-            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+            class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
           >
             Cancel
           </button>
@@ -276,11 +276,11 @@
 
     <!-- Regenerate Backup Codes Modal -->
     <div v-if="showRegenerateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Regenerate Backup Codes</h3>
+      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Regenerate Backup Codes</h3>
         
         <div v-if="!newBackupCodes">
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <p class="text-sm text-stone-600 dark:text-stone-400 mb-4">
             This will invalidate all your existing backup codes and generate new ones.
           </p>
           
@@ -289,28 +289,28 @@
           </div>
           
           <div class="mb-4">
-            <label for="regenerate-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label for="regenerate-password" class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">
               Password
             </label>
             <input
               id="regenerate-password"
               v-model="regeneratePassword"
               type="password"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              class="w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
             />
           </div>
           
           <div class="flex justify-end gap-3">
             <button
               @click="closeRegenerateModal"
-              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+              class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
             >
               Cancel
             </button>
             <button
               @click="regenerateBackupCodes"
               :disabled="regenerating || !regeneratePassword"
-              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
             >
               {{ regenerating ? 'Regenerating...' : 'Regenerate' }}
             </button>
@@ -327,9 +327,9 @@
             </p>
           </div>
           
-          <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-            <div class="grid grid-cols-2 gap-2 font-mono text-sm dark:text-gray-200">
-              <div v-for="code in newBackupCodes" :key="code" class="bg-white dark:bg-gray-600 px-3 py-2 rounded text-center">
+          <div class="bg-stone-100 dark:bg-neutral-700 p-4 rounded-lg">
+            <div class="grid grid-cols-2 gap-2 font-mono text-sm dark:text-stone-200">
+              <div v-for="code in newBackupCodes" :key="code" class="bg-white dark:bg-neutral-600 px-3 py-2 rounded text-center">
                 {{ code }}
               </div>
             </div>
@@ -338,7 +338,7 @@
           <div class="flex justify-end">
             <button
               @click="closeRegenerateModal"
-              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               Done
             </button>
@@ -348,7 +348,7 @@
     </div>
 
     <!-- Save indicator -->
-    <div v-if="saving" class="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg">
+    <div v-if="saving" class="fixed bottom-4 right-4 bg-neutral-800 dark:bg-neutral-200 text-white px-4 py-2 rounded-lg shadow-lg">
       Saving...
     </div>
     <div v-if="saved" class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg">

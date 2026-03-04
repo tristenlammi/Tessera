@@ -163,27 +163,27 @@ watch(() => props.fileId, () => {
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
     @click.self="emit('close')"
   >
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-md mx-4">
       <!-- Header -->
-      <div class="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
-        <h3 class="font-medium dark:text-white">Share "{{ fileName }}"</h3>
+      <div class="flex items-center justify-between px-4 py-3 border-b dark:border-neutral-700">
+        <h3 class="font-medium dark:text-stone-100">Share "{{ fileName }}"</h3>
         <button
           @click="emit('close')"
-          class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+          class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded"
         >
-          <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
       <!-- Tabs -->
-      <div class="flex border-b dark:border-gray-700">
+      <div class="flex border-b dark:border-neutral-700">
         <button
           @click="activeTab = 'link'"
           :class="[
             'flex-1 py-2 text-sm font-medium text-center border-b-2 transition-colors',
-            activeTab === 'link' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            activeTab === 'link' ? 'border-neutral-800 dark:border-neutral-200 text-stone-800 dark:text-stone-200' : 'border-transparent text-stone-500 hover:text-stone-700 dark:hover:text-stone-300'
           ]"
         >
           Link Sharing
@@ -192,7 +192,7 @@ watch(() => props.fileId, () => {
           @click="activeTab = 'people'"
           :class="[
             'flex-1 py-2 text-sm font-medium text-center border-b-2 transition-colors',
-            activeTab === 'people' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            activeTab === 'people' ? 'border-neutral-800 dark:border-neutral-200 text-stone-800 dark:text-stone-200' : 'border-transparent text-stone-500 hover:text-stone-700 dark:hover:text-stone-300'
           ]"
         >
           Share with People
@@ -204,22 +204,22 @@ watch(() => props.fileId, () => {
         <!-- Link Tab -->
         <div v-if="activeTab === 'link'" class="space-y-4">
           <div v-if="loading" class="flex items-center justify-center py-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-800 dark:border-neutral-200"></div>
           </div>
 
           <template v-else>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Share link</label>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Share link</label>
               <div class="flex gap-2">
                 <input
                   type="text"
                   :value="fullShareUrl"
                   readonly
-                  class="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-sm dark:text-white"
+                  class="flex-1 px-3 py-2 border dark:border-neutral-700 rounded-lg bg-stone-50 dark:bg-neutral-700 text-sm dark:text-stone-100"
                 />
                 <button
                   @click="copyToClipboard"
-                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex items-center gap-2"
+                  class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 text-sm flex items-center gap-2"
                 >
                   <svg v-if="!copied" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -232,15 +232,15 @@ watch(() => props.fileId, () => {
               </div>
             </div>
 
-            <div class="space-y-3 pt-2 border-t dark:border-gray-700">
-              <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Options</h4>
+            <div class="space-y-3 pt-2 border-t dark:border-neutral-700">
+              <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300">Options</h4>
 
               <div class="flex items-center justify-between">
-                <label class="text-sm text-gray-600 dark:text-gray-400">Expires in</label>
+                <label class="text-sm text-stone-600 dark:text-stone-400">Expires in</label>
                 <select
                   v-model="expiresIn"
                   @change="createShare"
-                  class="px-3 py-1.5 border dark:border-gray-600 rounded-lg text-sm dark:bg-gray-700 dark:text-white"
+                  class="px-3 py-1.5 border dark:border-neutral-700 rounded-lg text-sm dark:bg-neutral-700 dark:text-stone-100"
                 >
                   <option value="1">1 day</option>
                   <option value="7">7 days</option>
@@ -251,12 +251,12 @@ watch(() => props.fileId, () => {
               </div>
 
               <div class="flex items-center justify-between">
-                <label class="text-sm text-gray-600 dark:text-gray-400">Allow download</label>
+                <label class="text-sm text-stone-600 dark:text-stone-400">Allow download</label>
                 <button
                   @click="allowDownload = !allowDownload; createShare()"
                   :class="[
                     'relative w-11 h-6 rounded-full transition-colors',
-                    allowDownload ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                    allowDownload ? 'bg-neutral-800 dark:bg-neutral-200' : 'bg-stone-300 dark:bg-neutral-600'
                   ]"
                 >
                   <span
@@ -269,53 +269,53 @@ watch(() => props.fileId, () => {
               </div>
 
               <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">Password (optional)</label>
+                <label class="block text-sm text-stone-600 dark:text-stone-400 mb-1">Password (optional)</label>
                 <input
                   v-model="password"
                   type="password"
                   placeholder="Set a password"
                   @blur="createShare"
-                  class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm dark:bg-gray-700 dark:text-white"
+                  class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg text-sm dark:bg-neutral-700 dark:text-stone-100"
                 />
               </div>
 
               <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">Max downloads (optional)</label>
+                <label class="block text-sm text-stone-600 dark:text-stone-400 mb-1">Max downloads (optional)</label>
                 <input
                   v-model="maxDownloads"
                   type="number"
                   min="1"
                   placeholder="Unlimited"
                   @blur="createShare"
-                  class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg text-sm dark:bg-gray-700 dark:text-white"
+                  class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg text-sm dark:bg-neutral-700 dark:text-stone-100"
                 />
               </div>
             </div>
 
             <!-- Analytics Section -->
-            <div v-if="analytics" class="space-y-2 pt-3 border-t dark:border-gray-700">
-              <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div v-if="analytics" class="space-y-2 pt-3 border-t dark:border-neutral-700">
+              <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 flex items-center gap-2">
+                <svg class="w-4 h-4 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 Link Analytics
               </h4>
               <div class="grid grid-cols-2 gap-3">
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
-                  <div class="text-2xl font-semibold text-blue-600">{{ analytics.view_count }}</div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400">Views</div>
+                <div class="bg-stone-50 dark:bg-neutral-700 rounded-lg p-3 text-center">
+                  <div class="text-2xl font-semibold text-stone-800 dark:text-stone-200">{{ analytics.view_count }}</div>
+                  <div class="text-xs text-stone-500 dark:text-stone-400">Views</div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+                <div class="bg-stone-50 dark:bg-neutral-700 rounded-lg p-3 text-center">
                   <div class="text-2xl font-semibold text-green-600">{{ analytics.download_count }}</div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400">
+                  <div class="text-xs text-stone-500 dark:text-stone-400">
                     Downloads
-                    <span v-if="analytics.max_downloads" class="text-gray-400">
+                    <span v-if="analytics.max_downloads" class="text-stone-400">
                       / {{ analytics.max_downloads }}
                     </span>
                   </div>
                 </div>
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400 text-center">
+              <div class="text-xs text-stone-500 dark:text-stone-400 text-center">
                 Last accessed: {{ formatDate(analytics.last_accessed_at) }}
               </div>
             </div>
@@ -331,9 +331,9 @@ watch(() => props.fileId, () => {
               type="email"
               placeholder="Enter email address"
               @keyup.enter="shareWithUser"
-              class="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg text-sm dark:bg-gray-700 dark:text-white"
+              class="flex-1 px-3 py-2 border dark:border-neutral-700 rounded-lg text-sm dark:bg-neutral-700 dark:text-stone-100"
             />
-            <select v-model="permission" class="px-3 py-2 border dark:border-gray-600 rounded-lg text-sm dark:bg-gray-700 dark:text-white">
+            <select v-model="permission" class="px-3 py-2 border dark:border-neutral-700 rounded-lg text-sm dark:bg-neutral-700 dark:text-stone-100">
               <option value="view">View</option>
               <option value="edit">Edit</option>
               <option value="admin">Full access</option>
@@ -341,7 +341,7 @@ watch(() => props.fileId, () => {
             <button
               @click="shareWithUser"
               :disabled="sharingWithUser"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm disabled:opacity-50"
+              class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 text-sm disabled:opacity-50"
             >
               {{ sharingWithUser ? '...' : 'Share' }}
             </button>
@@ -357,23 +357,23 @@ watch(() => props.fileId, () => {
 
           <!-- Existing shares -->
           <div v-if="loadingShares" class="flex justify-center py-4">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-neutral-800 dark:border-neutral-200"></div>
           </div>
 
           <div v-else-if="existingShares.length > 0" class="space-y-2">
-            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Shared with</h4>
+            <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300">Shared with</h4>
             <div
               v-for="share in existingShares"
               :key="share.id"
-              class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+              class="flex items-center justify-between p-2 bg-stone-50 dark:bg-neutral-700 rounded-lg"
             >
               <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-sm font-medium text-blue-600">
+                <div class="w-8 h-8 bg-stone-100 dark:bg-neutral-700/30 rounded-full flex items-center justify-center text-sm font-medium text-stone-800 dark:text-stone-200">
                   {{ (share.shared_email || 'U')[0].toUpperCase() }}
                 </div>
                 <div>
-                  <div class="text-sm font-medium dark:text-white">{{ share.shared_name || share.shared_email || 'User' }}</div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ getPermissionLabel(share.permission) }}</div>
+                  <div class="text-sm font-medium dark:text-stone-100">{{ share.shared_name || share.shared_email || 'User' }}</div>
+                  <div class="text-xs text-stone-500 dark:text-stone-400">{{ getPermissionLabel(share.permission) }}</div>
                 </div>
               </div>
               <button
@@ -385,17 +385,17 @@ watch(() => props.fileId, () => {
             </div>
           </div>
 
-          <div v-else class="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
+          <div v-else class="text-center py-4 text-sm text-stone-500 dark:text-stone-400">
             Not shared with anyone yet
           </div>
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="px-4 py-3 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-lg">
+      <div class="px-4 py-3 border-t dark:border-neutral-700 bg-stone-50 dark:bg-neutral-800/50 rounded-b-lg">
         <button
           @click="emit('close')"
-          class="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-sm"
+          class="w-full px-4 py-2 bg-stone-200 dark:bg-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-300 dark:hover:bg-neutral-600 text-sm"
         >
           Done
         </button>

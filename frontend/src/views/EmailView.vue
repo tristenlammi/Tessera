@@ -762,7 +762,7 @@ function toggleConversationEmail(emailId: string) {
 // Get avatar color based on email address (deterministic)
 function getAvatarColor(address: string): string {
   const colors = [
-    'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 
+    'bg-neutral-700 dark:bg-neutral-300', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 
     'bg-pink-500', 'bg-teal-500', 'bg-indigo-500', 'bg-red-500',
     'bg-cyan-500', 'bg-amber-500'
   ]
@@ -812,22 +812,22 @@ function closeConversation() {
 </script>
 
 <template>
-  <div class="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+  <div class="h-full flex flex-col bg-stone-50 dark:bg-neutral-900">
     <!-- No accounts - show setup -->
     <div v-if="!hasAccounts && !emailStore.loading" class="flex-1 flex items-center justify-center p-8">
       <div class="text-center max-w-md">
-        <svg class="w-24 h-24 mx-auto mb-6 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-24 h-24 mx-auto mb-6 text-stone-300 dark:text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
-        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+        <h2 class="text-2xl font-semibold text-stone-900 dark:text-stone-100 mb-2">
           Welcome to Tessera Email
         </h2>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">
+        <p class="text-stone-600 dark:text-stone-400 mb-6">
           Connect your email account to get started. We support any email provider with IMAP/SMTP access.
         </p>
         <button
           @click="showAccountSetup = true"
-          class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-neutral-800 dark:bg-neutral-200 text-white font-medium rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -840,12 +840,12 @@ function closeConversation() {
     <!-- Email interface -->
     <div v-else class="flex-1 flex overflow-hidden">
       <!-- Folders sidebar -->
-      <div class="w-56 bg-white dark:bg-gray-800 border-r dark:border-gray-700 flex flex-col">
+      <div class="w-56 bg-white dark:bg-neutral-800 border-r dark:border-neutral-700 flex flex-col">
         <!-- Compose button -->
         <div class="p-3">
           <button
             @click="openCompose('new')"
-            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-neutral-800 dark:bg-neutral-200 text-white font-medium rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -864,7 +864,7 @@ function closeConversation() {
                 'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                 currentVirtualFolder === 'starred'
                   ? 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  : 'text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700'
               ]"
             >
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -881,31 +881,31 @@ function closeConversation() {
               :class="[
                 'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                 currentVirtualFolder === 'drafts'
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-stone-200 dark:bg-neutral-700 text-stone-900 dark:text-stone-100'
+                  : 'text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700'
               ]"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
               </svg>
               <span class="flex-1 text-left">Drafts</span>
-              <span v-if="draftCount > 0" class="px-2 py-0.5 text-xs font-medium bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full">
+              <span v-if="draftCount > 0" class="px-2 py-0.5 text-xs font-medium bg-stone-200 dark:bg-neutral-600 text-stone-700 dark:text-stone-300 rounded-full">
                 {{ draftCount }}
               </span>
             </button>
           </div>
 
-          <div class="border-t dark:border-gray-700 my-2"></div>
+          <div class="border-t dark:border-neutral-700 my-2"></div>
 
           <!-- Folders section header -->
           <div class="flex items-center justify-between px-3 py-1">
-            <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Folders</span>
+            <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">Folders</span>
             <button
               @click="openCreateFolderModal(null)"
-              class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded"
               title="Create folder"
             >
-              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
             </button>
@@ -913,8 +913,8 @@ function closeConversation() {
 
           <!-- Root drop zone to un-nest folders -->
           <div
-            class="mx-2 mb-1 py-1 px-3 text-xs text-gray-400 dark:text-gray-500 border-2 border-dashed border-transparent rounded transition-colors"
-            :class="{ 'border-blue-400 bg-blue-50 dark:bg-blue-900/20': rootDropZoneActive }"
+            class="mx-2 mb-1 py-1 px-3 text-xs text-stone-400 dark:text-stone-500 border-2 border-dashed border-transparent rounded transition-colors"
+            :class="{ 'border-stone-400 bg-stone-100 dark:bg-neutral-700/20': rootDropZoneActive }"
             @dragover.prevent="rootDropZoneActive = true"
             @dragleave="rootDropZoneActive = false"
             @drop.prevent="handleRootDrop"
@@ -941,13 +941,13 @@ function closeConversation() {
           <!-- Labels section -->
           <div v-if="customLabels.length > 0 || true" class="mt-4">
             <div class="flex items-center justify-between px-3 py-2">
-              <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Labels</span>
+              <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">Labels</span>
               <button
                 @click="showLabelManager = true"
-                class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded"
                 title="Manage labels"
               >
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
               </button>
@@ -959,8 +959,8 @@ function closeConversation() {
               :class="[
                 'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                 currentLabel?.id === label.id
-                  ? 'bg-gray-100 dark:bg-gray-700'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-stone-100 dark:bg-neutral-700'
+                  : 'text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700'
               ]"
             >
               <span
@@ -970,7 +970,7 @@ function closeConversation() {
               <span class="flex-1 text-left truncate">{{ label.name }}</span>
               <span
                 v-if="label.email_count && label.email_count > 0"
-                class="px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full"
+                class="px-2 py-0.5 text-xs font-medium bg-stone-100 dark:bg-neutral-600 text-stone-600 dark:text-stone-300 rounded-full"
               >
                 {{ label.email_count }}
               </span>
@@ -979,25 +979,25 @@ function closeConversation() {
         </nav>
 
         <!-- Account actions -->
-        <div class="p-2 border-t dark:border-gray-700">
+        <div class="p-2 border-t dark:border-neutral-700">
           <!-- Sync progress (shown when syncing is in progress) -->
           <div v-if="emailStore.syncing" class="mb-2 px-3">
-            <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+            <div class="flex items-center justify-between text-xs text-stone-600 dark:text-stone-400 mb-1">
               <span class="truncate">{{ emailStore.syncProgress.message || 'Syncing...' }}</span>
               <span v-if="emailStore.syncProgress.totalFolders > 0">
                 {{ emailStore.syncProgress.completedFolders }}/{{ emailStore.syncProgress.totalFolders }}
               </span>
             </div>
-            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+            <div class="w-full bg-stone-200 dark:bg-neutral-700 rounded-full h-1.5">
               <div 
-                class="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                class="bg-neutral-800 dark:bg-neutral-200 h-1.5 rounded-full transition-all duration-300"
                 :style="{ width: emailStore.syncProgress.totalFolders > 0 ? `${(emailStore.syncProgress.completedFolders / emailStore.syncProgress.totalFolders) * 100}%` : '0%' }"
               ></div>
             </div>
           </div>
           <button
             @click="showRuleManager = true"
-            class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -1006,7 +1006,7 @@ function closeConversation() {
           </button>
           <button
             @click="showAccountSetup = true"
-            class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -1018,12 +1018,12 @@ function closeConversation() {
       </div>
 
       <!-- Email list -->
-      <div class="w-96 bg-white dark:bg-gray-800 border-r dark:border-gray-700 flex flex-col">
+      <div class="w-96 bg-white dark:bg-neutral-800 border-r dark:border-neutral-700 flex flex-col">
         <!-- Search bar and controls -->
-        <div class="p-3 border-b dark:border-gray-700">
+        <div class="p-3 border-b dark:border-neutral-700">
           <div class="flex items-center gap-2">
             <div class="relative flex-1">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
@@ -1031,12 +1031,12 @@ function closeConversation() {
                 @keyup.enter="handleSearch"
                 type="text"
                 placeholder="Search emails... (from: to: subject: has:attachment)"
-                class="w-full pl-10 pr-10 py-2 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                class="w-full pl-10 pr-10 py-2 bg-stone-100 dark:bg-neutral-700 border-0 rounded-lg text-sm focus:ring-2 focus:ring-stone-400"
               />
               <button
                 v-if="searchQuery"
                 @click="clearSearch"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1049,8 +1049,8 @@ function closeConversation() {
               :class="[
                 'p-2 rounded-lg transition-colors',
                 threadViewEnabled 
-                  ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                  : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-stone-100 text-stone-800 dark:text-stone-200 dark:bg-neutral-700/30 dark:text-stone-400' 
+                  : 'text-stone-400 hover:bg-stone-100 dark:hover:bg-neutral-700'
               ]"
               :title="threadViewEnabled ? 'Conversation view (on)' : 'Conversation view (off)'"
             >
@@ -1061,31 +1061,31 @@ function closeConversation() {
           </div>
 
           <!-- Batch action toolbar -->
-          <div v-if="hasSelection" class="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-b dark:border-gray-700">
+          <div v-if="hasSelection" class="flex items-center gap-2 px-4 py-2 bg-stone-100 dark:bg-neutral-700/20 border-b dark:border-neutral-700">
             <input
               type="checkbox"
               :checked="selectedEmailIds.size === emails.length"
               @change="emailStore.selectAllEmails()"
-              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              class="rounded border-stone-300 text-stone-800 dark:text-stone-200 focus:ring-stone-400"
             />
-            <span class="text-sm text-blue-700 dark:text-blue-300 font-medium">{{ selectedEmailIds.size }} selected</span>
+            <span class="text-sm text-stone-800 dark:text-stone-200 dark:text-stone-300 font-medium">{{ selectedEmailIds.size }} selected</span>
             <div class="flex items-center gap-1 ml-auto">
-              <button @click="emailStore.batchMarkAsRead(true)" class="px-2 py-1 text-xs bg-white dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300" title="Mark as read">
+              <button @click="emailStore.batchMarkAsRead(true)" class="px-2 py-1 text-xs bg-white dark:bg-neutral-700 rounded hover:bg-stone-100 dark:hover:bg-neutral-600 text-stone-700 dark:text-stone-300" title="Mark as read">
                 Read
               </button>
-              <button @click="emailStore.batchMarkAsRead(false)" class="px-2 py-1 text-xs bg-white dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300" title="Mark as unread">
+              <button @click="emailStore.batchMarkAsRead(false)" class="px-2 py-1 text-xs bg-white dark:bg-neutral-700 rounded hover:bg-stone-100 dark:hover:bg-neutral-600 text-stone-700 dark:text-stone-300" title="Mark as unread">
                 Unread
               </button>
-              <button @click="emailStore.batchMarkAsStarred(true)" class="px-2 py-1 text-xs bg-white dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-yellow-600" title="Star">
+              <button @click="emailStore.batchMarkAsStarred(true)" class="px-2 py-1 text-xs bg-white dark:bg-neutral-700 rounded hover:bg-stone-100 dark:hover:bg-neutral-600 text-yellow-600" title="Star">
                 ★
               </button>
-              <button v-if="emailStore.trashFolder" @click="emailStore.batchMoveEmails(emailStore.trashFolder!.id)" class="px-2 py-1 text-xs bg-white dark:bg-gray-700 rounded hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600" title="Move to trash">
+              <button v-if="emailStore.trashFolder" @click="emailStore.batchMoveEmails(emailStore.trashFolder!.id)" class="px-2 py-1 text-xs bg-white dark:bg-neutral-700 rounded hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600" title="Move to trash">
                 Trash
               </button>
-              <button @click="emailStore.batchDeleteEmails()" class="px-2 py-1 text-xs bg-white dark:bg-gray-700 rounded hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600" title="Delete permanently">
+              <button @click="emailStore.batchDeleteEmails()" class="px-2 py-1 text-xs bg-white dark:bg-neutral-700 rounded hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600" title="Delete permanently">
                 Delete
               </button>
-              <button @click="emailStore.clearSelection()" class="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" title="Clear selection">
+              <button @click="emailStore.clearSelection()" class="px-2 py-1 text-xs text-stone-500 hover:text-stone-700 dark:hover:text-stone-300" title="Clear selection">
                 ✕
               </button>
             </div>
@@ -1099,13 +1099,13 @@ function closeConversation() {
           @scroll="handleEmailListScroll"
         >
           <div v-if="emailStore.loading" class="flex items-center justify-center py-8">
-            <svg class="w-8 h-8 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+            <svg class="w-8 h-8 animate-spin text-stone-800 dark:text-stone-200" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           </div>
 
-          <div v-else-if="emails.length === 0 && threads.length === 0" class="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+          <div v-else-if="emails.length === 0 && threads.length === 0" class="flex flex-col items-center justify-center py-12 text-stone-500 dark:text-stone-400">
             <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
@@ -1117,7 +1117,7 @@ function closeConversation() {
             v-else-if="threadViewEnabled && threads.length > 0"
             v-for="thread in threads"
             :key="thread.thread_id"
-            class="border-b dark:border-gray-700"
+            class="border-b dark:border-neutral-700"
             draggable="true"
             @dragstart="(e) => handleThreadDragStart(e, thread)"
           >
@@ -1128,13 +1128,20 @@ function closeConversation() {
               @mouseleave="cancelPrefetch"
               @contextmenu.prevent="thread.latest_email && handleEmailContextMenu(thread.latest_email, $event)"
               :class="[
-                'group w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer select-none',
-                emailStore.currentThreadId === thread.thread_id && 'bg-blue-50 dark:bg-blue-900/20',
-                currentEmail?.id === thread.latest_email?.id && 'bg-blue-50 dark:bg-blue-900/20',
-                thread.unread_count > 0 && !emailStore.currentThreadId !== thread.thread_id && 'bg-gray-50 dark:bg-gray-800'
+                'group w-full text-left p-4 hover:bg-stone-50 dark:hover:bg-neutral-700/50 transition-all duration-200 cursor-pointer select-none',
+                emailStore.currentThreadId === thread.thread_id && 'bg-stone-100 dark:bg-neutral-700/20',
+                currentEmail?.id === thread.latest_email?.id && 'bg-stone-100 dark:bg-neutral-700/20',
+                thread.unread_count > 0 && emailStore.currentThreadId !== thread.thread_id && 'bg-stone-100/30 dark:bg-neutral-700/10'
               ]"
             >
               <div class="flex items-start gap-3">
+                <!-- Unread indicator dot -->
+                <div class="mt-2 flex-shrink-0 w-2.5 h-2.5">
+                  <div
+                    v-if="thread.unread_count > 0"
+                    class="w-2.5 h-2.5 rounded-full bg-neutral-700 dark:bg-neutral-300 transition-opacity duration-200"
+                  ></div>
+                </div>
                 <!-- Star button -->
                 <button
                   @click.stop="emailStore.markAsStarred(thread.latest_email?.id || '', !thread.is_starred)"
@@ -1145,7 +1152,7 @@ function closeConversation() {
                       'w-5 h-5',
                       thread.is_starred
                         ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400'
+                        : 'text-stone-300 dark:text-stone-600 hover:text-yellow-400'
                     ]"
                     fill="none"
                     stroke="currentColor"
@@ -1159,10 +1166,10 @@ function closeConversation() {
                   <div class="flex items-center justify-between mb-1">
                     <span
                       :class="[
-                        'text-sm truncate',
+                        'text-sm truncate transition-all duration-200',
                         thread.unread_count > 0
-                          ? 'font-semibold text-gray-900 dark:text-white'
-                          : 'text-gray-700 dark:text-gray-300'
+                          ? 'font-semibold text-stone-900 dark:text-stone-100'
+                          : 'font-normal text-stone-600 dark:text-stone-400'
                       ]"
                     >
                       {{ thread.latest_email?.from_name || thread.latest_email?.from_address }}
@@ -1171,26 +1178,26 @@ function closeConversation() {
                       <!-- Thread count badge -->
                       <span
                         v-if="thread.email_count > 1"
-                        class="px-1.5 py-0.5 text-xs font-medium bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded"
+                        class="px-1.5 py-0.5 text-xs font-medium bg-stone-200 dark:bg-neutral-600 text-stone-600 dark:text-stone-300 rounded"
                       >
                         {{ thread.email_count }}
                       </span>
-                      <span class="text-xs text-gray-500 dark:text-gray-400">
+                      <span class="text-xs text-stone-500 dark:text-stone-400">
                         {{ formatDate(thread.latest_date) }}
                       </span>
                     </div>
                   </div>
                   <p
                     :class="[
-                      'text-sm truncate mb-1',
+                      'text-sm truncate mb-1 transition-all duration-200',
                       thread.unread_count > 0
-                        ? 'font-medium text-gray-800 dark:text-gray-200'
-                        : 'text-gray-600 dark:text-gray-400'
+                        ? 'font-semibold text-stone-800 dark:text-stone-200'
+                        : 'font-normal text-stone-500 dark:text-stone-500'
                     ]"
                   >
                     {{ thread.subject || '(No subject)' }}
                   </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  <p class="text-xs text-stone-500 dark:text-stone-400 truncate">
                     {{ thread.snippet }}
                   </p>
                 </div>
@@ -1199,7 +1206,7 @@ function closeConversation() {
                 <div class="flex flex-col items-center gap-1 flex-shrink-0">
                   <svg
                     v-if="thread.has_attachments"
-                    class="w-4 h-4 text-gray-400"
+                    class="w-4 h-4 text-stone-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -1209,7 +1216,7 @@ function closeConversation() {
                   <!-- Delete button -->
                   <button
                     @click.stop="deleteEmailFromList(thread.latest_email?.id || '')"
-                    class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    class="p-1 text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Delete"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1233,10 +1240,10 @@ function closeConversation() {
             @mouseleave="cancelPrefetch"
             @contextmenu.prevent="handleEmailContextMenu(email, $event)"
             :class="[
-              'group w-full text-left p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-grab active:cursor-grabbing select-none',
-              currentEmail?.id === email.id && 'bg-blue-50 dark:bg-blue-900/20',
-              !email.is_read && 'bg-gray-50 dark:bg-gray-800',
-              isEmailSelected(email.id) && 'bg-blue-50 dark:bg-blue-900/30'
+              'group w-full text-left p-4 border-b dark:border-neutral-700 hover:bg-stone-50 dark:hover:bg-neutral-700/50 transition-all duration-200 cursor-grab active:cursor-grabbing select-none',
+              currentEmail?.id === email.id && 'bg-stone-100 dark:bg-neutral-700/20',
+              !email.is_read && currentEmail?.id !== email.id && 'bg-stone-100/30 dark:bg-neutral-700/10',
+              isEmailSelected(email.id) && 'bg-stone-100 dark:bg-neutral-700/30'
             ]"
           >
             <div class="flex items-start gap-3">
@@ -1245,8 +1252,15 @@ function closeConversation() {
                 type="checkbox"
                 :checked="isEmailSelected(email.id)"
                 @click="(e) => toggleEmailSelection(email.id, e)"
-                class="mt-1.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
+                class="mt-1.5 rounded border-stone-300 text-stone-800 dark:text-stone-200 focus:ring-stone-400 flex-shrink-0"
               />
+              <!-- Unread indicator dot -->
+              <div class="mt-2 flex-shrink-0 w-2.5 h-2.5">
+                <div
+                  v-if="!email.is_read"
+                  class="w-2.5 h-2.5 rounded-full bg-neutral-700 dark:bg-neutral-300 transition-opacity duration-200"
+                ></div>
+              </div>
               <!-- Star button -->
               <button
                 @click="(e) => toggleStar(email, e)"
@@ -1257,7 +1271,7 @@ function closeConversation() {
                     'w-5 h-5',
                     email.is_starred
                       ? 'text-yellow-400 fill-current'
-                      : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400'
+                      : 'text-stone-300 dark:text-stone-600 hover:text-yellow-400'
                   ]"
                   fill="none"
                   stroke="currentColor"
@@ -1271,29 +1285,29 @@ function closeConversation() {
                 <div class="flex items-center justify-between mb-1">
                   <span
                     :class="[
-                      'text-sm truncate',
+                      'text-sm truncate transition-all duration-200',
                       email.is_read
-                        ? 'text-gray-700 dark:text-gray-300'
-                        : 'font-semibold text-gray-900 dark:text-white'
+                        ? 'font-normal text-stone-600 dark:text-stone-400'
+                        : 'font-semibold text-stone-900 dark:text-stone-100'
                     ]"
                   >
                     {{ email.from_name || email.from_address }}
                   </span>
-                  <span class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2">
+                  <span class="text-xs text-stone-500 dark:text-stone-400 flex-shrink-0 ml-2">
                     {{ formatDate(email.date) }}
                   </span>
                 </div>
                 <p
                   :class="[
-                    'text-sm truncate mb-1',
+                    'text-sm truncate mb-1 transition-all duration-200',
                     email.is_read
-                      ? 'text-gray-600 dark:text-gray-400'
-                      : 'font-medium text-gray-800 dark:text-gray-200'
+                      ? 'font-normal text-stone-500 dark:text-stone-500'
+                      : 'font-semibold text-stone-800 dark:text-stone-200'
                   ]"
                 >
                   {{ email.subject || '(No subject)' }}
                 </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <p class="text-xs text-stone-500 dark:text-stone-400 truncate">
                   {{ email.snippet }}
                 </p>
               </div>
@@ -1303,7 +1317,7 @@ function closeConversation() {
                 <!-- Attachment indicator -->
                 <svg
                   v-if="email.has_attachments"
-                  class="w-4 h-4 text-gray-400"
+                  class="w-4 h-4 text-stone-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1314,7 +1328,7 @@ function closeConversation() {
                 <!-- Delete button -->
                 <button
                   @click.stop="deleteEmailFromList(email.id)"
-                  class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded opacity-50 group-hover:opacity-100 transition-opacity"
+                  class="p-1 text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded opacity-50 group-hover:opacity-100 transition-opacity"
                   title="Delete"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1327,31 +1341,31 @@ function closeConversation() {
 
           <!-- Load more indicator -->
           <div v-if="emailStore.loadingMore" class="flex items-center justify-center py-4">
-            <svg class="w-6 h-6 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+            <svg class="w-6 h-6 animate-spin text-stone-800 dark:text-stone-200" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           </div>
-          <div v-else-if="!emailStore.hasMoreEmails && emails.length > 0" class="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
+          <div v-else-if="!emailStore.hasMoreEmails && emails.length > 0" class="text-center py-4 text-sm text-stone-500 dark:text-stone-400">
             No more emails
           </div>
         </div>
       </div>
 
       <!-- Email content -->
-      <div class="flex-1 flex flex-col bg-white dark:bg-gray-800">
+      <div class="flex-1 flex flex-col bg-white dark:bg-neutral-800">
         <!-- Loading state -->
         <div v-if="emailStore.loadingEmail || emailStore.loadingConversation" class="flex-1 flex items-center justify-center">
-          <svg class="w-8 h-8 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+          <svg class="w-8 h-8 animate-spin text-stone-800 dark:text-stone-200" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
         </div>
 
         <!-- No email selected -->
-        <div v-else-if="!currentEmail && emailStore.threadConversation.length === 0" class="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
+        <div v-else-if="!currentEmail && emailStore.threadConversation.length === 0" class="flex-1 flex items-center justify-center text-stone-500 dark:text-stone-400">
           <div class="text-center">
-            <svg class="w-20 h-20 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-20 h-20 mx-auto mb-4 text-stone-300 dark:text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
             <p>Select an email to read</p>
@@ -1361,33 +1375,33 @@ function closeConversation() {
         <!-- ===== THREAD CONVERSATION VIEW (Gmail-style) ===== -->
         <template v-else-if="emailStore.threadConversation.length > 0">
           <!-- Thread header bar -->
-          <div class="flex items-center gap-2 p-4 border-b dark:border-gray-700">
+          <div class="flex items-center gap-2 p-4 border-b dark:border-neutral-700">
             <button
               @click="closeConversation()"
-              class="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              class="lg:hidden p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
 
-            <button @click="openCompose('reply')" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Reply">
+            <button @click="openCompose('reply')" class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg" title="Reply">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
               </svg>
             </button>
-            <button @click="openCompose('replyAll')" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Reply All">
+            <button @click="openCompose('replyAll')" class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg" title="Reply All">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6M8 4h10a8 8 0 018 8v2" />
               </svg>
             </button>
-            <button @click="openCompose('forward')" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Forward">
+            <button @click="openCompose('forward')" class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg" title="Forward">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
               </svg>
             </button>
             <div class="flex-1"></div>
-            <button @click="moveToTrash" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-red-500" title="Delete">
+            <button @click="moveToTrash" class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg text-red-500" title="Delete">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
@@ -1396,10 +1410,10 @@ function closeConversation() {
 
           <!-- Thread subject -->
           <div class="px-6 pt-4 pb-2">
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
+            <h1 class="text-2xl font-semibold text-stone-900 dark:text-stone-100">
               {{ emailStore.threadConversation[0]?.subject || '(No subject)' }}
             </h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">
               {{ emailStore.threadConversation.length }} messages in conversation
             </p>
           </div>
@@ -1415,25 +1429,25 @@ function closeConversation() {
               <div
                 v-if="!isConversationEmailExpanded(email.id)"
                 @click="toggleConversationEmail(email.id)"
-                class="flex items-center gap-3 p-3 rounded-lg border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                class="flex items-center gap-3 p-3 rounded-lg border dark:border-neutral-700 hover:bg-stone-50 dark:hover:bg-neutral-700/50 cursor-pointer transition-colors"
               >
                 <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0', getAvatarColor(email.from_address)]">
                   {{ (email.from_name || email.from_address).charAt(0).toUpperCase() }}
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
-                    <span class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <span class="text-sm font-medium text-stone-900 dark:text-stone-100 truncate">
                       {{ email.from_name || email.from_address }}
                     </span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                    <span class="text-xs text-stone-500 dark:text-stone-400 flex-shrink-0">
                       {{ formatFullDate(email.date) }}
                     </span>
                   </div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                  <p class="text-sm text-stone-500 dark:text-stone-400 truncate">
                     {{ email.snippet }}
                   </p>
                 </div>
-                <svg v-if="email.has_attachments" class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-if="email.has_attachments" class="w-4 h-4 text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                 </svg>
               </div>
@@ -1441,42 +1455,42 @@ function closeConversation() {
               <!-- Expanded email (full view) -->
               <div
                 v-else
-                class="rounded-lg border dark:border-gray-700 overflow-hidden"
+                class="rounded-lg border dark:border-neutral-700 overflow-hidden"
               >
                 <!-- Email header -->
                 <div
                   @click="toggleConversationEmail(email.id)"
-                  class="flex items-start gap-3 p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                  class="flex items-start gap-3 p-4 cursor-pointer hover:bg-stone-50 dark:hover:bg-neutral-700/30 transition-colors"
                 >
                   <div :class="['w-10 h-10 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0', getAvatarColor(email.from_address)]">
                     {{ (email.from_name || email.from_address).charAt(0).toUpperCase() }}
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 flex-wrap">
-                      <span class="font-medium text-gray-900 dark:text-white">
+                      <span class="font-medium text-stone-900 dark:text-stone-100">
                         {{ email.from_name || email.from_address }}
                       </span>
-                      <span class="text-sm text-gray-500 dark:text-gray-400">
+                      <span class="text-sm text-stone-500 dark:text-stone-400">
                         &lt;{{ email.from_address }}&gt;
                       </span>
                     </div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                    <div class="text-sm text-stone-500 dark:text-stone-400">
                       to {{ email.to?.map((t: any) => t.name || t.address).join(', ') }}
                       <span v-if="email.cc?.length">
                         , cc: {{ email.cc?.map((c: any) => c.name || c.address).join(', ') }}
                       </span>
                     </div>
-                    <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    <div class="text-xs text-stone-400 dark:text-stone-500 mt-1">
                       {{ formatFullDate(email.date) }}
                     </div>
                   </div>
                   <div class="flex items-center gap-1 flex-shrink-0">
                     <button
                       @click.stop="emailStore.markAsStarred(email.id, !email.is_starred)"
-                      class="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded"
+                      class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-600 rounded"
                     >
                       <svg
-                        :class="['w-4 h-4', email.is_starred ? 'text-yellow-400 fill-current' : 'text-gray-300 dark:text-gray-600']"
+                        :class="['w-4 h-4', email.is_starred ? 'text-yellow-400 fill-current' : 'text-stone-300 dark:text-stone-600']"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24"
                       >
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -1486,8 +1500,8 @@ function closeConversation() {
                 </div>
 
                 <!-- Attachments -->
-                <div v-if="email.attachments?.length" class="mx-4 mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
-                  <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                <div v-if="email.attachments?.length" class="mx-4 mb-3 p-3 bg-stone-50 dark:bg-neutral-800 rounded-lg border dark:border-neutral-700">
+                  <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 mb-2 flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                     </svg>
@@ -1497,30 +1511,30 @@ function closeConversation() {
                     <div
                       v-for="attachment in email.attachments"
                       :key="attachment.id"
-                      class="group relative flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors border dark:border-gray-600"
+                      class="group relative flex items-center gap-2 px-3 py-2 bg-white dark:bg-neutral-700 rounded-lg hover:bg-stone-100 dark:hover:bg-neutral-600 cursor-pointer transition-colors border dark:border-neutral-700"
                       @click.stop="handleAttachmentClick(attachment)"
                       @contextmenu.prevent="showAttachmentMenu($event, attachment)"
                     >
                       <span class="text-lg">{{ getAttachmentIcon(attachment.content_type) }}</span>
                       <div class="flex flex-col">
-                        <span class="text-sm text-gray-700 dark:text-gray-300 max-w-[200px] truncate">{{ attachment.filename }}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatFileSize(attachment.size) }}</span>
+                        <span class="text-sm text-stone-700 dark:text-stone-300 max-w-[200px] truncate">{{ attachment.filename }}</span>
+                        <span class="text-xs text-stone-500 dark:text-stone-400">{{ formatFileSize(attachment.size) }}</span>
                       </div>
                       <button
                         @click.stop="handleAttachmentDownload(attachment)"
-                        class="ml-2 p-1 hover:bg-gray-200 dark:hover:bg-gray-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        class="ml-2 p-1 hover:bg-stone-200 dark:hover:bg-stone-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Download"
                       >
-                        <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 text-stone-600 dark:text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                       </button>
                       <button
                         @click.stop="contextMenuAttachment = attachment; showSaveToFilesModal = true"
-                        class="p-1 hover:bg-gray-200 dark:hover:bg-gray-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        class="p-1 hover:bg-stone-200 dark:hover:bg-stone-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Save to My Files"
                       >
-                        <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 text-stone-600 dark:text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                       </button>
@@ -1540,7 +1554,7 @@ function closeConversation() {
                   ></iframe>
                   <pre
                     v-else
-                    class="whitespace-pre-wrap font-sans text-gray-700 dark:text-gray-300 text-sm leading-relaxed"
+                    class="whitespace-pre-wrap font-sans text-stone-700 dark:text-stone-300 text-sm leading-relaxed"
                   >{{ email.text_body || email.snippet }}</pre>
                 </div>
 
@@ -1548,7 +1562,7 @@ function closeConversation() {
                 <div v-if="index === emailStore.threadConversation.length - 1" class="px-4 pb-4 flex gap-2">
                   <button
                     @click="emailStore.currentEmail = email; openCompose('reply')"
-                    class="inline-flex items-center gap-2 px-4 py-2 text-sm border dark:border-gray-600 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm border dark:border-neutral-700 rounded-full hover:bg-stone-50 dark:hover:bg-neutral-700 text-stone-700 dark:text-stone-300 transition-colors"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -1557,7 +1571,7 @@ function closeConversation() {
                   </button>
                   <button
                     @click="emailStore.currentEmail = email; openCompose('forward')"
-                    class="inline-flex items-center gap-2 px-4 py-2 text-sm border dark:border-gray-600 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm border dark:border-neutral-700 rounded-full hover:bg-stone-50 dark:hover:bg-neutral-700 text-stone-700 dark:text-stone-300 transition-colors"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
@@ -1573,26 +1587,26 @@ function closeConversation() {
         <!-- ===== SINGLE EMAIL VIEW ===== -->
         <template v-else-if="currentEmail">
           <!-- Email header -->
-          <div class="flex items-center gap-2 p-4 border-b dark:border-gray-700">
+          <div class="flex items-center gap-2 p-4 border-b dark:border-neutral-700">
             <button
               @click="emailStore.currentEmail = null"
-              class="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              class="lg:hidden p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <button @click="openCompose('reply')" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Reply">
+            <button @click="openCompose('reply')" class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg" title="Reply">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
               </svg>
             </button>
-            <button @click="openCompose('replyAll')" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Reply All">
+            <button @click="openCompose('replyAll')" class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg" title="Reply All">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6M8 4h10a8 8 0 018 8v2" />
               </svg>
             </button>
-            <button @click="openCompose('forward')" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Forward">
+            <button @click="openCompose('forward')" class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg" title="Forward">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
               </svg>
@@ -1602,7 +1616,7 @@ function closeConversation() {
             <div class="relative">
               <button
                 @click="showLabelMenu = !showLabelMenu"
-                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
                 title="Add/remove labels"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1611,29 +1625,29 @@ function closeConversation() {
               </button>
               <div
                 v-if="showLabelMenu && currentEmail"
-                class="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 z-10"
+                class="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border dark:border-neutral-700 z-10"
               >
                 <div class="p-2">
-                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400 px-2 pb-2">Labels</p>
+                  <p class="text-xs font-medium text-stone-500 dark:text-stone-400 px-2 pb-2">Labels</p>
                   <button
                     v-for="label in labels"
                     :key="label.id"
                     @click="toggleEmailLabel(label.id)"
-                    class="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-sm"
+                    class="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded text-sm"
                   >
                     <span class="w-3 h-3 rounded-full flex-shrink-0" :style="{ backgroundColor: label.color }"></span>
-                    <span class="flex-1 text-left text-gray-700 dark:text-gray-300">{{ label.name }}</span>
-                    <svg v-if="currentEmail.labels?.some(l => l.id === label.id)" class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <span class="flex-1 text-left text-stone-700 dark:text-stone-300">{{ label.name }}</span>
+                    <svg v-if="currentEmail.labels?.some(l => l.id === label.id)" class="w-4 h-4 text-stone-800 dark:text-stone-200" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <div v-if="labels.length === 0" class="px-2 py-3 text-xs text-gray-500 dark:text-gray-400 text-center">No labels yet</div>
+                  <div v-if="labels.length === 0" class="px-2 py-3 text-xs text-stone-500 dark:text-stone-400 text-center">No labels yet</div>
                 </div>
               </div>
             </div>
 
             <div class="flex-1"></div>
-            <button @click="moveToTrash" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-red-500" title="Delete">
+            <button @click="moveToTrash" class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg text-red-500" title="Delete">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
@@ -1642,7 +1656,7 @@ function closeConversation() {
 
           <!-- Email content -->
           <div class="flex-1 overflow-y-auto p-6 flex flex-col">
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+            <h1 class="text-2xl font-semibold text-stone-900 dark:text-stone-100 mb-2">
               {{ currentEmail.subject || '(No subject)' }}
             </h1>
 
@@ -1663,24 +1677,24 @@ function closeConversation() {
             </div>
 
             <div class="flex items-start gap-4 mb-6">
-              <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium flex-shrink-0">
+              <div class="w-10 h-10 rounded-full bg-neutral-700 dark:bg-neutral-300 flex items-center justify-center text-white font-medium flex-shrink-0">
                 {{ (currentEmail.from_name || currentEmail.from_address).charAt(0).toUpperCase() }}
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="font-medium text-gray-900 dark:text-white">{{ currentEmail.from_name || currentEmail.from_address }}</span>
-                  <span class="text-sm text-gray-500 dark:text-gray-400">&lt;{{ currentEmail.from_address }}&gt;</span>
+                  <span class="font-medium text-stone-900 dark:text-stone-100">{{ currentEmail.from_name || currentEmail.from_address }}</span>
+                  <span class="text-sm text-stone-500 dark:text-stone-400">&lt;{{ currentEmail.from_address }}&gt;</span>
                 </div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">
+                <div class="text-sm text-stone-500 dark:text-stone-400">
                   to {{ currentEmail.to.map(t => t.name || t.address).join(', ') }}
                   <span v-if="currentEmail.cc?.length">, cc: {{ currentEmail.cc.map(c => c.name || c.address).join(', ') }}</span>
                 </div>
-                <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ formatFullDate(currentEmail.date) }}</div>
+                <div class="text-xs text-stone-400 dark:text-stone-500 mt-1">{{ formatFullDate(currentEmail.date) }}</div>
               </div>
             </div>
 
-            <div v-if="currentEmail.attachments?.length" class="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
-              <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+            <div v-if="currentEmail.attachments?.length" class="mb-4 p-3 bg-stone-50 dark:bg-neutral-800 rounded-lg border dark:border-neutral-700">
+              <h4 class="text-sm font-medium text-stone-700 dark:text-stone-300 mb-2 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                 </svg>
@@ -1690,30 +1704,30 @@ function closeConversation() {
                 <div
                   v-for="attachment in currentEmail.attachments"
                   :key="attachment.id"
-                  class="group relative flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors border dark:border-gray-600"
+                  class="group relative flex items-center gap-2 px-3 py-2 bg-white dark:bg-neutral-700 rounded-lg hover:bg-stone-100 dark:hover:bg-neutral-600 cursor-pointer transition-colors border dark:border-neutral-700"
                   @click="handleAttachmentClick(attachment)"
                   @contextmenu.prevent="showAttachmentMenu($event, attachment)"
                 >
                   <span class="text-lg">{{ getAttachmentIcon(attachment.content_type) }}</span>
                   <div class="flex flex-col">
-                    <span class="text-sm text-gray-700 dark:text-gray-300 max-w-[200px] truncate">{{ attachment.filename }}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatFileSize(attachment.size) }}</span>
+                    <span class="text-sm text-stone-700 dark:text-stone-300 max-w-[200px] truncate">{{ attachment.filename }}</span>
+                    <span class="text-xs text-stone-500 dark:text-stone-400">{{ formatFileSize(attachment.size) }}</span>
                   </div>
                   <button
                     @click.stop="handleAttachmentDownload(attachment)"
-                    class="ml-2 p-1 hover:bg-gray-200 dark:hover:bg-gray-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    class="ml-2 p-1 hover:bg-stone-200 dark:hover:bg-stone-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Download"
                   >
-                    <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-stone-600 dark:text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                   </button>
                   <button
                     @click.stop="contextMenuAttachment = attachment; showSaveToFilesModal = true"
-                    class="p-1 hover:bg-gray-200 dark:hover:bg-gray-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    class="p-1 hover:bg-stone-200 dark:hover:bg-stone-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Save to My Files"
                   >
-                    <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-stone-600 dark:text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                   </button>
@@ -1731,7 +1745,7 @@ function closeConversation() {
                 @load="resizeIframe"
                 ref="emailIframe"
               ></iframe>
-              <pre v-else class="whitespace-pre-wrap font-sans text-gray-700 dark:text-gray-300 p-4">{{ currentEmail.text_body }}</pre>
+              <pre v-else class="whitespace-pre-wrap font-sans text-stone-700 dark:text-stone-300 p-4">{{ currentEmail.text_body }}</pre>
             </div>
           </div>
         </template>
@@ -1771,13 +1785,13 @@ function closeConversation() {
         @click="closeFolderContextMenu"
       >
         <div
-          class="absolute bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1 min-w-[160px]"
+          class="absolute bg-white dark:bg-neutral-800 rounded-lg shadow-lg border dark:border-neutral-700 py-1 min-w-[160px]"
           :style="{ left: contextMenuPosition.x + 'px', top: contextMenuPosition.y + 'px' }"
           @click.stop
         >
           <button
             @click="handleMarkFolderAsRead"
-            class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            class="w-full px-4 py-2 text-left text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
@@ -1786,7 +1800,7 @@ function closeConversation() {
           </button>
           <button
             @click="openCreateFolderModal(contextMenuFolder?.id || null)"
-            class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            class="w-full px-4 py-2 text-left text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -1796,7 +1810,7 @@ function closeConversation() {
           <button
             v-if="contextMenuFolder?.folder_type === 'custom'"
             @click="openRenameFolderModal(contextMenuFolder)"
-            class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            class="w-full px-4 py-2 text-left text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -1806,7 +1820,7 @@ function closeConversation() {
           <button
             v-if="contextMenuFolder?.folder_type === 'custom'"
             @click="confirmDeleteFolder(contextMenuFolder)"
-            class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1824,32 +1838,32 @@ function closeConversation() {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
         @click.self="showFolderModal = false"
       >
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md p-6">
+          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">
             {{ folderModalMode === 'create' ? 'Create Folder' : 'Rename Folder' }}
           </h3>
           <input
             v-model="folderModalName"
             type="text"
             placeholder="Folder name"
-            class="w-full px-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            class="w-full px-4 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
             @keyup.enter="saveFolderModal"
             autofocus
           />
-          <div v-if="folderModalMode === 'create' && folderModalParentId" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <div v-if="folderModalMode === 'create' && folderModalParentId" class="mt-2 text-sm text-stone-500 dark:text-stone-400">
             Will be created inside the selected folder
           </div>
           <div class="flex justify-end gap-3 mt-6">
             <button
               @click="showFolderModal = false"
-              class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               Cancel
             </button>
             <button
               @click="saveFolderModal"
               :disabled="!folderModalName.trim()"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ folderModalMode === 'create' ? 'Create' : 'Save' }}
             </button>
@@ -1865,17 +1879,17 @@ function closeConversation() {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
         @click.self="showDeleteConfirm = false"
       >
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md p-6">
+          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">
             Delete Folder
           </h3>
-          <p class="text-gray-600 dark:text-gray-400 mb-6">
+          <p class="text-stone-600 dark:text-stone-400 mb-6">
             Are you sure you want to delete "{{ contextMenuFolder?.name }}"? This will also delete all emails in this folder.
           </p>
           <div class="flex justify-end gap-3">
             <button
               @click="showDeleteConfirm = false"
-              class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               Cancel
             </button>
@@ -1898,13 +1912,13 @@ function closeConversation() {
         @click="closeAttachmentContextMenu"
       >
         <div
-          class="absolute bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1 min-w-[180px]"
+          class="absolute bg-white dark:bg-neutral-800 rounded-lg shadow-lg border dark:border-neutral-700 py-1 min-w-[180px]"
           :style="{ left: attachmentContextMenuPosition.x + 'px', top: attachmentContextMenuPosition.y + 'px' }"
           @click.stop
         >
           <button
             @click="handleAttachmentDownload(contextMenuAttachment!); closeAttachmentContextMenu()"
-            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -1913,7 +1927,7 @@ function closeConversation() {
           </button>
           <button
             @click="handleSaveAttachmentToFiles"
-            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
@@ -1931,14 +1945,14 @@ function closeConversation() {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
         @click.self="cancelSaveToFiles"
       >
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
-          <div class="p-4 border-b dark:border-gray-700 flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+          <div class="p-4 border-b dark:border-neutral-700 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
               Save to My Files
             </h3>
             <button
               @click="cancelSaveToFiles"
-              class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1947,8 +1961,8 @@ function closeConversation() {
           </div>
           
           <div class="p-4">
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Saving: <span class="font-medium text-gray-900 dark:text-white">{{ contextMenuAttachment?.filename }}</span>
+            <p class="text-sm text-stone-600 dark:text-stone-400 mb-4">
+              Saving: <span class="font-medium text-stone-900 dark:text-stone-100">{{ contextMenuAttachment?.filename }}</span>
             </p>
             
             <SaveToFolderPicker
@@ -1969,13 +1983,13 @@ function closeConversation() {
         @click="closeEmailContextMenu"
       >
         <div
-          class="absolute bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1 min-w-[180px]"
+          class="absolute bg-white dark:bg-neutral-800 rounded-lg shadow-lg border dark:border-neutral-700 py-1 min-w-[180px]"
           :style="{ left: contextMenuPosition.x + 'px', top: contextMenuPosition.y + 'px' }"
           @click.stop
         >
           <button
             @click="openCreateTaskFromEmail(contextMenuEmail)"
-            class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            class="w-full px-4 py-2 text-left text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -1984,7 +1998,7 @@ function closeConversation() {
           </button>
           <button
             @click="closeEmailContextMenu(); emailStore.markAsRead(contextMenuEmail.id, !contextMenuEmail.is_read)"
-            class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            class="w-full px-4 py-2 text-left text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
@@ -1993,17 +2007,17 @@ function closeConversation() {
           </button>
           <button
             @click="closeEmailContextMenu(); toggleStar(contextMenuEmail, { stopPropagation: () => {} } as Event)"
-            class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            class="w-full px-4 py-2 text-left text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             </svg>
             {{ contextMenuEmail.is_starred ? 'Remove Star' : 'Add Star' }}
           </button>
-          <div class="border-t dark:border-gray-700 my-1"></div>
+          <div class="border-t dark:border-neutral-700 my-1"></div>
           <button
             @click="closeEmailContextMenu(); deleteEmailFromList(contextMenuEmail.id)"
-            class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -2021,50 +2035,50 @@ function closeConversation() {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
         @click.self="cancelCreateTask"
       >
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-lg p-6">
+          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">
             Create Task from Email
           </h3>
           
           <!-- Linked Email Info -->
-          <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center gap-2">
-            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="mb-4 p-3 bg-stone-100 dark:bg-neutral-700/20 rounded-lg flex items-center gap-2">
+            <svg class="w-5 h-5 text-stone-800 dark:text-stone-200 dark:text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            <span class="text-sm text-blue-700 dark:text-blue-300 truncate">
+            <span class="text-sm text-stone-800 dark:text-stone-200 dark:text-stone-300 truncate">
               Linked to: {{ taskFromEmail?.emailSubject }}
             </span>
           </div>
 
           <!-- Title -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Title</label>
             <input
               v-model="newTaskForm.title"
               type="text"
               placeholder="Task title"
-              class="w-full px-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-4 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
             />
           </div>
 
           <!-- Description -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Description</label>
             <textarea
               v-model="newTaskForm.description"
               rows="3"
               placeholder="Task description"
-              class="w-full px-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              class="w-full px-4 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400 focus:border-transparent resize-none"
             ></textarea>
           </div>
 
           <!-- Priority & Due Date -->
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Priority</label>
               <select
                 v-model="newTaskForm.priority"
-                class="w-full px-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="w-full px-4 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -2072,21 +2086,21 @@ function closeConversation() {
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Due Date</label>
               <input
                 v-model="newTaskForm.dueDate"
                 type="date"
-                class="w-full px-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                class="w-full px-4 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
               />
             </div>
           </div>
 
           <!-- Group -->
           <div v-if="tasksStore.groups.length > 0" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Group</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Group</label>
             <select
               v-model="newTaskForm.groupId"
-              class="w-full px-4 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              class="w-full px-4 py-2 border dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
             >
               <option :value="null">No Group</option>
               <option v-for="group in tasksStore.groups" :key="group.id" :value="group.id">
@@ -2097,16 +2111,16 @@ function closeConversation() {
 
           <!-- Add to Calendar (only show when a due date is set) -->
           <div v-if="newTaskForm.dueDate" class="mb-4">
-            <label class="flex items-center gap-2 cursor-pointer p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <label class="flex items-center gap-2 cursor-pointer p-3 bg-stone-100 dark:bg-neutral-700/20 border border-stone-200 dark:border-neutral-700 rounded-lg">
               <input
                 v-model="addToCalendar"
                 type="checkbox"
-                class="w-4 h-4 rounded text-blue-600"
+                class="w-4 h-4 rounded text-stone-800 dark:text-stone-200"
               />
-              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-stone-800 dark:text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Add to calendar</span>
+              <span class="text-sm font-medium text-stone-800 dark:text-stone-200 dark:text-stone-300">Add to calendar</span>
             </label>
           </div>
 
@@ -2114,14 +2128,14 @@ function closeConversation() {
           <div class="flex justify-end gap-3">
             <button
               @click="cancelCreateTask"
-              class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               Cancel
             </button>
             <button
               @click="saveTaskFromEmail"
               :disabled="!newTaskForm.title.trim()"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Create Task
             </button>
@@ -2136,12 +2150,12 @@ function closeConversation() {
         <div
           v-for="item in undoSendItems"
           :key="item.sendId"
-          class="flex items-center gap-4 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-2xl min-w-[320px]"
+          class="flex items-center gap-4 bg-neutral-900 text-white px-5 py-3 rounded-xl shadow-2xl min-w-[320px]"
         >
           <span class="text-sm flex-1">Sending "{{ item.subject }}"...</span>
           <button
             @click="emailStore.cancelSend(item.sendId)"
-            class="px-3 py-1 bg-blue-500 hover:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors"
+            class="px-3 py-1 bg-neutral-700 dark:bg-neutral-300 hover:bg-stone-300 text-white text-sm font-medium rounded-lg transition-colors"
           >
             Undo
           </button>

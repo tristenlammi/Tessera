@@ -43,33 +43,33 @@ const fileType = computed(() => {
 })
 
 const iconColor = computed(() => {
-  if (props.file.is_folder) return 'text-blue-500'
+  if (props.file.is_folder) return 'text-stone-700 dark:text-stone-300'
   const mime = props.file.mime_type || ''
   if (mime.startsWith('image/')) return 'text-green-500'
   if (mime.startsWith('video/')) return 'text-purple-500'
   if (mime.startsWith('audio/')) return 'text-pink-500'
   if (mime === 'application/pdf') return 'text-red-500'
-  return 'text-gray-400'
+  return 'text-stone-400'
 })
 </script>
 
 <template>
-  <div class="w-80 border-l dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col h-full">
+  <div class="w-80 border-l dark:border-neutral-700 bg-white dark:bg-neutral-800 flex flex-col h-full">
     <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
-      <h3 class="font-medium dark:text-white">Details</h3>
+    <div class="flex items-center justify-between px-4 py-3 border-b dark:border-neutral-700">
+      <h3 class="font-medium dark:text-stone-100">Details</h3>
       <button
         @click="emit('close')"
-        class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+        class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded"
       >
-        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
 
     <!-- Preview -->
-    <div class="p-6 flex flex-col items-center border-b dark:border-gray-700">
+    <div class="p-6 flex flex-col items-center border-b dark:border-neutral-700">
       <!-- File Icon -->
       <div :class="['w-20 h-20 flex items-center justify-center mb-3', iconColor]">
         <svg v-if="file.is_folder" class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
@@ -87,42 +87,42 @@ const iconColor = computed(() => {
       </div>
 
       <!-- File Name -->
-      <h4 class="font-medium text-center break-all px-2 dark:text-white">{{ file.name }}</h4>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ fileType }}</p>
+      <h4 class="font-medium text-center break-all px-2 dark:text-stone-100">{{ file.name }}</h4>
+      <p class="text-sm text-stone-500 dark:text-stone-400 mt-1">{{ fileType }}</p>
     </div>
 
     <!-- Details -->
     <div class="flex-1 overflow-auto p-4 space-y-4">
       <!-- Size -->
       <div v-if="!file.is_folder">
-        <label class="text-xs font-medium text-gray-500 uppercase">Size</label>
+        <label class="text-xs font-medium text-stone-500 uppercase">Size</label>
         <p class="text-sm mt-1">{{ formatBytes(file.size) }}</p>
       </div>
 
       <!-- Type -->
       <div v-if="file.mime_type">
-        <label class="text-xs font-medium text-gray-500 uppercase">Type</label>
+        <label class="text-xs font-medium text-stone-500 uppercase">Type</label>
         <p class="text-sm mt-1">{{ file.mime_type }}</p>
       </div>
 
       <!-- Created -->
       <div>
-        <label class="text-xs font-medium text-gray-500 uppercase">Created</label>
+        <label class="text-xs font-medium text-stone-500 uppercase">Created</label>
         <p class="text-sm mt-1">{{ formatDate(file.created_at) }}</p>
       </div>
 
       <!-- Modified -->
       <div>
-        <label class="text-xs font-medium text-gray-500 uppercase">Modified</label>
+        <label class="text-xs font-medium text-stone-500 uppercase">Modified</label>
         <p class="text-sm mt-1">{{ formatDate(file.updated_at) }}</p>
       </div>
 
       <!-- Starred -->
       <div>
-        <label class="text-xs font-medium text-gray-500 uppercase">Starred</label>
+        <label class="text-xs font-medium text-stone-500 uppercase">Starred</label>
         <p class="text-sm mt-1 flex items-center gap-1">
           <svg 
-            :class="['w-4 h-4', file.is_starred ? 'text-yellow-400' : 'text-gray-300']" 
+            :class="['w-4 h-4', file.is_starred ? 'text-yellow-400' : 'text-stone-300']" 
             fill="currentColor" 
             viewBox="0 0 20 20"
           >
@@ -133,19 +133,19 @@ const iconColor = computed(() => {
       </div>
 
       <!-- File ID (for debugging) -->
-      <div class="pt-4 border-t dark:border-gray-700">
-        <label class="text-xs font-medium text-gray-500 uppercase">File ID</label>
-        <p class="text-xs mt-1 text-gray-400 font-mono break-all">{{ file.id }}</p>
+      <div class="pt-4 border-t dark:border-neutral-700">
+        <label class="text-xs font-medium text-stone-500 uppercase">File ID</label>
+        <p class="text-xs mt-1 text-stone-400 font-mono break-all">{{ file.id }}</p>
       </div>
     </div>
 
     <!-- Actions -->
-    <div class="p-4 border-t dark:border-gray-700 space-y-2">
+    <div class="p-4 border-t dark:border-neutral-700 space-y-2">
       <a
         v-if="!file.is_folder"
         :href="`/api/files/${file.id}/download`"
         download
-        class="flex items-center justify-center gap-2 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        class="flex items-center justify-center gap-2 w-full px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

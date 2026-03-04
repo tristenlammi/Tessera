@@ -525,15 +525,15 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+  <div class="h-full flex flex-col bg-stone-50 dark:bg-neutral-900">
     <!-- Header -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+    <div class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700 px-6 py-4">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tasks</h1>
+        <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Tasks</h1>
         <div class="flex items-center gap-3">
           <button
             @click="openNewGroupModal"
-            class="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+            class="px-4 py-2 text-stone-700 dark:text-stone-300 border border-stone-300 dark:border-neutral-700 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700 flex items-center gap-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -542,7 +542,7 @@ onMounted(async () => {
           </button>
           <button
             @click="openNewTaskModal"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -554,7 +554,7 @@ onMounted(async () => {
 
       <!-- Groups -->
       <div v-if="tasksStore.groups.length > 0" class="flex items-center gap-2 mt-4">
-        <span class="text-sm text-gray-500 dark:text-gray-400">Groups:</span>
+        <span class="text-sm text-stone-500 dark:text-stone-400">Groups:</span>
         <div
           v-for="group in tasksStore.groups"
           :key="group.id"
@@ -580,24 +580,24 @@ onMounted(async () => {
           <!-- Column Header -->
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
-              <h2 class="font-semibold text-gray-900 dark:text-white">{{ column.title }}</h2>
-              <span class="px-2 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
+              <h2 class="font-semibold text-stone-900 dark:text-stone-100">{{ column.title }}</h2>
+              <span class="px-2 py-0.5 text-xs bg-stone-200 dark:bg-neutral-700 text-stone-600 dark:text-stone-400 rounded-full">
                 {{ column.tasks.length }}
               </span>
             </div>
             <button
               v-if="column.id === 'todo'"
               @click="openNewTaskModal"
-              class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+              class="p-1 rounded hover:bg-stone-200 dark:hover:bg-neutral-700"
             >
-              <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
             </button>
           </div>
 
           <!-- Tasks Container -->
-          <div class="flex-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-2 overflow-y-auto">
+          <div class="flex-1 bg-stone-100 dark:bg-neutral-800 rounded-lg p-2 overflow-y-auto">
             <draggable
               :list="column.tasks"
               group="tasks"
@@ -611,19 +611,19 @@ onMounted(async () => {
                   :class="[
                     'rounded-lg p-3 shadow-sm cursor-grab hover:shadow-md transition-shadow border-l-4',
                     task.status === 'done'
-                      ? 'bg-gray-100 dark:bg-gray-700/50 opacity-60'
-                      : 'bg-white dark:bg-gray-700'
+                      ? 'bg-stone-100 dark:bg-neutral-700/50 opacity-60'
+                      : 'bg-white dark:bg-neutral-700'
                   ]"
                   :style="{ borderLeftColor: getGroupColor(task.groupId) }"
                   @click="openEditTaskModal(task)"
                 >
                   <!-- Title -->
-                  <h3 class="font-medium text-gray-900 dark:text-white mb-2">
+                  <h3 class="font-medium text-stone-900 dark:text-stone-100 mb-2">
                     {{ task.title }}
                   </h3>
 
                   <!-- Description preview -->
-                  <p v-if="task.description" class="text-sm text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">
+                  <p v-if="task.description" class="text-sm text-stone-500 dark:text-stone-400 mb-2 line-clamp-2">
                     {{ task.description }}
                   </p>
 
@@ -644,7 +644,7 @@ onMounted(async () => {
                         'px-2 py-0.5 text-xs rounded-full',
                         isOverdue(task.dueDate) && task.status !== 'done'
                           ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                          : 'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300'
+                          : 'bg-stone-100 text-stone-600 dark:bg-neutral-600 dark:text-stone-300'
                       ]"
                     >
                       {{ formatDate(task.dueDate) }}
@@ -653,7 +653,7 @@ onMounted(async () => {
                     <!-- Recurrence indicator -->
                     <span
                       v-if="task.recurrence"
-                      class="text-gray-400 dark:text-gray-500"
+                      class="text-stone-400 dark:text-stone-500"
                       title="Recurring task"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -676,7 +676,7 @@ onMounted(async () => {
                     <span
                       v-for="tag in task.tags"
                       :key="tag"
-                      class="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded"
+                      class="px-2 py-0.5 text-xs bg-stone-100 text-stone-800 dark:text-stone-200 dark:bg-neutral-800 dark:text-stone-300 rounded"
                     >
                       {{ tag }}
                     </span>
@@ -687,17 +687,17 @@ onMounted(async () => {
                     v-if="task.checklist && task.checklist.length > 0"
                     class="flex items-center gap-2 mt-2"
                   >
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                     </svg>
                     <div class="flex-1 flex items-center gap-2">
-                      <div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                      <div class="flex-1 h-1.5 bg-stone-200 dark:bg-neutral-600 rounded-full overflow-hidden">
                         <div
                           class="h-full bg-green-500 rounded-full transition-all"
                           :style="{ width: `${(task.checklist.filter(i => i.completed).length / task.checklist.length) * 100}%` }"
                         ></div>
                       </div>
-                      <span class="text-xs text-gray-500 dark:text-gray-400">
+                      <span class="text-xs text-stone-500 dark:text-stone-400">
                         {{ task.checklist.filter(i => i.completed).length }}/{{ task.checklist.length }}
                       </span>
                     </div>
@@ -707,12 +707,12 @@ onMounted(async () => {
                   <div
                     v-if="task.linkedEmailId"
                     @click.stop="openLinkedEmail(task)"
-                    class="flex items-center gap-2 mt-2 p-2 bg-gray-50 dark:bg-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-500 cursor-pointer transition-colors"
+                    class="flex items-center gap-2 mt-2 p-2 bg-stone-50 dark:bg-neutral-600 rounded hover:bg-stone-100 dark:hover:bg-stone-500 cursor-pointer transition-colors"
                   >
-                    <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-stone-700 dark:text-stone-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
-                    <span class="text-xs text-gray-600 dark:text-gray-300 truncate">
+                    <span class="text-xs text-stone-600 dark:text-stone-300 truncate">
                       {{ task.linkedEmailSubject || 'Linked Email' }}
                     </span>
                   </div>
@@ -726,10 +726,10 @@ onMounted(async () => {
 
     <!-- Task Modal -->
     <div v-if="showTaskModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div class="p-6">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+            <h2 class="text-xl font-bold text-stone-900 dark:text-stone-100">
               {{ editingTask ? 'Edit Task' : 'New Task' }}
             </h2>
             <button
@@ -745,22 +745,22 @@ onMounted(async () => {
 
           <!-- Title -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Title</label>
             <input
               v-model="taskForm.title"
               type="text"
-              class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
               placeholder="Task title"
             />
           </div>
 
           <!-- Description -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Description</label>
             <textarea
               v-model="taskForm.description"
               rows="3"
-              class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+              class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100 resize-none"
               placeholder="Task description"
             ></textarea>
           </div>
@@ -768,10 +768,10 @@ onMounted(async () => {
           <!-- Priority & Due Date -->
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Priority</label>
               <select
                 v-model="taskForm.priority"
-                class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -779,36 +779,36 @@ onMounted(async () => {
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Due Date</label>
               <input
                 v-model="taskForm.dueDate"
                 type="date"
-                class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
               />
             </div>
           </div>
 
           <!-- Add to Calendar (only show for new tasks with a due date) -->
           <div v-if="!editingTask && taskForm.dueDate" class="mb-4">
-            <label class="flex items-center gap-2 cursor-pointer p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <label class="flex items-center gap-2 cursor-pointer p-3 bg-stone-100 dark:bg-neutral-700/20 border border-stone-200 dark:border-neutral-700 rounded-lg">
               <input
                 v-model="addToCalendar"
                 type="checkbox"
-                class="w-4 h-4 rounded text-blue-600"
+                class="w-4 h-4 rounded text-stone-800 dark:text-stone-200"
               />
-              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-stone-800 dark:text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Add to calendar</span>
+              <span class="text-sm font-medium text-stone-800 dark:text-stone-200 dark:text-stone-300">Add to calendar</span>
             </label>
           </div>
 
           <!-- Group -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Group</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Group</label>
             <select
               v-model="taskForm.groupId"
-              class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
             >
               <option :value="null">No group</option>
               <option v-for="group in tasksStore.groups" :key="group.id" :value="group.id">
@@ -819,18 +819,18 @@ onMounted(async () => {
 
           <!-- Tags -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Tags</label>
             <div class="flex items-center gap-2">
               <input
                 v-model="tagInput"
                 type="text"
-                class="flex-1 px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="flex-1 px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                 placeholder="Add tag"
                 @keydown.enter.prevent="addTag"
               />
               <button
                 @click="addTag"
-                class="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
+                class="px-4 py-2 bg-stone-200 dark:bg-neutral-600 rounded-lg hover:bg-stone-300 dark:hover:bg-stone-500"
               >
                 Add
               </button>
@@ -839,33 +839,33 @@ onMounted(async () => {
               <span
                 v-for="tag in taskForm.tags"
                 :key="tag"
-                class="px-2 py-1 text-sm bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded flex items-center gap-1"
+                class="px-2 py-1 text-sm bg-stone-100 text-stone-800 dark:text-stone-200 dark:bg-neutral-800 dark:text-stone-300 rounded flex items-center gap-1"
               >
                 {{ tag }}
-                <button @click="removeTag(tag)" class="hover:text-blue-900">×</button>
+                <button @click="removeTag(tag)" class="hover:text-stone-900">×</button>
               </span>
             </div>
           </div>
 
           <!-- Checklist -->
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Checklist</label>
+            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">Checklist</label>
             <div class="flex items-center gap-2 mb-2">
               <input
                 v-model="checklistInput"
                 type="text"
-                class="flex-1 px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                class="flex-1 px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                 placeholder="Add checklist item"
                 @keydown.enter.prevent="addChecklistItem"
               />
               <button
                 @click="addChecklistItem"
-                class="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
+                class="px-4 py-2 bg-stone-200 dark:bg-neutral-600 rounded-lg hover:bg-stone-300 dark:hover:bg-stone-500"
               >
                 Add
               </button>
             </div>
-            <div v-if="taskForm.checklist.length > 0" class="space-y-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div v-if="taskForm.checklist.length > 0" class="space-y-2 p-3 bg-stone-50 dark:bg-neutral-700 rounded-lg">
               <div
                 v-for="item in taskForm.checklist"
                 :key="item.id"
@@ -880,7 +880,7 @@ onMounted(async () => {
                 <span
                   :class="[
                     'flex-1 text-sm',
-                    item.completed ? 'line-through text-gray-400' : 'text-gray-700 dark:text-gray-300'
+                    item.completed ? 'line-through text-stone-400' : 'text-stone-700 dark:text-stone-300'
                   ]"
                 >
                   {{ item.title }}
@@ -905,21 +905,21 @@ onMounted(async () => {
                 type="checkbox"
                 class="w-4 h-4 rounded"
               />
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Recurring task</span>
+              <span class="text-sm font-medium text-stone-700 dark:text-stone-300">Recurring task</span>
             </label>
 
-            <div v-if="recurrenceEnabled" class="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3">
+            <div v-if="recurrenceEnabled" class="mt-3 p-3 bg-stone-50 dark:bg-neutral-700 rounded-lg space-y-3">
               <div class="flex items-center gap-3">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Repeat every</span>
+                <span class="text-sm text-stone-600 dark:text-stone-400">Repeat every</span>
                 <input
                   v-model.number="recurrenceForm.interval"
                   type="number"
                   min="1"
-                  class="w-16 px-2 py-1 border rounded dark:bg-gray-600 dark:border-gray-500 dark:text-white text-center"
+                  class="w-16 px-2 py-1 border rounded dark:bg-neutral-600 dark:border-neutral-700 dark:text-stone-100 text-center"
                 />
                 <select
                   v-model="recurrenceForm.type"
-                  class="px-3 py-1 border rounded dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  class="px-3 py-1 border rounded dark:bg-neutral-600 dark:border-neutral-700 dark:text-stone-100"
                 >
                   <option value="daily">day(s)</option>
                   <option value="weekly">week(s)</option>
@@ -930,7 +930,7 @@ onMounted(async () => {
 
               <!-- Weekly: Days of week selection -->
               <div v-if="recurrenceForm.type === 'weekly'" class="space-y-1">
-                <span class="text-sm text-gray-600 dark:text-gray-400">On days:</span>
+                <span class="text-sm text-stone-600 dark:text-stone-400">On days:</span>
                 <div class="flex flex-wrap gap-1">
                   <button
                     v-for="day in weekDays"
@@ -939,8 +939,8 @@ onMounted(async () => {
                     :class="[
                       'px-3 py-1 text-sm rounded-full transition-colors',
                       recurrenceForm.daysOfWeek.includes(day.value)
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500'
+                        ? 'bg-neutral-800 dark:bg-neutral-200 text-white'
+                        : 'bg-stone-200 dark:bg-neutral-600 text-stone-700 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-500'
                     ]"
                   >
                     {{ day.label }}
@@ -950,10 +950,10 @@ onMounted(async () => {
 
               <!-- Monthly: Day of month selection -->
               <div v-if="recurrenceForm.type === 'monthly'" class="flex items-center gap-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">On day:</span>
+                <span class="text-sm text-stone-600 dark:text-stone-400">On day:</span>
                 <select
                   v-model.number="recurrenceForm.dayOfMonth"
-                  class="px-3 py-1 border rounded dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                  class="px-3 py-1 border rounded dark:bg-neutral-600 dark:border-neutral-700 dark:text-stone-100"
                 >
                   <option :value="null">Same as due date</option>
                   <option v-for="d in 31" :key="d" :value="d">{{ d }}</option>
@@ -961,40 +961,40 @@ onMounted(async () => {
               </div>
 
               <!-- End conditions -->
-              <div class="space-y-2 pt-2 border-t dark:border-gray-600">
-                <span class="text-sm text-gray-600 dark:text-gray-400">End:</span>
+              <div class="space-y-2 pt-2 border-t dark:border-neutral-700">
+                <span class="text-sm text-stone-600 dark:text-stone-400">End:</span>
                 <div class="flex items-center gap-4">
                   <div class="flex items-center gap-2">
-                    <label class="text-sm text-gray-600 dark:text-gray-400">On date:</label>
+                    <label class="text-sm text-stone-600 dark:text-stone-400">On date:</label>
                     <input
                       v-model="recurrenceForm.endDate"
                       type="date"
-                      class="px-3 py-1 border rounded dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                      class="px-3 py-1 border rounded dark:bg-neutral-600 dark:border-neutral-700 dark:text-stone-100"
                     />
                   </div>
-                  <span class="text-sm text-gray-400">or</span>
+                  <span class="text-sm text-stone-400">or</span>
                   <div class="flex items-center gap-2">
-                    <label class="text-sm text-gray-600 dark:text-gray-400">After:</label>
+                    <label class="text-sm text-stone-600 dark:text-stone-400">After:</label>
                     <input
                       v-model.number="recurrenceForm.occurrences"
                       type="number"
                       min="1"
                       placeholder="∞"
-                      class="w-16 px-2 py-1 border rounded dark:bg-gray-600 dark:border-gray-500 dark:text-white text-center"
+                      class="w-16 px-2 py-1 border rounded dark:bg-neutral-600 dark:border-neutral-700 dark:text-stone-100 text-center"
                     />
-                    <span class="text-sm text-gray-600 dark:text-gray-400">times</span>
+                    <span class="text-sm text-stone-600 dark:text-stone-400">times</span>
                   </div>
                 </div>
               </div>
 
               <!-- Recurrence Preview -->
-              <div v-if="recurrencePreview.length > 0" class="pt-2 border-t dark:border-gray-600">
-                <span class="text-sm text-gray-600 dark:text-gray-400">Next occurrences:</span>
+              <div v-if="recurrencePreview.length > 0" class="pt-2 border-t dark:border-neutral-700">
+                <span class="text-sm text-stone-600 dark:text-stone-400">Next occurrences:</span>
                 <div class="mt-1 flex flex-wrap gap-2">
                   <span
                     v-for="(date, index) in recurrencePreview"
                     :key="index"
-                    class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded"
+                    class="text-xs px-2 py-1 bg-stone-100 dark:bg-neutral-700/50 text-stone-800 dark:text-stone-200 dark:text-stone-300 rounded"
                   >
                     {{ date }}
                   </span>
@@ -1004,16 +1004,16 @@ onMounted(async () => {
           </div>
 
           <!-- Actions -->
-          <div class="flex justify-end gap-2 pt-4 border-t dark:border-gray-700">
+          <div class="flex justify-end gap-2 pt-4 border-t dark:border-neutral-700">
             <button
               @click="showTaskModal = false"
-              class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               Cancel
             </button>
             <button
               @click="saveTask"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               {{ editingTask ? 'Save' : 'Create' }}
             </button>
@@ -1024,9 +1024,9 @@ onMounted(async () => {
 
     <!-- Group Modal -->
     <div v-if="showGroupModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+      <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl p-6 w-full max-w-md">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 class="text-xl font-bold text-stone-900 dark:text-stone-100">
             {{ editingGroup ? 'Edit Group' : 'New Group' }}
           </h2>
           <button
@@ -1041,17 +1041,17 @@ onMounted(async () => {
         </div>
 
         <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+          <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Name</label>
           <input
             v-model="groupForm.name"
             type="text"
-            class="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
             placeholder="Group name"
           />
         </div>
 
         <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</label>
+          <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-2">Color</label>
           <div class="flex items-center gap-2 flex-wrap">
             <button
               v-for="color in groupColors"
@@ -1059,7 +1059,7 @@ onMounted(async () => {
               @click="groupForm.color = color"
               :class="[
                 'w-8 h-8 rounded-full border-2',
-                groupForm.color === color ? 'border-gray-800 dark:border-white' : 'border-transparent'
+                groupForm.color === color ? 'border-stone-800 dark:border-white' : 'border-transparent'
               ]"
               :style="{ backgroundColor: color }"
             ></button>
@@ -1069,13 +1069,13 @@ onMounted(async () => {
         <div class="flex justify-end gap-2">
           <button
             @click="showGroupModal = false"
-            class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
           >
             Cancel
           </button>
           <button
             @click="saveGroup"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             {{ editingGroup ? 'Save' : 'Create' }}
           </button>
@@ -1090,15 +1090,15 @@ onMounted(async () => {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
         @click.self="closeEmailPreview"
       >
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
           <!-- Header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Linked Email</h3>
+          <div class="flex items-center justify-between px-6 py-4 border-b dark:border-neutral-700">
+            <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">Linked Email</h3>
             <button
               @click="closeEmailPreview"
-              class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded"
             >
-              <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -1106,7 +1106,7 @@ onMounted(async () => {
 
           <!-- Loading -->
           <div v-if="loadingEmail" class="flex-1 flex items-center justify-center py-12">
-            <svg class="w-8 h-8 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
+            <svg class="w-8 h-8 text-stone-800 dark:text-stone-200 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -1115,27 +1115,27 @@ onMounted(async () => {
           <!-- Email Content -->
           <div v-else-if="previewEmail" class="flex-1 overflow-y-auto">
             <!-- Email metadata -->
-            <div class="px-6 py-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-              <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+            <div class="px-6 py-4 border-b dark:border-neutral-700 bg-stone-50 dark:bg-neutral-900/50">
+              <h4 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-3">
                 {{ previewEmail.subject || '(No subject)' }}
               </h4>
               <div class="space-y-1 text-sm">
                 <div class="flex">
-                  <span class="w-16 text-gray-500 dark:text-gray-400">From:</span>
-                  <span class="text-gray-900 dark:text-white">
+                  <span class="w-16 text-stone-500 dark:text-stone-400">From:</span>
+                  <span class="text-stone-900 dark:text-stone-100">
                     {{ previewEmail.from_name || previewEmail.from_address }}
-                    <span v-if="previewEmail.from_name" class="text-gray-500 dark:text-gray-400">
+                    <span v-if="previewEmail.from_name" class="text-stone-500 dark:text-stone-400">
                       &lt;{{ previewEmail.from_address }}&gt;
                     </span>
                   </span>
                 </div>
                 <div class="flex">
-                  <span class="w-16 text-gray-500 dark:text-gray-400">To:</span>
-                  <span class="text-gray-900 dark:text-white">{{ previewEmail.to_addresses?.join(', ') }}</span>
+                  <span class="w-16 text-stone-500 dark:text-stone-400">To:</span>
+                  <span class="text-stone-900 dark:text-stone-100">{{ previewEmail.to_addresses?.join(', ') }}</span>
                 </div>
                 <div class="flex">
-                  <span class="w-16 text-gray-500 dark:text-gray-400">Date:</span>
-                  <span class="text-gray-900 dark:text-white">{{ formatEmailDate(previewEmail.date) }}</span>
+                  <span class="w-16 text-stone-500 dark:text-stone-400">Date:</span>
+                  <span class="text-stone-900 dark:text-stone-100">{{ formatEmailDate(previewEmail.date) }}</span>
                 </div>
               </div>
             </div>
@@ -1149,15 +1149,15 @@ onMounted(async () => {
               ></div>
               <pre
                 v-else-if="previewEmail.text_body"
-                class="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300"
+                class="whitespace-pre-wrap text-sm text-stone-700 dark:text-stone-300"
               >{{ previewEmail.text_body }}</pre>
-              <p v-else class="text-gray-500 dark:text-gray-400 italic">No content</p>
+              <p v-else class="text-stone-500 dark:text-stone-400 italic">No content</p>
             </div>
           </div>
 
           <!-- Error state -->
           <div v-else class="flex-1 flex items-center justify-center py-12">
-            <p class="text-gray-500 dark:text-gray-400">Failed to load email</p>
+            <p class="text-stone-500 dark:text-stone-400">Failed to load email</p>
           </div>
         </div>
       </div>
@@ -1170,7 +1170,7 @@ onMounted(async () => {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
         @click.self="cancelDeleteTask"
       >
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6">
+        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md p-6">
           <div class="flex items-center gap-3 mb-4">
             <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-red-100 dark:bg-red-900/30 rounded-full">
               <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1178,19 +1178,19 @@ onMounted(async () => {
               </svg>
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Delete Task</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone.</p>
+              <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">Delete Task</h3>
+              <p class="text-sm text-stone-500 dark:text-stone-400">This action cannot be undone.</p>
             </div>
           </div>
           
-          <p class="text-gray-700 dark:text-gray-300 mb-6">
+          <p class="text-stone-700 dark:text-stone-300 mb-6">
             Are you sure you want to delete "<span class="font-medium">{{ taskToDelete?.title }}</span>"?
           </p>
           
           <div class="flex justify-end gap-3">
             <button
               @click="cancelDeleteTask"
-              class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               Cancel
             </button>

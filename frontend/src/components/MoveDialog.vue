@@ -82,30 +82,30 @@ onMounted(() => {
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
     @click.self="emit('close')"
   >
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
       <!-- Header -->
-      <div class="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
-        <h3 class="font-medium dark:text-white">
+      <div class="flex items-center justify-between px-4 py-3 border-b dark:border-neutral-700">
+        <h3 class="font-medium dark:text-stone-100">
           {{ mode === 'move' ? 'Move' : 'Copy' }} {{ fileIds.length }} item{{ fileIds.length > 1 ? 's' : '' }}
         </h3>
         <button
           @click="emit('close')"
-          class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+          class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded"
         >
-          <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
       <!-- Breadcrumb -->
-      <div class="px-4 py-2 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+      <div class="px-4 py-2 border-b dark:border-neutral-700 bg-stone-50 dark:bg-neutral-800/50">
         <nav class="flex items-center gap-1 text-sm overflow-x-auto">
           <template v-for="(item, index) in currentPath" :key="item.id ?? 'root'">
-            <span v-if="index > 0" class="text-gray-400">/</span>
+            <span v-if="index > 0" class="text-stone-400">/</span>
             <button
               @click="navigateToBreadcrumb(index)"
-              class="hover:text-blue-600 px-1 whitespace-nowrap"
+              class="hover:text-stone-800 dark:hover:text-stone-200 px-1 whitespace-nowrap"
               :class="{ 'font-medium': index === currentPath.length - 1 }"
             >
               {{ item.name }}
@@ -117,10 +117,10 @@ onMounted(() => {
       <!-- Folder List -->
       <div class="flex-1 overflow-auto min-h-[200px]">
         <div v-if="loadingFolders" class="flex items-center justify-center py-8">
-          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-neutral-800 dark:border-neutral-200"></div>
         </div>
 
-        <div v-else-if="folders.length === 0" class="py-8 text-center text-gray-500 dark:text-gray-400">
+        <div v-else-if="folders.length === 0" class="py-8 text-center text-stone-500 dark:text-stone-400">
           No folders here
         </div>
 
@@ -132,10 +132,10 @@ onMounted(() => {
             @click="selectedFolder = folder.id"
             :class="[
               'w-full flex items-center gap-3 px-4 py-2 text-left',
-              selectedFolder === folder.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              selectedFolder === folder.id ? 'bg-stone-100 dark:bg-neutral-700/30 text-stone-800 dark:text-stone-300' : 'hover:bg-stone-50 dark:hover:bg-neutral-700/50'
             ]"
           >
-            <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="w-5 h-5 text-stone-700 dark:text-stone-300" fill="currentColor" viewBox="0 0 20 20">
               <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
             </svg>
             <span class="truncate">{{ folder.name }}</span>
@@ -149,22 +149,22 @@ onMounted(() => {
       </div>
 
       <!-- Actions -->
-      <div class="flex items-center justify-between px-4 py-3 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-        <p class="text-sm text-gray-500 dark:text-gray-400">
+      <div class="flex items-center justify-between px-4 py-3 border-t dark:border-neutral-700 bg-stone-50 dark:bg-neutral-800/50">
+        <p class="text-sm text-stone-500 dark:text-stone-400">
           {{ mode === 'move' ? 'Moving' : 'Copying' }} to: 
           <span class="font-medium">{{ currentPath[currentPath.length - 1].name }}</span>
         </p>
         <div class="flex gap-2">
           <button
             @click="emit('close')"
-            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600"
+            class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-white dark:bg-neutral-700 border border-stone-300 dark:border-neutral-700 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-600"
           >
             Cancel
           </button>
           <button
             @click="handleSubmit"
             :disabled="loading"
-            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
           >
             {{ loading ? 'Processing...' : (mode === 'move' ? 'Move Here' : 'Copy Here') }}
           </button>
