@@ -22,6 +22,9 @@
           <span v-else-if="isDirty" class="text-sm text-orange-500">
             Unsaved changes
           </span>
+          <span v-if="saveError" class="text-sm text-red-500">
+            {{ saveError }}
+          </span>
         </div>
         <div class="flex items-center gap-2 flex-shrink-0">
           <button
@@ -89,6 +92,7 @@ const lastSaved = ref<Date | null>(null)
 const currentFileId = ref<string | null>(null)
 const isDirty = ref(false)
 const currentFormat = ref<string>('markdown')
+const saveError = ref<string | null>(null)
 let autoSaveTimeout: ReturnType<typeof setTimeout> | null = null
 
 const editor = useEditor({
@@ -123,6 +127,7 @@ function triggerAutoSave() {
 
 // Load document when opening existing file
 watch(() => props.isOpen, async (isOpen) => {
+  saveError.value = null
   if (isOpen && props.fileId) {
     currentFileId.value = props.fileId
     isDirty.value = false
@@ -160,12 +165,13 @@ async function loadDocument(fileId: string) {
   }
 }
 
-async function saveDocument() {
-  if (!editor.value) return
-  if (saving.value) return
-  
+async function saveDocument(): Promise<boolean> {
+  if (!editor.value) return false
+  if (saving.value) return false
+
   saving.value = true
-  
+  saveError.value = null
+
   try {
     let content: string
     if (currentFormat.value === 'markdown') {
@@ -188,17 +194,25 @@ async function saveDocument() {
       const name = documentTitle.value.endsWith(ext) ? documentTitle.value : `${documentTitle.value}${ext}`
       const response = await api.post('/documents/create-file', {
         ...documentData,
-        parentId: props.folderId || null,
+        parentId: props.folderId ?? null,
         name,
       })
-      currentFileId.value = response.data.id
-      emit('saved', response.data)
+      const file = response.data
+      const fileId = file?.id ?? file?.ID
+      if (fileId) {
+        currentFileId.value = fileId
+      }
+      emit('saved', file)
     }
-    
+
     lastSaved.value = new Date()
     isDirty.value = false
+    return true
   } catch (err: any) {
+    const message = err.response?.data?.error ?? err.message ?? 'Failed to save'
+    saveError.value = message
     console.error('Failed to save document:', err)
+    return false
   } finally {
     saving.value = false
   }
@@ -209,7 +223,7 @@ function handleTitleChange() {
   triggerAutoSave()
 }
 
-function handleClose() {
+async function handleClose() {
   // Clear auto-save timeout
   if (autoSaveTimeout) {
     clearTimeout(autoSaveTimeout)
@@ -217,7 +231,8 @@ function handleClose() {
   }
   // Save before closing if there are unsaved changes
   if (editor.value && isDirty.value) {
-    saveDocument()
+    const ok = await saveDocument()
+    if (!ok) return // Keep modal open if save failed
   }
   emit('close')
 }

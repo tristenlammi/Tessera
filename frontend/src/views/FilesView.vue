@@ -287,7 +287,7 @@ function triggerFolderUpload() {
             <span v-if="index > 0" class="text-stone-400 flex-shrink-0">/</span>
             <button
               @click="navigateToBreadcrumb(index)"
-              class="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 flex items-center py-1 -my-1 hover:text-stone-800 dark:text-stone-200 px-2 whitespace-nowrap"
+              class="min-h-[44px] min-w-[44px] md:min-w-0 flex items-center py-1 -my-1 hover:text-stone-800 dark:text-stone-200 px-2 whitespace-nowrap"
               :class="{ 'font-medium': index === filesStore.breadcrumbs.length - 1 }"
             >
               {{ crumb.name }}
@@ -300,7 +300,7 @@ function triggerFolderUpload() {
         <!-- Search Button -->
         <button
           @click="showCommandPalette = true"
-          class="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 flex items-center justify-center gap-2 px-3 py-1.5 text-sm text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
+          class="min-h-[44px] min-w-[44px] md:min-w-0 flex items-center justify-center gap-2 px-3 py-1.5 text-sm text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -313,7 +313,7 @@ function triggerFolderUpload() {
         <div class="relative">
           <button
             @click="showUploadMenu = !showUploadMenu; showOverflowMenu = false"
-            class="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 flex items-center justify-center gap-1 px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            class="min-h-[44px] min-w-[44px] md:min-w-0 flex items-center justify-center gap-1 px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
