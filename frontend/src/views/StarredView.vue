@@ -58,14 +58,15 @@ async function handleContextDelete() {
 <template>
   <div class="h-full flex flex-col">
     <!-- Header -->
-    <div class="p-4 border-b dark:border-neutral-700 flex items-center justify-between">
+    <div class="p-4 pt-[env(safe-area-inset-top)] md:pt-4 border-b dark:border-neutral-700 flex flex-wrap items-center justify-between gap-2">
       <h1 class="text-xl font-semibold dark:text-stone-100">Starred</h1>
       
       <!-- View toggle -->
-      <div class="flex items-center gap-2">
+      <div class="flex border dark:border-neutral-700 rounded-lg overflow-hidden shrink-0">
         <button
           @click="viewMode = 'grid'"
-          :class="['p-2 rounded', viewMode === 'grid' ? 'bg-stone-200 dark:bg-neutral-700' : 'hover:bg-stone-100 dark:hover:bg-neutral-800']"
+          :class="['min-h-[44px] min-w-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center p-2 rounded-none', viewMode === 'grid' ? 'bg-stone-200 dark:bg-neutral-700' : 'hover:bg-stone-100 dark:hover:bg-neutral-800']"
+          aria-label="Grid view"
         >
           <svg class="w-5 h-5 dark:text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -73,7 +74,8 @@ async function handleContextDelete() {
         </button>
         <button
           @click="viewMode = 'list'"
-          :class="['p-2 rounded', viewMode === 'list' ? 'bg-stone-200 dark:bg-neutral-700' : 'hover:bg-stone-100 dark:hover:bg-neutral-800']"
+          :class="['min-h-[44px] min-w-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center p-2 rounded-none', viewMode === 'list' ? 'bg-stone-200 dark:bg-neutral-700' : 'hover:bg-stone-100 dark:hover:bg-neutral-800']"
+          aria-label="List view"
         >
           <svg class="w-5 h-5 dark:text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
@@ -83,7 +85,7 @@ async function handleContextDelete() {
     </div>
 
     <!-- Content -->
-    <div class="flex-1 overflow-auto">
+    <div class="flex-1 overflow-auto pb-[env(safe-area-inset-bottom)]">
       <!-- Loading state -->
       <div v-if="filesStore.loading" class="flex items-center justify-center h-full">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-800 dark:border-neutral-200"></div>

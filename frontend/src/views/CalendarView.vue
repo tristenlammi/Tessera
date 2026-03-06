@@ -255,14 +255,14 @@ onMounted(() => {
 <template>
   <div class="h-full flex flex-col bg-stone-50 dark:bg-neutral-900">
     <!-- Header -->
-    <div class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700 px-6 py-4">
-      <div class="flex items-center justify-between">
+    <div class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700 px-4 md:px-6 py-4 pt-[env(safe-area-inset-top)]">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div class="flex items-center gap-4">
           <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Calendar</h1>
           <div class="flex items-center gap-2">
             <button
               @click="previousMonth"
-              class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+              class="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -270,13 +270,13 @@ onMounted(() => {
             </button>
             <button
               @click="goToToday"
-              class="px-3 py-1 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+              class="min-h-[44px] px-3 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               Today
             </button>
             <button
               @click="nextMonth"
-              class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+              class="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -287,7 +287,7 @@ onMounted(() => {
             </h2>
           </div>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
           <!-- View mode toggle -->
           <div class="flex items-center bg-stone-100 dark:bg-neutral-700 rounded-lg p-1">
             <button
@@ -295,7 +295,7 @@ onMounted(() => {
               :key="mode"
               @click="viewMode = mode"
               :class="[
-                'px-3 py-1 text-sm font-medium rounded-md capitalize',
+                'min-h-[44px] px-3 py-2 text-sm font-medium rounded-md capitalize',
                 viewMode === mode
                   ? 'bg-white dark:bg-neutral-600 text-stone-900 dark:text-stone-100 shadow-sm'
                   : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
@@ -306,7 +306,7 @@ onMounted(() => {
           </div>
           <button
             @click="openNewEventModal()"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
+            class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -318,27 +318,27 @@ onMounted(() => {
     </div>
 
     <!-- Calendar Grid (Month View) -->
-    <div class="flex-1 p-6 overflow-hidden">
-      <div v-if="viewMode === 'month'" class="h-full bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-stone-200 dark:border-neutral-700 overflow-hidden">
+    <div class="flex-1 p-4 md:p-6 overflow-hidden">
+      <div v-if="viewMode === 'month'" class="h-full flex flex-col bg-white dark:bg-neutral-800 rounded-xl shadow-sm border border-stone-200 dark:border-neutral-700 overflow-hidden">
         <!-- Days of week header -->
-        <div class="grid grid-cols-7 border-b border-stone-200 dark:border-neutral-700">
+        <div class="grid grid-cols-7 border-b border-stone-200 dark:border-neutral-700 min-h-[44px]">
           <div
             v-for="day in daysOfWeek"
             :key="day"
-            class="py-3 text-center text-sm font-semibold text-stone-600 dark:text-stone-400"
+            class="py-2 md:py-3 text-center text-xs md:text-sm font-semibold text-stone-600 dark:text-stone-400 flex items-center justify-center"
           >
             {{ day }}
           </div>
         </div>
 
         <!-- Calendar days grid -->
-        <div class="grid grid-cols-7 grid-rows-6 h-[calc(100%-48px)]">
+        <div class="grid grid-cols-7 grid-rows-6 flex-1 min-h-0">
           <div
             v-for="(day, index) in calendarDays"
             :key="index"
             @click="openNewEventModal(day.date)"
             :class="[
-              'border-b border-r border-stone-100 dark:border-neutral-700 p-1 cursor-pointer hover:bg-stone-50 dark:hover:bg-neutral-700/50 transition-colors overflow-hidden',
+              'border-b border-r border-stone-100 dark:border-neutral-700 p-1 min-h-[44px] md:min-h-0 cursor-pointer hover:bg-stone-50 dark:hover:bg-neutral-700/50 transition-colors overflow-hidden flex flex-col',
               !day.isCurrentMonth && 'bg-stone-50 dark:bg-neutral-900/50'
             ]"
           >
@@ -346,7 +346,7 @@ onMounted(() => {
             <div class="flex items-center justify-between mb-1">
               <span
                 :class="[
-                  'w-7 h-7 flex items-center justify-center text-sm rounded-full',
+                  'w-7 h-7 min-w-[28px] min-h-[28px] flex items-center justify-center text-xs md:text-sm rounded-full',
                   day.isToday
                     ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-semibold'
                     : day.isCurrentMonth
@@ -364,7 +364,7 @@ onMounted(() => {
                 v-for="event in getEventsForDay(day.date).slice(0, 3)"
                 :key="event.id"
                 @click.stop="openEditEventModal(event)"
-                class="px-1.5 py-0.5 text-xs rounded truncate cursor-pointer hover:opacity-80"
+                class="px-1.5 py-1 min-h-[28px] flex items-center text-xs rounded truncate cursor-pointer hover:opacity-80"
                 :style="{ backgroundColor: event.color + '20', color: event.color }"
               >
                 <span class="font-medium">{{ formatEventTime(event) }}</span>
@@ -397,11 +397,11 @@ onMounted(() => {
     <Teleport to="body">
       <div
         v-if="showEventModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-y-auto"
         @click.self="showEventModal = false"
       >
-        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-lg">
-          <div class="p-6">
+        <div class="modal-panel-lg bg-white dark:bg-neutral-800 rounded-xl shadow-xl flex-shrink-0 my-auto">
+          <div class="p-4 md:p-6 overflow-y-auto flex-1">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-xl font-bold text-stone-900 dark:text-stone-100">
                 {{ editingEvent ? 'Edit Event' : 'New Event' }}
@@ -409,7 +409,7 @@ onMounted(() => {
               <button
                 v-if="editingEvent"
                 @click="deleteEvent(editingEvent)"
-                class="text-red-500 hover:text-red-700"
+                class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 -m-2"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -423,37 +423,37 @@ onMounted(() => {
               <input
                 v-model="eventForm.title"
                 type="text"
-                class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                 placeholder="Event title"
               />
             </div>
 
             <!-- All Day Toggle -->
             <div class="mb-4">
-              <label class="flex items-center gap-2 cursor-pointer">
+              <label class="flex items-center gap-3 min-h-[44px] cursor-pointer">
                 <input
                   v-model="eventForm.allDay"
                   type="checkbox"
-                  class="w-4 h-4 rounded"
+                  class="w-5 h-5 rounded"
                 />
                 <span class="text-sm font-medium text-stone-700 dark:text-stone-300">All day event</span>
               </label>
             </div>
 
             <!-- Date & Time -->
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Start</label>
                 <input
                   v-model="eventForm.startDate"
                   type="date"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100 mb-2"
+                  class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100 mb-2"
                 />
                 <input
                   v-if="!eventForm.allDay"
                   v-model="eventForm.startTime"
                   type="time"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                  class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                 />
               </div>
               <div>
@@ -461,13 +461,13 @@ onMounted(() => {
                 <input
                   v-model="eventForm.endDate"
                   type="date"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100 mb-2"
+                  class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100 mb-2"
                 />
                 <input
                   v-if="!eventForm.allDay"
                   v-model="eventForm.endTime"
                   type="time"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                  class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                 />
               </div>
             </div>
@@ -492,7 +492,7 @@ onMounted(() => {
                   :key="color"
                   @click="eventForm.color = color"
                   :class="[
-                    'w-8 h-8 rounded-full border-2 transition-transform',
+                    'w-10 h-10 min-w-[44px] min-h-[44px] rounded-full border-2 transition-transform flex-shrink-0',
                     eventForm.color === color ? 'border-stone-800 dark:border-white scale-110' : 'border-transparent hover:scale-105'
                   ]"
                   :style="{ backgroundColor: color }"
@@ -504,14 +504,14 @@ onMounted(() => {
             <div class="flex justify-end gap-2 pt-4 border-t dark:border-neutral-700">
               <button
                 @click="showEventModal = false"
-                class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+                class="min-h-[44px] px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
               >
                 Cancel
               </button>
               <button
                 @click="saveEvent"
                 :disabled="!eventForm.title"
-                class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ editingEvent ? 'Save' : 'Create' }}
               </button>

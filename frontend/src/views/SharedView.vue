@@ -73,7 +73,7 @@ function openFile(file: SharedFile) {
   if (file.is_folder) {
     // TODO: Navigate into shared folder
   } else {
-    previewFile.value = file as any
+    previewFile.value = file
   }
 }
 </script>
@@ -81,12 +81,12 @@ function openFile(file: SharedFile) {
 <template>
   <div class="h-full flex flex-col">
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b dark:border-neutral-700">
+    <div class="flex items-center justify-between p-4 pt-[env(safe-area-inset-top)] md:pt-4 border-b dark:border-neutral-700">
       <h1 class="text-xl font-semibold dark:text-stone-100">Shared with Me</h1>
     </div>
 
     <!-- Content -->
-    <div class="flex-1 overflow-auto p-4">
+    <div class="flex-1 overflow-auto p-4 pb-[env(safe-area-inset-bottom)]">
       <div v-if="loading" class="flex items-center justify-center h-64">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-800 dark:border-neutral-200"></div>
       </div>
@@ -104,7 +104,7 @@ function openFile(file: SharedFile) {
           v-for="file in files"
           :key="file.id"
           @click="openFile(file)"
-          class="flex items-center gap-4 p-3 rounded-lg border dark:border-neutral-700 hover:bg-stone-50 dark:hover:bg-neutral-700/50 cursor-pointer transition-colors"
+          class="flex items-center gap-4 p-3 min-h-[56px] rounded-lg border dark:border-neutral-700 hover:bg-stone-50 dark:hover:bg-neutral-700/50 active:bg-stone-100 dark:active:bg-neutral-700 cursor-pointer transition-colors"
         >
           <!-- Icon -->
           <div class="text-2xl">{{ getFileIcon(file) }}</div>

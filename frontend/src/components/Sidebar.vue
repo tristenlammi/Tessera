@@ -170,7 +170,7 @@ onMounted(() => {
       </div>
 
       <!-- Theme toggle and connection status -->
-      <div class="px-4 py-2 border-t border-notion-border dark:border-notion-dark-border flex items-center justify-between">
+      <div class="px-4 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom,0))] border-t border-notion-border dark:border-notion-dark-border flex items-center justify-between">
         <div class="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-500">
           <span
             class="w-2 h-2 rounded-full"

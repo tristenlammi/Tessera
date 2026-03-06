@@ -135,7 +135,7 @@ async function handleSetup() {
   </div>
 
   <!-- First Time Setup -->
-  <div v-else-if="isFirstTimeSetup" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-50 to-stone-100 dark:from-neutral-900 dark:to-neutral-800 py-12 px-4 sm:px-6 lg:px-8">
+  <div v-else-if="isFirstTimeSetup" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-50 to-stone-100 dark:from-neutral-900 dark:to-neutral-800 py-12 px-4 sm:px-6 lg:px-8 pt-[calc(3rem+env(safe-area-inset-top))] pb-[calc(3rem+env(safe-area-inset-bottom))]">
     <div class="max-w-md w-full space-y-8">
       <div class="text-center">
         <div class="inline-flex items-center justify-center w-16 h-16 bg-neutral-800 dark:bg-neutral-200 rounded-2xl mb-4">
@@ -164,7 +164,7 @@ async function handleSetup() {
               autocomplete="name"
               required
               placeholder="John Doe"
-              class="mt-1 block w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
+              class="mt-1 block w-full min-h-[44px] px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
 
@@ -179,7 +179,7 @@ async function handleSetup() {
               autocomplete="email"
               required
               placeholder="admin@example.com"
-              class="mt-1 block w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
+              class="mt-1 block w-full min-h-[44px] px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
 
@@ -194,7 +194,7 @@ async function handleSetup() {
               autocomplete="new-password"
               required
               placeholder="Minimum 8 characters"
-              class="mt-1 block w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
+              class="mt-1 block w-full min-h-[44px] px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
 
@@ -209,7 +209,7 @@ async function handleSetup() {
               autocomplete="new-password"
               required
               placeholder="Confirm your password"
-              class="mt-1 block w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
+              class="mt-1 block w-full min-h-[44px] px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
         </div>
@@ -217,7 +217,7 @@ async function handleSetup() {
         <button
           type="submit"
           :disabled="loading"
-          class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-800 dark:hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full min-h-[44px] flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-800 dark:hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg v-if="loading" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -234,7 +234,7 @@ async function handleSetup() {
   </div>
 
   <!-- Normal Login -->
-  <div v-else class="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-neutral-900 py-12 px-4 sm:px-6 lg:px-8">
+  <div v-else class="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-neutral-900 py-12 px-4 sm:px-6 lg:px-8 pt-[calc(3rem+env(safe-area-inset-top))] pb-[calc(3rem+env(safe-area-inset-bottom))]">
     <div class="max-w-md w-full space-y-8">
       <div>
         <h1 class="text-center text-4xl font-bold text-stone-800 dark:text-stone-200">Tessera</h1>
@@ -264,7 +264,7 @@ async function handleSetup() {
             autocomplete="one-time-code"
             maxlength="20"
             placeholder="Enter code"
-            class="block w-full px-3 py-3 text-center text-2xl tracking-widest border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
+            class="block w-full min-h-[44px] px-3 py-3 text-center text-2xl tracking-widest border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             autofocus
           />
         </div>
@@ -273,14 +273,14 @@ async function handleSetup() {
           <button
             type="button"
             @click="cancelTOTP"
-            class="flex-1 py-2.5 px-4 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm font-medium text-stone-700 dark:text-stone-300 bg-white dark:bg-neutral-700 hover:bg-stone-50 dark:hover:bg-neutral-600"
+            class="flex-1 min-h-[44px] py-2.5 px-4 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm font-medium text-stone-700 dark:text-stone-300 bg-white dark:bg-neutral-700 hover:bg-stone-50 dark:hover:bg-neutral-600"
           >
             Back
           </button>
           <button
             type="submit"
             :disabled="loading"
-            class="flex-1 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-800 dark:hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex-1 min-h-[44px] py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-800 dark:hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ loading ? 'Verifying...' : 'Verify' }}
           </button>
@@ -304,7 +304,7 @@ async function handleSetup() {
               type="email"
               autocomplete="email"
               required
-              class="mt-1 block w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
+              class="mt-1 block w-full min-h-[44px] px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
 
@@ -318,7 +318,7 @@ async function handleSetup() {
               type="password"
               autocomplete="current-password"
               required
-              class="mt-1 block w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
+              class="mt-1 block w-full min-h-[44px] px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400"
             />
           </div>
         </div>
@@ -326,7 +326,7 @@ async function handleSetup() {
         <button
           type="submit"
           :disabled="loading"
-          class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-800 dark:hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full min-h-[44px] flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-800 dark:hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span v-if="loading">Signing in...</span>
           <span v-else>Sign in</span>

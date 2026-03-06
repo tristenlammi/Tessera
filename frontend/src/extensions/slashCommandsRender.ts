@@ -24,7 +24,15 @@ export const slashCommandsRender = () => {
         showOnCreate: true,
         interactive: true,
         trigger: 'manual',
-        placement: 'bottom-start',
+        placement: 'top-start',
+        maxWidth: 'min(90vw, 256px)',
+        strategy: 'fixed',
+        popperOptions: {
+          modifiers: [
+            { name: 'preventOverflow', options: { padding: 8, boundary: 'viewport' } },
+            { name: 'flip', options: { fallbackPlacements: ['bottom-start', 'top-end', 'bottom-end'] } },
+          ],
+        },
       })
     },
 

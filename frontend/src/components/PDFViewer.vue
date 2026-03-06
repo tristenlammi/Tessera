@@ -327,11 +327,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-black/90 z-50 flex flex-col">
+  <div class="fixed inset-0 bg-black/90 z-50 flex flex-col pt-[env(safe-area-inset-top)]">
     <!-- Toolbar -->
-    <div class="bg-neutral-900 text-white px-4 py-2 flex items-center gap-4">
+    <div class="bg-neutral-900 text-white px-4 py-2 flex items-center gap-2 overflow-x-auto scrollbar-hide flex-wrap md:flex-nowrap min-h-[56px]">
       <!-- Close button -->
-      <button @click="emit('close')" class="p-2 hover:bg-neutral-700 rounded">
+      <button @click="emit('close')" class="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-neutral-700 rounded flex-shrink-0">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -343,8 +343,8 @@ onUnmounted(() => {
       <div class="h-6 w-px bg-neutral-600"></div>
 
       <!-- Navigation -->
-      <div class="flex items-center gap-2">
-        <button @click="previousPage" :disabled="currentPage <= 1" class="p-2 hover:bg-neutral-700 rounded disabled:opacity-50">
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button @click="previousPage" :disabled="currentPage <= 1" class="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-neutral-700 rounded disabled:opacity-50">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
@@ -354,13 +354,13 @@ onUnmounted(() => {
             type="number"
             :value="currentPage"
             @change="goToPage(parseInt(($event.target as HTMLInputElement).value))"
-            class="w-12 px-2 py-1 text-center bg-neutral-800 border border-neutral-600 rounded"
+            class="w-12 min-h-[44px] px-2 py-2 text-center bg-neutral-800 border border-neutral-600 rounded"
             min="1"
             :max="totalPages"
           />
           / {{ totalPages }}
         </span>
-        <button @click="nextPage" :disabled="currentPage >= totalPages" class="p-2 hover:bg-neutral-700 rounded disabled:opacity-50">
+        <button @click="nextPage" :disabled="currentPage >= totalPages" class="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-neutral-700 rounded disabled:opacity-50">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
@@ -370,19 +370,19 @@ onUnmounted(() => {
       <div class="h-6 w-px bg-neutral-600"></div>
 
       <!-- Zoom -->
-      <div class="flex items-center gap-2">
-        <button @click="zoomOut" class="p-2 hover:bg-neutral-700 rounded">
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button @click="zoomOut" class="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-neutral-700 rounded">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
           </svg>
         </button>
         <span class="text-sm w-16 text-center">{{ Math.round(scale * 100) }}%</span>
-        <button @click="zoomIn" class="p-2 hover:bg-neutral-700 rounded">
+        <button @click="zoomIn" class="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-neutral-700 rounded">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
         </button>
-        <button @click="fitWidth" class="p-2 hover:bg-neutral-700 rounded" title="Fit width">
+        <button @click="fitWidth" class="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-neutral-700 rounded" title="Fit width">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
           </svg>
@@ -392,10 +392,10 @@ onUnmounted(() => {
       <div class="h-6 w-px bg-neutral-600"></div>
 
       <!-- Annotation Tools -->
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 flex-shrink-0">
         <button
           @click="selectedTool = 'select'"
-          :class="['p-2 rounded', selectedTool === 'select' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
+          :class="['min-w-[44px] min-h-[44px] flex items-center justify-center rounded', selectedTool === 'select' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
           title="Select"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -404,7 +404,7 @@ onUnmounted(() => {
         </button>
         <button
           @click="selectedTool = 'highlight'"
-          :class="['p-2 rounded', selectedTool === 'highlight' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
+          :class="['min-w-[44px] min-h-[44px] flex items-center justify-center rounded', selectedTool === 'highlight' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
           title="Highlight"
         >
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -413,7 +413,7 @@ onUnmounted(() => {
         </button>
         <button
           @click="selectedTool = 'underline'"
-          :class="['p-2 rounded', selectedTool === 'underline' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
+          :class="['min-w-[44px] min-h-[44px] flex items-center justify-center rounded', selectedTool === 'underline' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
           title="Underline"
         >
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -422,7 +422,7 @@ onUnmounted(() => {
         </button>
         <button
           @click="selectedTool = 'comment'"
-          :class="['p-2 rounded', selectedTool === 'comment' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
+          :class="['min-w-[44px] min-h-[44px] flex items-center justify-center rounded', selectedTool === 'comment' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
           title="Add Comment"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -431,7 +431,7 @@ onUnmounted(() => {
         </button>
         <button
           @click="selectedTool = 'draw'"
-          :class="['p-2 rounded', selectedTool === 'draw' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
+          :class="['min-w-[44px] min-h-[44px] flex items-center justify-center rounded', selectedTool === 'draw' ? 'bg-neutral-800 dark:bg-neutral-200' : 'hover:bg-neutral-700']"
           title="Draw"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -445,7 +445,7 @@ onUnmounted(() => {
             v-for="color in colors"
             :key="color"
             @click="annotationColor = color"
-            :class="['w-6 h-6 rounded-full border-2', annotationColor === color ? 'border-white' : 'border-transparent']"
+            :class="['min-w-[44px] min-h-[44px] w-10 h-10 rounded-full border-2 flex items-center justify-center', annotationColor === color ? 'border-white' : 'border-transparent']"
             :style="{ backgroundColor: color }"
           ></button>
         </div>
@@ -454,16 +454,18 @@ onUnmounted(() => {
       <div class="flex-1"></div>
 
       <!-- Actions -->
-      <button @click="clearAnnotations" class="px-3 py-1.5 text-sm bg-neutral-700 rounded hover:bg-neutral-600">
-        Clear Page
-      </button>
-      <button @click="downloadAnnotated" class="px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 rounded hover:bg-neutral-700 dark:hover:bg-neutral-300">
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button @click="clearAnnotations" class="min-h-[44px] px-3 py-2 text-sm bg-neutral-700 rounded hover:bg-neutral-600">
+          Clear Page
+        </button>
+        <button @click="downloadAnnotated" class="min-h-[44px] px-3 py-2 text-sm bg-neutral-800 dark:bg-neutral-200 rounded hover:bg-neutral-700 dark:hover:bg-neutral-300">
         Download
       </button>
+      </div>
     </div>
 
     <!-- PDF Viewer -->
-    <div ref="containerRef" class="flex-1 overflow-auto flex justify-center p-4 bg-neutral-800">
+    <div ref="containerRef" class="flex-1 overflow-auto flex justify-center p-4 pb-[env(safe-area-inset-bottom)] bg-neutral-800">
       <!-- Loading state -->
       <div v-if="loading" class="flex items-center justify-center h-full">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
@@ -509,13 +511,13 @@ onUnmounted(() => {
           <div class="flex justify-end gap-2 mt-2">
             <button
               @click="showCommentInput = false"
-              class="px-2 py-1 text-xs text-stone-600 hover:bg-stone-100 rounded"
+              class="min-h-[44px] px-3 py-2 text-sm text-stone-600 hover:bg-stone-100 rounded"
             >
               Cancel
             </button>
             <button
               @click="addComment"
-              class="px-2 py-1 text-xs bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded hover:bg-neutral-700 dark:hover:bg-neutral-300"
+              class="min-h-[44px] px-3 py-2 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               Add
             </button>
@@ -548,7 +550,7 @@ onUnmounted(() => {
           </div>
           <button
             @click="deleteAnnotation(annotation.id)"
-            class="text-red-500 hover:text-red-700"
+            class="min-w-[44px] min-h-[44px] flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded -m-1"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

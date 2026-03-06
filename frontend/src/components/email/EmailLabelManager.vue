@@ -113,8 +113,8 @@ async function deleteLabel() {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-    <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-black/50">
+    <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl w-full max-h-[80vh] flex flex-col">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b dark:border-neutral-700">
         <h2 class="text-lg font-semibold text-stone-900 dark:text-stone-100">Manage Labels</h2>
@@ -260,8 +260,8 @@ async function deleteLabel() {
     </div>
 
     <!-- Delete confirmation modal -->
-    <div v-if="showDeleteModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
-      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-sm w-full p-6">
+    <div v-if="showDeleteModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-black/50">
+      <div class="modal-panel max-w-sm bg-white dark:bg-neutral-800 shadow-xl w-full p-6 mx-auto">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
             <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

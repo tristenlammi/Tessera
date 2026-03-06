@@ -3,17 +3,24 @@ import { ref, onMounted } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useFilesStore } from '@/stores/files'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import Sidebar from '@/components/Sidebar.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const filesStore = useFilesStore()
+const { isMobile } = useBreakpoint()
 
 const sidebarOpen = ref(true)
 const userMenuOpen = ref(false)
 
 onMounted(() => {
   filesStore.fetchStorageStats()
+  if (window.innerWidth < 768) sidebarOpen.value = false
+})
+
+router.afterEach(() => {
+  if (isMobile.value) sidebarOpen.value = false
 })
 
 async function handleLogout() {
@@ -38,17 +45,36 @@ function formatBytes(bytes: number): string {
 
 <template>
   <div class="h-screen flex bg-white dark:bg-notion-dark-bg">
-    <!-- Sidebar -->
-    <Sidebar v-if="sidebarOpen" />
+    <!-- Mobile backdrop -->
+    <div
+      v-if="sidebarOpen"
+      class="fixed inset-0 z-40 bg-black/50 md:hidden"
+      aria-hidden="true"
+      @click="sidebarOpen = false"
+    />
+
+    <!-- Sidebar: fixed overlay on mobile, normal flow on desktop -->
+    <div
+      :class="[
+        'flex flex-col shrink-0 h-full transition-transform duration-200 ease-out md:transition-none',
+        'fixed inset-y-0 left-0 z-50 w-64 pt-safe-top',
+        'md:relative md:translate-x-0',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        !sidebarOpen && 'md:hidden'
+      ]"
+    >
+      <Sidebar />
+    </div>
 
     <!-- Main content -->
     <div class="flex-1 flex flex-col min-w-0">
       <!-- Top bar -->
-      <header class="h-14 flex items-center justify-between px-4 bg-white dark:bg-notion-dark-bg-secondary border-b border-notion-border dark:border-notion-dark-border">
+      <header class="min-h-14 h-14 flex items-center justify-between px-4 pt-safe-top bg-white dark:bg-notion-dark-bg-secondary border-b border-notion-border dark:border-notion-dark-border">
         <div class="flex items-center gap-4">
           <button
             @click="sidebarOpen = !sidebarOpen"
-            class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-md text-stone-500 dark:text-stone-400"
+            class="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 -m-2 md:m-0 md:min-w-0 md:min-h-0 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-md text-stone-500 dark:text-stone-400"
+            aria-label="Toggle sidebar"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -57,15 +83,15 @@ function formatBytes(bytes: number): string {
         </div>
 
         <div class="flex items-center gap-4">
-          <!-- Storage indicator -->
-          <div v-if="filesStore.storageStats" class="text-sm text-stone-500 dark:text-stone-500">
+          <!-- Storage indicator (hidden on mobile) -->
+          <div v-if="filesStore.storageStats" class="hidden md:block text-sm text-stone-500 dark:text-stone-500">
             {{ formatBytes(filesStore.storageStats.used) }} of {{ formatBytes(filesStore.storageStats.limit) }} used
           </div>
 
           <!-- User menu -->
           <div class="relative">
             <button
-              class="flex items-center gap-2 p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-md"
+              class="flex items-center gap-2 min-w-[44px] min-h-[44px] p-2 -m-2 md:m-0 md:min-w-0 md:min-h-0 items-center justify-center hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-md"
               @click="userMenuOpen = !userMenuOpen"
             >
               <div class="w-8 h-8 bg-stone-700 dark:bg-stone-300 rounded-full flex items-center justify-center text-white dark:text-stone-800 text-sm font-medium">
@@ -79,7 +105,7 @@ function formatBytes(bytes: number): string {
             <!-- Dropdown menu -->
             <div
               v-if="userMenuOpen"
-              class="absolute right-0 mt-2 w-48 bg-white dark:bg-neutral-800 rounded-md shadow-lg border border-notion-border dark:border-notion-dark-border py-1 z-50"
+              class="absolute right-0 mt-2 w-48 max-h-[calc(100vh-6rem)] overflow-y-auto bg-white dark:bg-neutral-800 rounded-md shadow-lg border border-notion-border dark:border-notion-dark-border py-1 z-50"
               @click.stop
             >
               <div class="px-4 py-2 border-b border-notion-border dark:border-notion-dark-border">

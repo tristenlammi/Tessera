@@ -1,12 +1,12 @@
 <template>
   <div 
     v-if="isOpen" 
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 md:p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
   >
-    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-7xl h-[85vh] flex flex-col mx-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-7xl h-full md:h-[85vh] flex flex-col md:mx-4 md:max-h-[90dvh]">
       <!-- Header -->
-      <div class="flex items-center justify-between px-4 py-3 border-b dark:border-neutral-700">
-        <div class="flex items-center gap-3">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-4 py-3 border-b dark:border-neutral-700 flex-shrink-0">
+        <div class="flex items-center gap-3 min-w-0 flex-1">
           <input
             v-model="documentTitle"
             @input="handleTitleChange"
@@ -23,11 +23,11 @@
             Unsaved changes
           </span>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-shrink-0">
           <button
             @click="saveDocument"
             :disabled="saving || !isDirty"
-            class="px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            class="min-h-[44px] flex items-center px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed gap-1"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
@@ -36,7 +36,7 @@
           </button>
           <button
             @click="handleClose"
-            class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
+            class="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
           >
             <svg class="w-5 h-5 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -46,12 +46,12 @@
       </div>
 
       <!-- Toolbar -->
-      <div v-if="editor" class="px-4 py-2 border-b dark:border-neutral-700">
+      <div v-if="editor" class="px-4 py-2 border-b dark:border-neutral-700 flex-shrink-0">
         <EditorToolbar :editor="editor" />
       </div>
 
       <!-- Editor Content -->
-      <div class="flex-1 overflow-auto p-4">
+      <div class="flex-1 overflow-auto p-4 min-h-0">
         <editor-content 
           :editor="editor" 
           class="prose prose-lg dark:prose-invert max-w-none h-full [&_.ProseMirror]:min-h-full [&_.ProseMirror]:outline-none [&_.ProseMirror]:h-full"

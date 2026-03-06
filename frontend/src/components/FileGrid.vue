@@ -131,14 +131,25 @@ function handleDrop(file: FileItem, event: DragEvent) {
       @click="filesStore.selectFile(file.id, $event.ctrlKey || $event.metaKey)"
       @contextmenu="handleContextMenu(file, $event)"
       :class="[
-        'group p-2 rounded-lg border cursor-pointer transition-all select-none',
+        'group relative p-2 rounded-lg border cursor-pointer transition-all select-none',
         filesStore.selectedFiles.has(file.id)
           ? 'border-neutral-700 dark:border-neutral-300 bg-stone-100 dark:bg-neutral-700/30'
           : dragOverFolder === file.id
             ? 'border-stone-400 bg-stone-100 dark:bg-neutral-700/20 scale-105'
             : 'border-transparent hover:bg-stone-100 dark:hover:bg-neutral-700'
       ]"
+      data-file-item
     >
+      <!-- Context menu trigger (⋮) - visible on mobile, on hover for desktop -->
+      <button
+        class="absolute top-1 right-1 z-10 min-w-[44px] min-h-[44px] md:min-w-[32px] md:min-h-[32px] flex items-center justify-center p-1 -m-1 md:opacity-0 group-hover:opacity-100 rounded hover:bg-stone-200/80 dark:hover:bg-neutral-600/80 text-stone-500 dark:text-stone-400 transition-opacity"
+        @click.stop="handleContextMenu(file, $event as unknown as MouseEvent)"
+        aria-label="Open menu"
+      >
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+        </svg>
+      </button>
       <!-- Icon -->
       <div class="relative flex items-center justify-center mb-1 pointer-events-none">
         <!-- Star indicator -->

@@ -223,8 +223,8 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div class="modal-panel-lg bg-white dark:bg-neutral-800 shadow-xl w-full max-h-[90vh] overflow-y-auto">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b dark:border-neutral-700">
         <div class="flex items-center gap-2">
@@ -583,8 +583,8 @@ async function handleSubmit() {
     </div>
 
     <!-- Sync Confirmation Modal -->
-    <div v-if="showSyncConfirmation" class="fixed inset-0 bg-black/50 flex items-center justify-center z-60">
-      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md p-6 m-4">
+    <div v-if="showSyncConfirmation" class="fixed inset-0 bg-black/50 flex items-center justify-center z-60 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl w-full p-6">
         <div class="flex items-center gap-3 mb-4">
           <div class="p-3 bg-stone-100 dark:bg-neutral-700/30 rounded-full">
             <svg class="w-6 h-6 text-stone-800 dark:text-stone-200 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

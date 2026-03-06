@@ -57,7 +57,7 @@ defineExpose({ onKeyDown })
     <button
       v-for="(item, index) in items"
       :key="item.title"
-      class="slash-menu-item w-full flex items-center gap-3 px-3 py-2 text-left transition-colors"
+      class="slash-menu-item w-full flex items-center gap-3 px-3 py-2 min-h-[44px] text-left transition-colors"
       :class="index === selectedIndex ? 'is-selected bg-stone-100 dark:bg-neutral-700' : 'hover:bg-stone-50 dark:hover:bg-neutral-700/50'"
       @click="selectItem(index)"
       @mouseenter="selectedIndex = index"

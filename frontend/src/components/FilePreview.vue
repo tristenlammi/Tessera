@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
-import type { FileItem } from '@/stores/files'
 import api from '@/api'
 
+/** Minimum file shape for preview (works with FileItem and SharedFile) */
+export interface PreviewFile {
+  id: string
+  name: string
+  is_folder?: boolean
+  size?: number
+  mime_type?: string | null
+}
+
 const props = defineProps<{
-  file: FileItem
+  file: PreviewFile
 }>()
 
 const emit = defineEmits<{
@@ -133,22 +141,22 @@ function handleKeydown(e: KeyboardEvent) {
 
 <template>
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
     @click.self="emit('close')"
     @keydown="handleKeydown"
     tabindex="0"
   >
-    <div class="relative bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-[95vw] h-[95vh] max-w-[1800px] flex flex-col">
+    <div class="relative bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full h-full md:w-[95vw] md:h-[95vh] max-w-[1800px] flex flex-col">
       <!-- Header -->
       <div class="flex items-center justify-between px-4 py-3 border-b dark:border-neutral-700 flex-shrink-0">
         <div class="flex items-center gap-3 min-w-0">
           <h3 class="font-medium truncate dark:text-stone-100">{{ file.name }}</h3>
-          <span class="text-sm text-stone-500 dark:text-stone-400 flex-shrink-0">{{ formatBytes(file.size) }}</span>
+          <span class="text-sm text-stone-500 dark:text-stone-400 flex-shrink-0">{{ formatBytes(file.size ?? 0) }}</span>
         </div>
         <div class="flex items-center gap-2">
           <button
             @click="handleDownload"
-            class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg text-stone-600 dark:text-stone-400"
+            class="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg text-stone-600 dark:text-stone-400"
             title="Download"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +165,7 @@ function handleKeydown(e: KeyboardEvent) {
           </button>
           <button
             @click="emit('close')"
-            class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg text-stone-600 dark:text-stone-400"
+            class="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg text-stone-600 dark:text-stone-400"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -182,7 +190,7 @@ function handleKeydown(e: KeyboardEvent) {
           <p class="text-red-500 mb-4">{{ error }}</p>
           <button
             @click="handleDownload"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            class="min-h-[44px] inline-flex items-center gap-2 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -239,7 +247,7 @@ function handleKeydown(e: KeyboardEvent) {
           <p class="text-stone-500 dark:text-stone-400 mb-4">Preview not available for this file type</p>
           <button
             @click="handleDownload"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            class="min-h-[44px] inline-flex items-center gap-2 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

@@ -17,6 +17,7 @@
 body {
   @apply bg-notion-bg-secondary dark:bg-notion-dark-bg text-notion-text dark:text-notion-dark-text antialiased;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 /* ProseMirror placeholder */
@@ -193,4 +194,21 @@ body {
   max-width: 100%;
   height: auto;
   border-radius: 0.375rem;
+}
+
+/* Hide scrollbar but keep scroll (for breadcrumbs etc) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Shared modal mobile styles: full-width, scrollable, safe-area */
+.modal-panel {
+  @apply w-[calc(100vw-2rem)] max-w-md max-h-[90dvh] md:mx-4 mx-auto flex flex-col overflow-hidden rounded-lg;
+}
+.modal-panel-lg {
+  @apply w-[calc(100vw-2rem)] max-w-lg max-h-[90dvh] md:mx-4 mx-auto flex flex-col overflow-hidden rounded-lg;
 }

@@ -54,7 +54,7 @@ function goToLogin() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-neutral-900 px-4">
+  <div class="min-h-screen flex items-center justify-center bg-stone-50 dark:bg-neutral-900 px-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
     <div class="w-full max-w-md">
       <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-8">
         <div class="text-center mb-8">
@@ -77,7 +77,7 @@ function goToLogin() {
           </p>
           <button
             @click="goToLogin"
-            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 font-medium transition-colors"
+            class="w-full min-h-[44px] py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 font-medium transition-colors flex items-center justify-center"
           >
             Go to Login
           </button>
@@ -99,7 +99,7 @@ function goToLogin() {
               type="password"
               required
               minlength="8"
-              class="w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
+              class="w-full min-h-[44px] px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
               placeholder="Enter new password"
             />
           </div>
@@ -114,7 +114,7 @@ function goToLogin() {
               type="password"
               required
               minlength="8"
-              class="w-full px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
+              class="w-full min-h-[44px] px-3 py-2.5 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-700 text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
               placeholder="Confirm new password"
             />
           </div>
@@ -122,7 +122,7 @@ function goToLogin() {
           <button
             type="submit"
             :disabled="loading"
-            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 font-medium transition-colors"
+            class="w-full min-h-[44px] py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 font-medium transition-colors flex items-center justify-center"
           >
             {{ loading ? 'Resetting...' : 'Reset Password' }}
           </button>
@@ -138,7 +138,7 @@ function goToLogin() {
           <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">{{ error }}</p>
           <button
             @click="goToLogin"
-            class="w-full py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 font-medium transition-colors"
+            class="w-full min-h-[44px] py-2.5 px-4 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 font-medium transition-colors flex items-center justify-center"
           >
             Go to Login
           </button>

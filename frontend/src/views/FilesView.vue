@@ -33,6 +33,7 @@ const showCommandPalette = ref(false)
 const showInfoPanel = ref(false)
 const infoPanelFile = ref<FileItem | null>(null)
 const showUploadMenu = ref(false)
+const showOverflowMenu = ref(false)
 
 // Icon size state - persisted to localStorage
 const ICON_SIZE_KEY = 'tessera-files-icon-size'
@@ -279,14 +280,14 @@ function triggerFolderUpload() {
 <template>
   <div class="h-full flex flex-col">
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b dark:border-neutral-700">
-      <div class="flex items-center gap-2">
-        <nav class="flex items-center gap-1 text-sm">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border-b dark:border-neutral-700">
+      <div class="min-w-0 flex-1">
+        <nav class="flex items-center gap-1 text-sm overflow-x-auto pb-1 -mb-1 scrollbar-hide" aria-label="Breadcrumb">
           <template v-for="(crumb, index) in filesStore.breadcrumbs" :key="crumb.id ?? 'root'">
-            <span v-if="index > 0" class="text-stone-400">/</span>
+            <span v-if="index > 0" class="text-stone-400 flex-shrink-0">/</span>
             <button
               @click="navigateToBreadcrumb(index)"
-              class="hover:text-stone-800 dark:text-stone-200 px-1"
+              class="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 flex items-center py-1 -my-1 hover:text-stone-800 dark:text-stone-200 px-2 whitespace-nowrap"
               :class="{ 'font-medium': index === filesStore.breadcrumbs.length - 1 }"
             >
               {{ crumb.name }}
@@ -295,11 +296,11 @@ function triggerFolderUpload() {
         </nav>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <!-- Search Button -->
         <button
           @click="showCommandPalette = true"
-          class="flex items-center gap-2 px-3 py-1.5 text-sm text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
+          class="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 flex items-center justify-center gap-2 px-3 py-1.5 text-sm text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -311,8 +312,8 @@ function triggerFolderUpload() {
         <!-- Upload Dropdown -->
         <div class="relative">
           <button
-            @click="showUploadMenu = !showUploadMenu"
-            class="flex items-center gap-1 px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            @click="showUploadMenu = !showUploadMenu; showOverflowMenu = false"
+            class="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 flex items-center justify-center gap-1 px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -356,46 +357,103 @@ function triggerFolderUpload() {
           class="fixed inset-0 z-40"
           @click="showUploadMenu = false"
         ></div>
-        <button
-          @click="showCreateFolder = true"
-          class="px-3 py-1.5 text-sm border border-stone-300 rounded-lg hover:bg-stone-50 dark:border-neutral-700 dark:hover:bg-neutral-700"
-        >
-          New Folder
-        </button>
-        <button
-          v-if="modulesStore.isModuleEnabled('documents')"
-          @click="createNewDocument"
-          class="px-3 py-1.5 text-sm border border-stone-300 rounded-lg hover:bg-stone-50 dark:border-neutral-700 dark:hover:bg-neutral-700 flex items-center gap-1"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          New Document
-        </button>
-        
-        <!-- Icon Size Slider (only shown in grid view) -->
-        <div v-if="viewMode === 'grid'" class="flex items-center gap-2 px-2">
-          <svg class="w-3 h-3 text-stone-400" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5z" />
-          </svg>
-          <input
-            v-model="iconSize"
-            type="range"
-            min="32"
-            max="96"
-            step="8"
-            class="w-20 h-1 bg-stone-200 dark:bg-neutral-600 rounded-lg appearance-none cursor-pointer accent-neutral-800"
-            title="Icon size"
-          />
-          <svg class="w-5 h-5 text-stone-400" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5z" />
-          </svg>
+
+        <!-- Secondary actions: visible on desktop, in overflow on mobile -->
+        <div class="hidden md:flex items-center gap-2">
+          <button
+            @click="showCreateFolder = true"
+            class="px-3 py-1.5 text-sm border border-stone-300 rounded-lg hover:bg-stone-50 dark:border-neutral-700 dark:hover:bg-neutral-700"
+          >
+            New Folder
+          </button>
+          <button
+            v-if="modulesStore.isModuleEnabled('documents')"
+            @click="createNewDocument"
+            class="px-3 py-1.5 text-sm border border-stone-300 rounded-lg hover:bg-stone-50 dark:border-neutral-700 dark:hover:bg-neutral-700 flex items-center gap-1"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            New Document
+          </button>
+          <!-- Icon Size Slider (desktop, grid view) -->
+          <div v-if="viewMode === 'grid'" class="flex items-center gap-2 px-2">
+            <svg class="w-3 h-3 text-stone-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5z" />
+            </svg>
+            <input
+              v-model="iconSize"
+              type="range"
+              min="32"
+              max="96"
+              step="8"
+              class="w-20 h-1 bg-stone-200 dark:bg-neutral-600 rounded-lg appearance-none cursor-pointer accent-neutral-800"
+              title="Icon size"
+            />
+            <svg class="w-5 h-5 text-stone-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5z" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Mobile overflow menu -->
+        <div class="relative md:hidden">
+          <button
+            @click="showOverflowMenu = !showOverflowMenu; showUploadMenu = false"
+            class="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 border border-stone-300 dark:border-neutral-700 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700"
+            aria-label="More actions"
+          >
+            <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+            </svg>
+          </button>
+          <div
+            v-if="showOverflowMenu"
+            class="absolute right-0 mt-1 w-48 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border dark:border-neutral-700 py-1 z-50"
+            @click.stop
+          >
+            <button
+              @click="showCreateFolder = true; showOverflowMenu = false"
+              class="w-full px-4 py-3 min-h-[44px] text-left text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              </svg>
+              New Folder
+            </button>
+            <button
+              v-if="modulesStore.isModuleEnabled('documents')"
+              @click="createNewDocument(); showOverflowMenu = false"
+              class="w-full px-4 py-3 min-h-[44px] text-left text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              New Document
+            </button>
+            <div v-if="viewMode === 'grid'" class="px-4 py-3 border-t dark:border-neutral-700">
+              <div class="text-xs text-stone-500 dark:text-stone-400 mb-2">Icon size</div>
+              <input
+                v-model="iconSize"
+                type="range"
+                min="32"
+                max="96"
+                step="8"
+                class="w-full h-2 bg-stone-200 dark:bg-neutral-600 rounded-lg appearance-none cursor-pointer accent-neutral-800"
+              />
+            </div>
+          </div>
+          <div
+            v-if="showOverflowMenu"
+            class="fixed inset-0 z-40"
+            @click="showOverflowMenu = false"
+          ></div>
         </div>
         
-        <div class="flex border dark:border-neutral-700 rounded-lg overflow-hidden">
+        <div class="flex border dark:border-neutral-700 rounded-lg overflow-hidden shrink-0">
           <button
             @click="viewMode = 'grid'"
-            :class="['px-3 py-1.5', viewMode === 'grid' ? 'bg-stone-100 dark:bg-neutral-700' : 'hover:bg-stone-50 dark:hover:bg-neutral-700']"
+            :class="['min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 flex items-center justify-center px-3 py-1.5', viewMode === 'grid' ? 'bg-stone-100 dark:bg-neutral-700' : 'hover:bg-stone-50 dark:hover:bg-neutral-700']"
           >
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -403,7 +461,7 @@ function triggerFolderUpload() {
           </button>
           <button
             @click="viewMode = 'list'"
-            :class="['px-3 py-1.5', viewMode === 'list' ? 'bg-stone-100 dark:bg-neutral-700' : 'hover:bg-stone-50 dark:hover:bg-neutral-700']"
+            :class="['min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 flex items-center justify-center px-3 py-1.5', viewMode === 'list' ? 'bg-stone-100 dark:bg-neutral-700' : 'hover:bg-stone-50 dark:hover:bg-neutral-700']"
           >
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />

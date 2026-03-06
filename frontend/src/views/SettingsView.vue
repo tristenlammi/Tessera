@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-2xl mx-auto px-4 py-8">
+  <div class="max-w-2xl mx-auto px-4 py-8 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))]">
     <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100 mb-8">Settings</h1>
 
     <!-- General Settings -->
@@ -18,7 +18,7 @@
           id="timezone"
           v-model="selectedTimezone"
           @change="saveTimezone"
-          class="w-full border border-stone-300 dark:border-neutral-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
+          class="w-full min-h-[44px] border border-stone-300 dark:border-neutral-700 rounded-lg px-3 py-2 focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
         >
           <optgroup v-for="group in groupedTimezones" :key="group.label" :label="group.label">
             <option v-for="tz in group.timezones" :key="tz.value" :value="tz.value">
@@ -50,16 +50,16 @@
           Backup codes remaining: {{ totpStatus.backup_codes_remaining }} / 10
         </p>
         
-        <div class="flex gap-3 pt-2">
+        <div class="flex flex-wrap gap-3 pt-2">
           <button
             @click="showRegenerateModal = true"
-            class="px-4 py-2 text-sm font-medium text-stone-800 dark:text-stone-200 bg-stone-100 rounded-lg hover:bg-stone-100"
+            class="min-h-[44px] px-4 py-2 text-sm font-medium text-stone-800 dark:text-stone-200 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
           >
             Regenerate backup codes
           </button>
           <button
             @click="showDisableModal = true"
-            class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"
+            class="min-h-[44px] px-4 py-2 text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30"
           >
             Disable 2FA
           </button>
@@ -74,7 +74,7 @@
         <button
           @click="startTOTPSetup"
           :disabled="settingUp2FA"
-          class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+          class="min-h-[44px] px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
         >
           {{ settingUp2FA ? 'Loading...' : 'Enable 2FA' }}
         </button>
@@ -92,7 +92,7 @@
         </div>
         <button
           @click="editorPrefsStore.resetToDefaults()"
-          class="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 underline"
+          class="min-h-[44px] flex items-center text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 underline px-1 -mx-1"
         >
           Reset to defaults
         </button>
@@ -107,7 +107,7 @@
             <label
               v-for="ext in extensions"
               :key="ext.id"
-              class="flex items-center justify-between p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700/50 transition-colors cursor-pointer"
+              class="flex items-center justify-between p-3 min-h-[44px] rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700/50 transition-colors cursor-pointer"
             >
               <div class="flex items-center gap-3">
                 <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-stone-100 dark:bg-neutral-700 text-sm font-medium text-stone-700 dark:text-stone-300">
@@ -121,7 +121,7 @@
               <button
                 @click.prevent="editorPrefsStore.toggle(ext.id, !editorPrefsStore.isEnabled(ext.id))"
                 :class="[
-                  'relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2',
+                  'relative inline-flex h-5 w-9 min-h-[44px] flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2 items-center justify-center',
                   editorPrefsStore.isEnabled(ext.id) ? 'bg-neutral-800 dark:bg-neutral-200' : 'bg-stone-200 dark:bg-neutral-600'
                 ]"
               >
@@ -167,8 +167,8 @@
     </div>
 
     <!-- 2FA Setup Modal -->
-    <div v-if="showSetupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+    <div v-if="showSetupModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-y-auto">
+      <div class="modal-panel bg-white dark:bg-neutral-800 rounded-xl shadow-xl flex-shrink-0 my-auto p-4 md:p-6 overflow-y-auto">
         <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Set Up Two-Factor Authentication</h3>
         
         <!-- Step 1: Show QR/Secret -->
@@ -201,13 +201,13 @@
           <div class="flex justify-end gap-3 pt-4">
             <button
               @click="cancelSetup"
-              class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
+              class="min-h-[44px] px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
             >
               Cancel
             </button>
             <button
               @click="setupStep = 2"
-              class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+              class="min-h-[44px] px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               Next
             </button>
@@ -235,21 +235,21 @@
               inputmode="numeric"
               maxlength="6"
               placeholder="000000"
-              class="w-full px-3 py-2 text-center text-lg tracking-widest border border-stone-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
+              class="w-full min-h-[44px] px-3 py-2 text-center text-lg tracking-widest border border-stone-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
             />
           </div>
           
           <div class="flex justify-end gap-3 pt-4">
             <button
               @click="setupStep = 1"
-              class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
+              class="min-h-[44px] px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
             >
               Back
             </button>
             <button
               @click="verifyAndEnable"
               :disabled="verifying || verifyCode.length !== 6"
-              class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+              class="min-h-[44px] px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
             >
               {{ verifying ? 'Verifying...' : 'Enable 2FA' }}
             </button>
@@ -285,7 +285,7 @@
           <div class="flex justify-end pt-4">
             <button
               @click="finishSetup"
-              class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+              class="min-h-[44px] px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               I've saved my backup codes
             </button>
@@ -295,8 +295,8 @@
     </div>
 
     <!-- Disable 2FA Modal -->
-    <div v-if="showDisableModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+    <div v-if="showDisableModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-y-auto">
+      <div class="modal-panel bg-white dark:bg-neutral-800 rounded-xl shadow-xl flex-shrink-0 my-auto p-4 md:p-6">
         <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Disable Two-Factor Authentication</h3>
         
         <p class="text-sm text-stone-600 dark:text-stone-400 mb-4">
@@ -315,21 +315,21 @@
             id="disable-password"
             v-model="disablePassword"
             type="password"
-            class="w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
+            class="w-full min-h-[44px] px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
           />
         </div>
         
         <div class="flex justify-end gap-3">
           <button
             @click="closeDisableModal"
-            class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
+            class="min-h-[44px] px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
           >
             Cancel
           </button>
           <button
             @click="disableTOTP"
             :disabled="disabling || !disablePassword"
-            class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+            class="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
           >
             {{ disabling ? 'Disabling...' : 'Disable 2FA' }}
           </button>
@@ -338,8 +338,8 @@
     </div>
 
     <!-- Regenerate Backup Codes Modal -->
-    <div v-if="showRegenerateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+    <div v-if="showRegenerateModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-y-auto">
+      <div class="modal-panel bg-white dark:bg-neutral-800 rounded-xl shadow-xl flex-shrink-0 my-auto p-4 md:p-6 overflow-y-auto">
         <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Regenerate Backup Codes</h3>
         
         <div v-if="!newBackupCodes">
@@ -359,21 +359,21 @@
               id="regenerate-password"
               v-model="regeneratePassword"
               type="password"
-              class="w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
+              class="w-full min-h-[44px] px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
             />
           </div>
           
           <div class="flex justify-end gap-3">
             <button
               @click="closeRegenerateModal"
-              class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
+              class="min-h-[44px] px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-neutral-700 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600"
             >
               Cancel
             </button>
             <button
               @click="regenerateBackupCodes"
               :disabled="regenerating || !regeneratePassword"
-              class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+              class="min-h-[44px] px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
             >
               {{ regenerating ? 'Regenerating...' : 'Regenerate' }}
             </button>
@@ -401,7 +401,7 @@
           <div class="flex justify-end">
             <button
               @click="closeRegenerateModal"
-              class="px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+              class="min-h-[44px] px-4 py-2 text-sm font-medium text-white dark:text-neutral-800 bg-neutral-800 dark:bg-neutral-200 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               Done
             </button>

@@ -527,13 +527,13 @@ onMounted(async () => {
 <template>
   <div class="h-full flex flex-col bg-stone-50 dark:bg-neutral-900">
     <!-- Header -->
-    <div class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700 px-6 py-4">
-      <div class="flex items-center justify-between">
+    <div class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700 px-4 md:px-6 py-4 pt-[env(safe-area-inset-top)]">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Tasks</h1>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
           <button
             @click="openNewGroupModal"
-            class="px-4 py-2 text-stone-700 dark:text-stone-300 border border-stone-300 dark:border-neutral-700 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700 flex items-center gap-2"
+            class="min-h-[44px] px-4 py-2 text-stone-700 dark:text-stone-300 border border-stone-300 dark:border-neutral-700 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700 flex items-center gap-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -542,7 +542,7 @@ onMounted(async () => {
           </button>
           <button
             @click="openNewTaskModal"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
+            class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -553,12 +553,12 @@ onMounted(async () => {
       </div>
 
       <!-- Groups -->
-      <div v-if="tasksStore.groups.length > 0" class="flex items-center gap-2 mt-4">
-        <span class="text-sm text-stone-500 dark:text-stone-400">Groups:</span>
+      <div v-if="tasksStore.groups.length > 0" class="flex items-center gap-2 mt-4 overflow-x-auto scrollbar-hide">
+        <span class="text-sm text-stone-500 dark:text-stone-400 flex-shrink-0">Groups:</span>
         <div
           v-for="group in tasksStore.groups"
           :key="group.id"
-          class="flex items-center gap-1.5 px-2 py-1 rounded-full text-sm cursor-pointer hover:opacity-80"
+          class="flex items-center gap-1.5 px-2 py-1.5 min-h-[44px] rounded-full text-sm cursor-pointer hover:opacity-80 flex-shrink-0"
           :style="{ backgroundColor: group.color + '20', color: group.color }"
           @click="openEditGroupModal(group)"
         >
@@ -569,7 +569,7 @@ onMounted(async () => {
     </div>
 
     <!-- Kanban Board -->
-    <div class="flex-1 overflow-x-auto p-6">
+    <div class="flex-1 overflow-x-auto overflow-y-hidden p-4 md:p-6 scrollbar-hide">
       <div class="flex gap-6 h-full min-w-max">
         <!-- Columns -->
         <div
@@ -588,7 +588,7 @@ onMounted(async () => {
             <button
               v-if="column.id === 'todo'"
               @click="openNewTaskModal"
-              class="p-1 rounded hover:bg-stone-200 dark:hover:bg-neutral-700"
+              class="min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center p-2 rounded hover:bg-stone-200 dark:hover:bg-neutral-700"
             >
               <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -609,7 +609,7 @@ onMounted(async () => {
               <template #item="{ element: task }">
                 <div
                   :class="[
-                    'rounded-lg p-3 shadow-sm cursor-grab hover:shadow-md transition-shadow border-l-4',
+                    'rounded-lg p-3 shadow-sm cursor-grab hover:shadow-md transition-shadow border-l-4 min-h-[44px]',
                     task.status === 'done'
                       ? 'bg-stone-100 dark:bg-neutral-700/50 opacity-60'
                       : 'bg-white dark:bg-neutral-700'
@@ -725,9 +725,9 @@ onMounted(async () => {
     </div>
 
     <!-- Task Modal -->
-    <div v-if="showTaskModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div class="p-6">
+    <div v-if="showTaskModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-y-auto">
+      <div class="modal-panel-lg bg-white dark:bg-neutral-800 shadow-xl flex-shrink-0 my-auto">
+        <div class="p-4 md:p-6 overflow-y-auto flex-1">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-stone-900 dark:text-stone-100">
               {{ editingTask ? 'Edit Task' : 'New Task' }}
@@ -735,7 +735,7 @@ onMounted(async () => {
             <button
               v-if="editingTask"
               @click="deleteTask(editingTask)"
-              class="text-red-500 hover:text-red-700"
+              class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 -m-2"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -749,7 +749,7 @@ onMounted(async () => {
             <input
               v-model="taskForm.title"
               type="text"
-              class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+              class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
               placeholder="Task title"
             />
           </div>
@@ -766,12 +766,12 @@ onMounted(async () => {
           </div>
 
           <!-- Priority & Due Date -->
-          <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Priority</label>
               <select
                 v-model="taskForm.priority"
-                class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -783,18 +783,18 @@ onMounted(async () => {
               <input
                 v-model="taskForm.dueDate"
                 type="date"
-                class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
               />
             </div>
           </div>
 
           <!-- Add to Calendar (only show for new tasks with a due date) -->
           <div v-if="!editingTask && taskForm.dueDate" class="mb-4">
-            <label class="flex items-center gap-2 cursor-pointer p-3 bg-stone-100 dark:bg-neutral-700/20 border border-stone-200 dark:border-neutral-700 rounded-lg">
+            <label class="flex items-center gap-3 cursor-pointer min-h-[44px] p-3 bg-stone-100 dark:bg-neutral-700/20 border border-stone-200 dark:border-neutral-700 rounded-lg">
               <input
                 v-model="addToCalendar"
                 type="checkbox"
-                class="w-4 h-4 rounded text-stone-800 dark:text-stone-200"
+                class="w-5 h-5 rounded text-stone-800 dark:text-stone-200"
               />
               <svg class="w-5 h-5 text-stone-800 dark:text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -808,7 +808,7 @@ onMounted(async () => {
             <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Group</label>
             <select
               v-model="taskForm.groupId"
-              class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+              class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
             >
               <option :value="null">No group</option>
               <option v-for="group in tasksStore.groups" :key="group.id" :value="group.id">
@@ -824,13 +824,13 @@ onMounted(async () => {
               <input
                 v-model="tagInput"
                 type="text"
-                class="flex-1 px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                class="flex-1 min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                 placeholder="Add tag"
                 @keydown.enter.prevent="addTag"
               />
               <button
                 @click="addTag"
-                class="px-4 py-2 bg-stone-200 dark:bg-neutral-600 rounded-lg hover:bg-stone-300 dark:hover:bg-stone-500"
+                class="min-h-[44px] px-4 py-2 bg-stone-200 dark:bg-neutral-600 rounded-lg hover:bg-stone-300 dark:hover:bg-stone-500"
               >
                 Add
               </button>
@@ -854,13 +854,13 @@ onMounted(async () => {
               <input
                 v-model="checklistInput"
                 type="text"
-                class="flex-1 px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                class="flex-1 min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                 placeholder="Add checklist item"
                 @keydown.enter.prevent="addChecklistItem"
               />
               <button
                 @click="addChecklistItem"
-                class="px-4 py-2 bg-stone-200 dark:bg-neutral-600 rounded-lg hover:bg-stone-300 dark:hover:bg-stone-500"
+                class="min-h-[44px] px-4 py-2 bg-stone-200 dark:bg-neutral-600 rounded-lg hover:bg-stone-300 dark:hover:bg-stone-500"
               >
                 Add
               </button>
@@ -869,13 +869,13 @@ onMounted(async () => {
               <div
                 v-for="item in taskForm.checklist"
                 :key="item.id"
-                class="flex items-center gap-2 group"
+                class="flex items-center gap-2 group min-h-[44px]"
               >
                 <input
                   type="checkbox"
                   :checked="item.completed"
                   @change="toggleChecklistItem(item.id)"
-                  class="w-4 h-4 rounded"
+                  class="w-5 h-5 rounded flex-shrink-0"
                 />
                 <span
                   :class="[
@@ -887,7 +887,7 @@ onMounted(async () => {
                 </span>
                 <button
                   @click="removeChecklistItem(item.id)"
-                  class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity"
+                  class="min-w-[44px] min-h-[44px] flex items-center justify-center opacity-0 group-hover:opacity-100 md:opacity-100 md:group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity -m-1"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -899,11 +899,11 @@ onMounted(async () => {
 
           <!-- Recurrence -->
           <div class="mb-4">
-            <label class="flex items-center gap-2 cursor-pointer">
+            <label class="flex items-center gap-3 min-h-[44px] cursor-pointer">
               <input
                 v-model="recurrenceEnabled"
                 type="checkbox"
-                class="w-4 h-4 rounded"
+                class="w-5 h-5 rounded"
               />
               <span class="text-sm font-medium text-stone-700 dark:text-stone-300">Recurring task</span>
             </label>
@@ -937,7 +937,7 @@ onMounted(async () => {
                     :key="day.value"
                     @click="toggleDayOfWeek(day.value)"
                     :class="[
-                      'px-3 py-1 text-sm rounded-full transition-colors',
+                      'min-h-[44px] px-3 py-2 text-sm rounded-full transition-colors',
                       recurrenceForm.daysOfWeek.includes(day.value)
                         ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800'
                         : 'bg-stone-200 dark:bg-neutral-600 text-stone-700 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-500'
@@ -1007,13 +1007,13 @@ onMounted(async () => {
           <div class="flex justify-end gap-2 pt-4 border-t dark:border-neutral-700">
             <button
               @click="showTaskModal = false"
-              class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+              class="min-h-[44px] px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               Cancel
             </button>
             <button
               @click="saveTask"
-              class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+              class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
             >
               {{ editingTask ? 'Save' : 'Create' }}
             </button>
@@ -1023,17 +1023,17 @@ onMounted(async () => {
     </div>
 
     <!-- Group Modal -->
-    <div v-if="showGroupModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+    <div v-if="showGroupModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-y-auto">
+      <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl flex-shrink-0 my-auto p-4 md:p-6">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-bold text-stone-900 dark:text-stone-100">
             {{ editingGroup ? 'Edit Group' : 'New Group' }}
           </h2>
-          <button
-            v-if="editingGroup"
-            @click="deleteGroup(editingGroup)"
-            class="text-red-500 hover:text-red-700"
-          >
+            <button
+              v-if="editingGroup"
+              @click="deleteGroup(editingGroup)"
+              class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 -m-2"
+            >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
@@ -1045,7 +1045,7 @@ onMounted(async () => {
           <input
             v-model="groupForm.name"
             type="text"
-            class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+            class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
             placeholder="Group name"
           />
         </div>
@@ -1058,7 +1058,7 @@ onMounted(async () => {
               :key="color"
               @click="groupForm.color = color"
               :class="[
-                'w-8 h-8 rounded-full border-2',
+                'w-10 h-10 min-w-[44px] min-h-[44px] rounded-full border-2 flex-shrink-0',
                 groupForm.color === color ? 'border-stone-800 dark:border-white' : 'border-transparent'
               ]"
               :style="{ backgroundColor: color }"
@@ -1069,13 +1069,13 @@ onMounted(async () => {
         <div class="flex justify-end gap-2">
           <button
             @click="showGroupModal = false"
-            class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+            class="min-h-[44px] px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
           >
             Cancel
           </button>
           <button
             @click="saveGroup"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             {{ editingGroup ? 'Save' : 'Create' }}
           </button>
@@ -1087,16 +1087,16 @@ onMounted(async () => {
     <Teleport to="body">
       <div
         v-if="showEmailPreview"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-y-auto"
         @click.self="closeEmailPreview"
       >
-        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+        <div class="w-[calc(100vw-2rem)] max-w-3xl max-h-[90dvh] flex flex-col overflow-hidden rounded-xl shadow-xl bg-white dark:bg-neutral-800 flex-shrink-0 my-auto">
           <!-- Header -->
           <div class="flex items-center justify-between px-6 py-4 border-b dark:border-neutral-700">
             <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">Linked Email</h3>
             <button
               @click="closeEmailPreview"
-              class="p-1 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded"
+              class="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-stone-100 dark:hover:bg-neutral-700 rounded -m-2"
             >
               <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1167,10 +1167,10 @@ onMounted(async () => {
     <Teleport to="body">
       <div
         v-if="showDeleteConfirm"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-y-auto"
         @click.self="cancelDeleteTask"
       >
-        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md p-6">
+        <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl flex-shrink-0 my-auto p-6">
           <div class="flex items-center gap-3 mb-4">
             <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-red-100 dark:bg-red-900/30 rounded-full">
               <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1190,13 +1190,13 @@ onMounted(async () => {
           <div class="flex justify-end gap-3">
             <button
               @click="cancelDeleteTask"
-              class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+              class="min-h-[44px] px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               Cancel
             </button>
             <button
               @click="confirmDeleteTask"
-              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              class="min-h-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
               Delete
             </button>

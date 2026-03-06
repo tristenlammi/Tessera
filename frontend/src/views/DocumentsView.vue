@@ -167,11 +167,11 @@ onUnmounted(() => {
     <!-- Document List View -->
     <div v-if="!documentId" class="flex-1 p-6">
       <div class="max-w-4xl mx-auto">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Documents</h1>
           <button
             @click="showNewDocModal = true"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
+            class="min-h-[44px] flex items-center justify-center gap-2 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 self-start sm:self-center"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -188,7 +188,7 @@ onUnmounted(() => {
               v-for="doc in documentsStore.recentDocuments"
               :key="doc.id"
               @click="router.push(`/documents/${doc.id}`)"
-              class="bg-white dark:bg-neutral-800 rounded-lg border border-stone-200 dark:border-neutral-700 p-4 cursor-pointer hover:shadow-md transition-shadow"
+              class="bg-white dark:bg-neutral-800 rounded-lg border border-stone-200 dark:border-neutral-700 p-4 min-h-[72px] cursor-pointer hover:shadow-md transition-shadow active:bg-stone-50 dark:active:bg-neutral-700/50"
             >
               <div class="flex items-start gap-3">
                 <svg class="w-8 h-8 text-stone-700 dark:text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,7 +214,7 @@ onUnmounted(() => {
           <p class="text-stone-500 dark:text-stone-400 mb-4">Create your first document to get started</p>
           <button
             @click="showNewDocModal = true"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             Create Document
           </button>
@@ -225,12 +225,13 @@ onUnmounted(() => {
     <!-- Editor View -->
     <template v-else>
       <!-- Toolbar -->
-      <div class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700 px-4 py-2">
-        <div class="flex items-center gap-2 flex-wrap">
+      <div class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700 px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <div class="flex flex-col md:flex-row md:items-center gap-2 md:flex-wrap">
+          <div class="flex items-center gap-2 min-w-0">
           <!-- Back button -->
           <button
             @click="goBack"
-            class="p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700"
+            class="min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700"
             title="Back to documents"
           >
             <svg class="w-5 h-5 text-stone-600 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,13 +256,15 @@ onUnmounted(() => {
           <span v-else class="text-xs text-green-600 dark:text-green-400">
             Saved
           </span>
+          </div>
 
           <div class="flex-1"></div>
 
+          <div class="flex items-center gap-2">
           <!-- Share button -->
           <button
             @click="showShareModal = true"
-            class="px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
+            class="min-h-[44px] flex items-center justify-center px-3 py-1.5 text-sm bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 gap-2"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -273,13 +276,14 @@ onUnmounted(() => {
           <button
             @click="saveDocument"
             :disabled="documentsStore.saving"
-            class="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+            class="min-h-[44px] flex items-center justify-center px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 gap-2"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
             </svg>
             Save
           </button>
+          </div>
         </div>
 
         <!-- Editor Toolbar -->
@@ -289,8 +293,8 @@ onUnmounted(() => {
       </div>
 
       <!-- Editor Content -->
-      <div class="flex-1 overflow-auto">
-        <div class="max-w-4xl mx-auto py-8 px-4">
+      <div class="flex-1 overflow-auto min-h-0">
+        <div class="max-w-4xl mx-auto py-6 md:py-8 px-4 pb-[env(safe-area-inset-bottom)]">
           <EditorContent 
             :editor="editor" 
             class="prose prose-lg dark:prose-invert max-w-none min-h-[500px] bg-white dark:bg-neutral-800 rounded-lg shadow p-8"
@@ -313,17 +317,18 @@ onUnmounted(() => {
     </template>
 
     <!-- New Document Modal -->
-    <div v-if="showNewDocModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl p-6 w-full max-w-md">
-        <h2 class="text-xl font-bold text-stone-900 dark:text-stone-100 mb-4">New Document</h2>
-        <input
-          v-model="newDocTitle"
-          type="text"
-          placeholder="Document title"
-          class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100 mb-4"
-          @keydown.enter="createNewDocument"
-        />
-        <div class="flex justify-end gap-2">
+    <div v-if="showNewDocModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl w-full">
+        <div class="p-6">
+          <h2 class="text-xl font-bold text-stone-900 dark:text-stone-100 mb-4">New Document</h2>
+          <input
+            v-model="newDocTitle"
+            type="text"
+            placeholder="Document title"
+            class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100 mb-4 min-h-[44px]"
+            @keydown.enter="createNewDocument"
+          />
+          <div class="flex justify-end gap-2">
           <button
             @click="showNewDocModal = false"
             class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
@@ -332,17 +337,18 @@ onUnmounted(() => {
           </button>
           <button
             @click="createNewDocument"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
+            class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300"
           >
             Create
           </button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Share Modal -->
-    <div v-if="showShareModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+    <div v-if="showShareModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl w-full max-h-[90dvh] overflow-y-auto p-6">
         <h2 class="text-xl font-bold text-stone-900 dark:text-stone-100 mb-4">Share Document</h2>
         
         <div class="mb-4">

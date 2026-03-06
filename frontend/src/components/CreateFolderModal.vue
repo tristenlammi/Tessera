@@ -38,8 +38,8 @@ async function handleCreate() {
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl w-full">
       <div class="px-6 py-4 border-b dark:border-neutral-700">
         <h2 class="text-lg font-semibold dark:text-stone-100">New Folder</h2>
       </div>
@@ -58,7 +58,7 @@ async function handleCreate() {
             v-model="name"
             type="text"
             autofocus
-            class="w-full px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400 dark:bg-neutral-700 dark:text-stone-100"
+            class="w-full min-h-[44px] px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-stone-400 dark:bg-neutral-700 dark:text-stone-100"
             placeholder="Untitled folder"
           />
         </div>
@@ -67,14 +67,14 @@ async function handleCreate() {
           <button
             type="button"
             @click="emit('close')"
-            class="px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+            class="min-h-[44px] px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
           >
             Cancel
           </button>
           <button
             type="submit"
             :disabled="loading"
-            class="px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 dark:text-neutral-800 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg disabled:opacity-50"
+            class="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-neutral-800 dark:bg-neutral-200 dark:text-neutral-800 hover:bg-neutral-700 dark:hover:bg-neutral-300 rounded-lg disabled:opacity-50"
           >
             {{ loading ? 'Creating...' : 'Create' }}
           </button>

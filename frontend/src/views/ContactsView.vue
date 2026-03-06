@@ -228,12 +228,12 @@ onMounted(() => {
 <template>
   <div class="h-full flex flex-col bg-stone-50 dark:bg-neutral-900">
     <!-- Header -->
-    <div class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700 px-6 py-4">
-      <div class="flex items-center justify-between">
+    <div class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700 px-4 md:px-6 py-4 pt-[env(safe-area-inset-top)]">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 class="text-2xl font-bold text-stone-900 dark:text-stone-100">Contacts</h1>
         <button
           @click="openNewContactModal"
-          class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
+          class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 flex items-center gap-2"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -252,7 +252,7 @@ onMounted(() => {
             v-model="searchQuery"
             type="text"
             placeholder="Search contacts..."
-            class="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+            class="w-full min-h-[44px] pl-10 pr-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
           />
         </div>
       </div>
@@ -285,7 +285,7 @@ onMounted(() => {
               v-for="contact in groupContacts"
               :key="contact.id"
               @click="openEditContactModal(contact)"
-              class="flex items-center gap-4 p-4 hover:bg-stone-50 dark:hover:bg-neutral-700 cursor-pointer transition-colors"
+              class="flex items-center gap-4 p-4 min-h-[44px] hover:bg-stone-50 dark:hover:bg-neutral-700 cursor-pointer transition-colors"
             >
               <!-- Avatar -->
               <div
@@ -302,6 +302,7 @@ onMounted(() => {
                   </h4>
                   <button
                     @click.stop="toggleFavorite(contact)"
+                    class="min-w-[44px] min-h-[44px] flex items-center justify-center -m-2 rounded"
                     :class="contact.favorite ? 'text-yellow-500' : 'text-stone-300 dark:text-stone-600 hover:text-yellow-500'"
                   >
                     <svg class="w-5 h-5" :fill="contact.favorite ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
@@ -313,7 +314,7 @@ onMounted(() => {
                 <div v-if="contact.email" class="flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
                   <button
                     @click="openEmailCompose(contact, $event)"
-                    class="flex items-center gap-1.5 hover:text-stone-800 dark:text-stone-200 dark:hover:text-stone-600 dark:text-stone-400 transition-colors"
+                    class="min-h-[44px] flex items-center gap-1.5 hover:text-stone-800 dark:text-stone-200 dark:hover:text-stone-600 dark:text-stone-400 transition-colors -my-1"
                     title="Send email"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -341,11 +342,11 @@ onMounted(() => {
     <Teleport to="body">
       <div
         v-if="showContactModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-y-auto"
         @click.self="showContactModal = false"
       >
-        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-          <div class="p-6">
+        <div class="modal-panel-lg bg-white dark:bg-neutral-800 rounded-xl shadow-xl flex-shrink-0 my-auto">
+          <div class="p-4 md:p-6 overflow-y-auto flex-1">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-xl font-bold text-stone-900 dark:text-stone-100">
                 {{ editingContact ? 'Edit Contact' : 'New Contact' }}
@@ -353,7 +354,7 @@ onMounted(() => {
               <button
                 v-if="editingContact"
                 @click="confirmDelete(editingContact)"
-                class="text-red-500 hover:text-red-700"
+                class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 -m-2"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -362,13 +363,13 @@ onMounted(() => {
             </div>
 
             <!-- Name -->
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">First Name</label>
                 <input
                   v-model="contactForm.firstName"
                   type="text"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                  class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="John"
                 />
               </div>
@@ -377,20 +378,20 @@ onMounted(() => {
                 <input
                   v-model="contactForm.lastName"
                   type="text"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                  class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="Doe"
                 />
               </div>
             </div>
 
             <!-- Email & Phone -->
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Email</label>
                 <input
                   v-model="contactForm.email"
                   type="email"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                  class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="john@example.com"
                 />
               </div>
@@ -399,20 +400,20 @@ onMounted(() => {
                 <input
                   v-model="contactForm.phone"
                   type="tel"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                  class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="+1 234 567 8900"
                 />
               </div>
             </div>
 
             <!-- Company & Job Title -->
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Company</label>
                 <input
                   v-model="contactForm.company"
                   type="text"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                  class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="Acme Inc."
                 />
               </div>
@@ -421,7 +422,7 @@ onMounted(() => {
                 <input
                   v-model="contactForm.jobTitle"
                   type="text"
-                  class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                  class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
                   placeholder="Software Engineer"
                 />
               </div>
@@ -433,7 +434,7 @@ onMounted(() => {
               <input
                 v-model="contactForm.birthday"
                 type="date"
-                class="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
+                class="w-full min-h-[44px] px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:border-neutral-700 dark:text-stone-100"
               />
             </div>
 
@@ -452,14 +453,14 @@ onMounted(() => {
             <div class="flex justify-end gap-2 pt-4 border-t dark:border-neutral-700">
               <button
                 @click="showContactModal = false"
-                class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+                class="min-h-[44px] px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
               >
                 Cancel
               </button>
               <button
                 @click="saveContact"
                 :disabled="!contactForm.firstName && !contactForm.lastName"
-                class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ editingContact ? 'Save' : 'Create' }}
               </button>
@@ -473,10 +474,10 @@ onMounted(() => {
     <Teleport to="body">
       <div
         v-if="showDeleteConfirm"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-y-auto"
         @click.self="showDeleteConfirm = false"
       >
-        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md p-6">
+        <div class="modal-panel bg-white dark:bg-neutral-800 rounded-xl shadow-xl flex-shrink-0 my-auto p-6">
           <div class="flex items-center gap-3 mb-4">
             <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-red-100 dark:bg-red-900/30 rounded-full">
               <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -496,13 +497,13 @@ onMounted(() => {
           <div class="flex justify-end gap-3">
             <button
               @click="showDeleteConfirm = false"
-              class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+              class="min-h-[44px] px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               Cancel
             </button>
             <button
               @click="deleteContact"
-              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              class="min-h-[44px] px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
               Delete
             </button>

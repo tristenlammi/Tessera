@@ -49,7 +49,7 @@ function getFolderIcon(folder: any): string {
       <!-- Root option -->
       <button
         @click="selectFolder(null)"
-        class="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-stone-50 dark:hover:bg-neutral-700/50 transition-colors"
+        class="w-full flex items-center gap-3 px-4 py-2.5 min-h-[44px] text-left hover:bg-stone-50 dark:hover:bg-neutral-700/50 transition-colors"
         :class="{ 'bg-stone-100 dark:bg-neutral-700/30': selectedFolderId === null }"
       >
         <svg class="w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,7 +75,7 @@ function getFolderIcon(folder: any): string {
           v-for="folder in folders"
           :key="folder.id"
           @click="selectFolder(folder.id)"
-          class="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-stone-50 dark:hover:bg-neutral-700/50 transition-colors border-t dark:border-neutral-700"
+          class="w-full flex items-center gap-3 px-4 py-2.5 min-h-[44px] text-left hover:bg-stone-50 dark:hover:bg-neutral-700/50 transition-colors border-t dark:border-neutral-700"
           :class="{ 'bg-stone-100 dark:bg-neutral-700/30': selectedFolderId === folder.id }"
         >
           <span class="text-lg">📁</span>
@@ -96,14 +96,14 @@ function getFolderIcon(folder: any): string {
       <button
         @click="emit('cancel')"
         :disabled="saving"
-        class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg disabled:opacity-50"
+        class="min-h-[44px] px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg disabled:opacity-50"
       >
         Cancel
       </button>
       <button
         @click="confirm"
         :disabled="saving"
-        class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 flex items-center gap-2"
+        class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 flex items-center gap-2"
       >
         <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-stone-50 dark:bg-neutral-900">
     <!-- Admin Header -->
-    <header class="bg-white dark:bg-neutral-800 shadow-sm border-b border-stone-200 dark:border-neutral-700">
+    <header class="bg-white dark:bg-neutral-800 shadow-sm border-b border-stone-200 dark:border-neutral-700 pt-[env(safe-area-inset-top)]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -15,7 +15,7 @@
           </div>
           <router-link
             to="/files"
-            class="text-sm text-stone-800 dark:text-stone-200 dark:text-stone-400 hover:underline flex items-center gap-1"
+            class="min-h-[44px] min-w-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center md:justify-start text-sm text-stone-800 dark:text-stone-200 dark:text-stone-400 hover:underline gap-1"
           >
             <ArrowLeftIcon class="w-4 h-4" />
             Back to Files
@@ -26,20 +26,20 @@
 
     <!-- Navigation Tabs -->
     <nav class="bg-white dark:bg-neutral-800 border-b border-stone-200 dark:border-neutral-700">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex space-x-8">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-x-auto scrollbar-hide">
+        <div class="flex space-x-4 md:space-x-8 min-w-max pb-px -mb-px">
           <button
             v-for="tab in tabs"
             :key="tab.id"
             @click="activeTab = tab.id"
             :class="[
-              'py-4 px-1 border-b-2 font-medium text-sm transition-colors',
+              'py-4 px-2 md:px-1 border-b-2 font-medium text-sm transition-colors flex-shrink-0 min-h-[44px] flex items-center gap-2',
               activeTab === tab.id
                 ? 'border-neutral-700 dark:border-neutral-300 text-stone-800 dark:text-stone-200 dark:text-stone-400'
                 : 'border-transparent text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-300'
             ]"
           >
-            <component :is="tab.icon" class="w-5 h-5 inline-block mr-2" />
+            <component :is="tab.icon" class="w-5 h-5 flex-shrink-0" />
             {{ tab.name }}
           </button>
         </div>
@@ -124,7 +124,7 @@
             <button
               @click="handleClearCache"
               :disabled="loading"
-              class="px-4 py-2 bg-stone-100 dark:bg-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600 transition-colors"
+              class="min-h-[44px] px-4 py-2 flex items-center bg-stone-100 dark:bg-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600 transition-colors disabled:opacity-50"
             >
               <TrashIcon class="w-4 h-4 inline-block mr-2" />
               Clear Cache
@@ -132,7 +132,7 @@
             <button
               @click="handleRunCleanup"
               :disabled="loading"
-              class="px-4 py-2 bg-stone-100 dark:bg-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600 transition-colors"
+              class="min-h-[44px] px-4 py-2 flex items-center bg-stone-100 dark:bg-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-200 dark:hover:bg-neutral-600 transition-colors disabled:opacity-50"
             >
               <ArrowPathIcon class="w-4 h-4 inline-block mr-2" />
               Run Cleanup
@@ -141,7 +141,7 @@
               @click="toggleMaintenance"
               :disabled="loading"
               :class="[
-                'px-4 py-2 rounded-lg transition-colors',
+                'min-h-[44px] px-4 py-2 flex items-center rounded-lg transition-colors disabled:opacity-50',
                 systemSettings?.maintenanceMode
                   ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200'
                   : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-200'
@@ -165,12 +165,12 @@
               @input="debouncedSearchUsers"
               type="text"
               placeholder="Search users by name or email..."
-              class="w-full pl-10 pr-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
+              class="w-full min-h-[44px] pl-10 pr-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400 focus:border-transparent"
             />
           </div>
           <button
             @click="showCreateUserModal = true"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors flex items-center gap-2"
+            class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors flex items-center justify-center gap-2"
           >
             <PlusIcon class="w-5 h-5" />
             Add User
@@ -183,17 +183,17 @@
             <table class="min-w-full divide-y divide-stone-200 dark:divide-neutral-700">
               <thead class="bg-stone-50 dark:bg-neutral-900">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">User</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Role</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Storage</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Status</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Last Login</th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Actions</th>
+                  <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">User</th>
+                  <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Role</th>
+                  <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Storage</th>
+                  <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Status</th>
+                  <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Last Login</th>
+                  <th class="px-4 md:px-6 py-3 text-right text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-neutral-800 divide-y divide-stone-200 dark:divide-neutral-700">
                 <tr v-for="user in users" :key="user.id" class="hover:bg-stone-50 dark:hover:bg-neutral-700/50">
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap min-h-[44px]">
                     <div class="flex items-center">
                       <div class="w-10 h-10 rounded-full bg-stone-100 dark:bg-neutral-800 flex items-center justify-center">
                         <span class="text-stone-800 dark:text-stone-200 dark:text-stone-400 font-medium">{{ user.name.charAt(0).toUpperCase() }}</span>
@@ -204,7 +204,7 @@
                       </div>
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap min-h-[44px]">
                     <span :class="[
                       'px-2 py-1 text-xs font-medium rounded-full',
                       user.role === 'admin'
@@ -214,7 +214,7 @@
                       {{ user.role }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap min-h-[44px]">
                     <div class="text-sm text-stone-900 dark:text-stone-100">{{ formatBytes(user.storageUsed) }}</div>
                     <div class="text-xs text-stone-500 dark:text-stone-400">of {{ formatBytes(user.storageQuota) }}</div>
                     <div class="w-24 bg-stone-200 dark:bg-neutral-700 rounded-full h-1.5 mt-1">
@@ -224,7 +224,7 @@
                       ></div>
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap min-h-[44px]">
                     <span :class="[
                       'px-2 py-1 text-xs font-medium rounded-full',
                       user.isActive
@@ -234,28 +234,28 @@
                       {{ user.isActive ? 'Active' : 'Disabled' }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
+                  <td class="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
                     {{ user.lastLoginAt ? formatDate(user.lastLoginAt) : 'Never' }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div class="flex items-center justify-end gap-2">
+                  <td class="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex items-center justify-end gap-1">
                       <button
                         @click="editUser(user)"
-                        class="text-stone-800 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-300"
+                        class="min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center p-2 rounded text-stone-800 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700"
                         title="Edit"
                       >
                         <PencilIcon class="w-5 h-5" />
                       </button>
                       <button
                         @click="generateResetLink(user)"
-                        class="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300"
+                        class="min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center p-2 rounded text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
                         title="Generate Password Reset Link"
                       >
                         <KeyIcon class="w-5 h-5" />
                       </button>
                       <button
                         @click="confirmDeleteUser(user)"
-                        class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                        class="min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center p-2 rounded text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                         title="Delete"
                       >
                         <TrashIcon class="w-5 h-5" />
@@ -268,7 +268,7 @@
           </div>
 
           <!-- Pagination -->
-          <div class="px-6 py-4 border-t border-stone-200 dark:border-neutral-700 flex items-center justify-between">
+          <div class="px-4 md:px-6 py-4 border-t border-stone-200 dark:border-neutral-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
             <p class="text-sm text-stone-500 dark:text-stone-400">
               Showing {{ (usersPage - 1) * 20 + 1 }} to {{ Math.min(usersPage * 20, usersTotal) }} of {{ usersTotal }} users
             </p>
@@ -276,14 +276,14 @@
               <button
                 @click="loadUsers(usersPage - 1)"
                 :disabled="usersPage <= 1"
-                class="px-3 py-1 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-stone-50 dark:hover:bg-neutral-700"
+                class="min-h-[44px] px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-stone-50 dark:hover:bg-neutral-700"
               >
                 Previous
               </button>
               <button
                 @click="loadUsers(usersPage + 1)"
                 :disabled="usersPage >= totalPages"
-                class="px-3 py-1 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-stone-50 dark:hover:bg-neutral-700"
+                class="min-h-[44px] px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-stone-50 dark:hover:bg-neutral-700"
               >
                 Next
               </button>
@@ -304,7 +304,7 @@
                 <input
                   v-model="settingsForm.siteName"
                   type="text"
-                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
+                  class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
@@ -312,7 +312,7 @@
                 <input
                   v-model="settingsForm.siteUrl"
                   type="url"
-                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
+                  class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
@@ -321,7 +321,7 @@
                   v-model.number="settingsForm.defaultQuotaGB"
                   type="number"
                   min="1"
-                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
+                  class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
@@ -330,25 +330,25 @@
                   v-model.number="settingsForm.maxUploadSizeMB"
                   type="number"
                   min="1"
-                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
+                  class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
             </div>
 
             <div class="space-y-4">
-              <label class="flex items-center gap-3">
+              <label class="flex items-center gap-3 min-h-[44px] cursor-pointer">
                 <input
                   v-model="settingsForm.allowRegistration"
                   type="checkbox"
-                  class="w-4 h-4 text-stone-800 dark:text-stone-200 rounded border-stone-300 focus:ring-stone-400"
+                  class="w-5 h-5 text-stone-800 dark:text-stone-200 rounded border-stone-300 focus:ring-stone-400"
                 />
                 <span class="text-sm text-stone-700 dark:text-stone-300">Allow public registration</span>
               </label>
-              <label class="flex items-center gap-3">
+              <label class="flex items-center gap-3 min-h-[44px] cursor-pointer">
                 <input
                   v-model="settingsForm.requireEmailVerification"
                   type="checkbox"
-                  class="w-4 h-4 text-stone-800 dark:text-stone-200 rounded border-stone-300 focus:ring-stone-400"
+                  class="w-5 h-5 text-stone-800 dark:text-stone-200 rounded border-stone-300 focus:ring-stone-400"
                 />
                 <span class="text-sm text-stone-700 dark:text-stone-300">Require email verification</span>
               </label>
@@ -358,7 +358,7 @@
               <button
                 type="submit"
                 :disabled="loading"
-                class="px-6 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50"
+                class="min-h-[44px] px-6 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50"
               >
                 Save Settings
               </button>
@@ -378,7 +378,7 @@
                   v-model="smtpForm.smtpHost"
                   type="text"
                   placeholder="smtp.example.com"
-                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
+                  class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
@@ -387,7 +387,7 @@
                   v-model.number="smtpForm.smtpPort"
                   type="number"
                   placeholder="587"
-                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
+                  class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
@@ -395,7 +395,7 @@
                 <input
                   v-model="smtpForm.smtpUser"
                   type="text"
-                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
+                  class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
               <div>
@@ -404,16 +404,16 @@
                   v-model="smtpForm.smtpFrom"
                   type="email"
                   placeholder="noreply@example.com"
-                  class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
+                  class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-400"
                 />
               </div>
             </div>
 
-            <div class="pt-4 border-t border-stone-200 dark:border-neutral-700 flex gap-3">
+            <div class="pt-4 border-t border-stone-200 dark:border-neutral-700 flex flex-wrap gap-3">
               <button
                 type="submit"
                 :disabled="loading"
-                class="px-6 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50"
+                class="min-h-[44px] px-6 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50"
               >
                 Save SMTP Settings
               </button>
@@ -421,7 +421,7 @@
                 type="button"
                 @click="testSmtp"
                 :disabled="loading"
-                class="px-6 py-2 border border-stone-300 dark:border-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50"
+                class="min-h-[44px] px-6 py-2 border border-stone-300 dark:border-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50"
               >
                 Send Test Email
               </button>
@@ -443,7 +443,7 @@
             <div
               v-for="module in modules"
               :key="module.id"
-              class="p-6 flex items-center justify-between"
+              class="p-6 flex items-center justify-between min-h-[44px]"
             >
               <div class="flex items-center gap-4">
                 <div :class="[
@@ -472,7 +472,7 @@
               <button
                 @click="toggleModule(module.id)"
                 :class="[
-                  'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2',
+                  'relative inline-flex h-6 w-11 min-h-[44px] flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2 items-center justify-center',
                   module.enabled ? 'bg-neutral-800 dark:bg-neutral-200' : 'bg-stone-200 dark:bg-neutral-600'
                 ]"
               >
@@ -531,22 +531,22 @@
             <table class="min-w-full divide-y divide-stone-200 dark:divide-neutral-700">
               <thead class="bg-stone-50 dark:bg-neutral-900">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">Time</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">User</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">Action</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">Resource</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">IP Address</th>
+                  <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">Time</th>
+                  <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">User</th>
+                  <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">Action</th>
+                  <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">Resource</th>
+                  <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase">IP Address</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-stone-200 dark:divide-neutral-700">
                 <tr v-for="log in activityLogs" :key="log.id" class="hover:bg-stone-50 dark:hover:bg-neutral-700/50">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
+                  <td class="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
                     {{ formatDateTime(log.createdAt) }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-900 dark:text-stone-100">
+                  <td class="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm text-stone-900 dark:text-stone-100">
                     {{ log.userEmail }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap min-h-[44px]">
                     <span :class="[
                       'px-2 py-1 text-xs font-medium rounded-full',
                       getActionColor(log.action)
@@ -554,10 +554,10 @@
                       {{ log.action }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
+                  <td class="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
                     {{ log.resourceType }}: {{ log.resourceId?.slice(0, 8) }}...
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
+                  <td class="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-sm text-stone-500 dark:text-stone-400">
                     {{ log.ipAddress }}
                   </td>
                 </tr>
@@ -566,7 +566,7 @@
           </div>
 
           <!-- Pagination -->
-          <div class="px-6 py-4 border-t border-stone-200 dark:border-neutral-700 flex items-center justify-between">
+          <div class="px-4 md:px-6 py-4 border-t border-stone-200 dark:border-neutral-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
             <p class="text-sm text-stone-500 dark:text-stone-400">
               Page {{ logsPage }} of {{ logsTotalPages }}
             </p>
@@ -574,14 +574,14 @@
               <button
                 @click="loadLogs(logsPage - 1)"
                 :disabled="logsPage <= 1"
-                class="px-3 py-1 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50"
+                class="min-h-[44px] px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50 hover:bg-stone-50 dark:hover:bg-neutral-700"
               >
                 Previous
               </button>
               <button
                 @click="loadLogs(logsPage + 1)"
                 :disabled="logsPage >= logsTotalPages"
-                class="px-3 py-1 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50"
+                class="min-h-[44px] px-3 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg text-sm disabled:opacity-50 hover:bg-stone-50 dark:hover:bg-neutral-700"
               >
                 Next
               </button>
@@ -592,139 +592,143 @@
     </main>
 
     <!-- Edit User Modal -->
-    <div v-if="editingUser" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Edit User</h3>
-        <form @submit.prevent="saveUser" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Name</label>
-            <input
-              v-model="editingUser.name"
-              type="text"
-              required
-              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Role</label>
-            <select
-              v-model="editingUser.role"
-              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Storage Quota (GB)</label>
-            <input
-              v-model.number="editUserQuotaGB"
-              type="number"
-              min="1"
-              required
-              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
-            />
-          </div>
-          <div>
-            <label class="flex items-center gap-2">
-              <input v-model="editingUser.isActive" type="checkbox" class="w-4 h-4 text-stone-800 dark:text-stone-200 rounded" />
-              <span class="text-sm text-stone-700 dark:text-stone-300">Active</span>
-            </label>
-          </div>
-          <div class="flex gap-3 pt-4">
-            <button
-              type="button"
-              @click="editingUser = null"
-              class="flex-1 px-4 py-2 border border-stone-300 dark:border-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              :disabled="loading"
-              class="flex-1 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
-            >
-              Save
-            </button>
-          </div>
-        </form>
+    <div v-if="editingUser" class="fixed inset-0 z-50 flex items-center justify-center p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-black/50 overflow-y-auto">
+      <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl flex-shrink-0 my-auto">
+        <div class="p-4 md:p-6 overflow-y-auto flex-1">
+          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Edit User</h3>
+          <form @submit.prevent="saveUser" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Name</label>
+              <input
+                v-model="editingUser.name"
+                type="text"
+                required
+                class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Role</label>
+              <select
+                v-model="editingUser.role"
+                class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Storage Quota (GB)</label>
+              <input
+                v-model.number="editUserQuotaGB"
+                type="number"
+                min="1"
+                required
+                class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
+              />
+            </div>
+            <div>
+              <label class="flex items-center gap-3 min-h-[44px] cursor-pointer">
+                <input v-model="editingUser.isActive" type="checkbox" class="w-5 h-5 text-stone-800 dark:text-stone-200 rounded" />
+                <span class="text-sm text-stone-700 dark:text-stone-300">Active</span>
+              </label>
+            </div>
+            <div class="flex gap-3 pt-4">
+              <button
+                type="button"
+                @click="editingUser = null"
+                class="flex-1 min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                :disabled="loading"
+                class="flex-1 min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
 
     <!-- Create User Modal -->
-    <div v-if="showCreateUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Create New User</h3>
-        <form @submit.prevent="handleCreateUser" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Email *</label>
-            <input
-              v-model="newUserForm.email"
-              type="email"
-              required
-              placeholder="user@example.com"
-              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Name *</label>
-            <input
-              v-model="newUserForm.name"
-              type="text"
-              required
-              placeholder="Full Name"
-              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Password *</label>
-            <input
-              v-model="newUserForm.password"
-              type="password"
-              required
-              minlength="8"
-              placeholder="Minimum 8 characters"
-              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Role</label>
-            <select
-              v-model="newUserForm.role"
-              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Storage Quota (GB)</label>
-            <input
-              v-model.number="newUserForm.storageQuotaGB"
-              type="number"
-              min="1"
-              required
-              class="w-full px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
-            />
-          </div>
-          <p v-if="createUserError" class="text-sm text-red-600 dark:text-red-400">{{ createUserError }}</p>
-          <div class="flex gap-3 pt-4">
-            <button
-              type="button"
-              @click="closeCreateUserModal"
-              class="flex-1 px-4 py-2 border border-stone-300 dark:border-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              :disabled="loading"
-              class="flex-1 px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
-            >
-              Create User
-            </button>
-          </div>
-        </form>
+    <div v-if="showCreateUserModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-black/50 overflow-y-auto">
+      <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl flex-shrink-0 my-auto">
+        <div class="p-4 md:p-6 overflow-y-auto flex-1">
+          <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">Create New User</h3>
+          <form @submit.prevent="handleCreateUser" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Email *</label>
+              <input
+                v-model="newUserForm.email"
+                type="email"
+                required
+                placeholder="user@example.com"
+                class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Name *</label>
+              <input
+                v-model="newUserForm.name"
+                type="text"
+                required
+                placeholder="Full Name"
+                class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Password *</label>
+              <input
+                v-model="newUserForm.password"
+                type="password"
+                required
+                minlength="8"
+                placeholder="Minimum 8 characters"
+                class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Role</label>
+              <select
+                v-model="newUserForm.role"
+                class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Storage Quota (GB)</label>
+              <input
+                v-model.number="newUserForm.storageQuotaGB"
+                type="number"
+                min="1"
+                required
+                class="w-full min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-stone-900 dark:text-stone-100"
+              />
+            </div>
+            <p v-if="createUserError" class="text-sm text-red-600 dark:text-red-400">{{ createUserError }}</p>
+            <div class="flex gap-3 pt-4">
+              <button
+                type="button"
+                @click="closeCreateUserModal"
+                class="flex-1 min-h-[44px] px-4 py-2 border border-stone-300 dark:border-neutral-700 text-stone-700 dark:text-stone-300 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                :disabled="loading"
+                class="flex-1 min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+              >
+                Create User
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>

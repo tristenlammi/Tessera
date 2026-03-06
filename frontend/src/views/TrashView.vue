@@ -22,18 +22,18 @@ async function handleRestore(file: any) {
 
 <template>
   <div class="h-full flex flex-col">
-    <div class="flex items-center justify-between p-4 border-b border-stone-200 dark:border-neutral-700">
+    <div class="flex flex-wrap items-center justify-between gap-2 p-4 pt-[env(safe-area-inset-top)] md:pt-4 border-b border-stone-200 dark:border-neutral-700">
       <h1 class="text-xl font-semibold text-stone-900 dark:text-stone-100">Trash</h1>
       <button
         v-if="filesStore.files.length > 0"
         @click="handleEmptyTrash"
-        class="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+        class="min-h-[44px] flex items-center justify-center px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
       >
         Empty Trash
       </button>
     </div>
 
-    <div class="flex-1 overflow-auto">
+    <div class="flex-1 overflow-auto pb-[env(safe-area-inset-bottom)]">
       <div v-if="filesStore.loading" class="flex items-center justify-center h-64">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-800 dark:border-neutral-200"></div>
       </div>

@@ -52,10 +52,10 @@ async function handleSubmit() {
 
 <template>
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
     @click.self="emit('close')"
   >
-    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-sm mx-4">
+    <div class="modal-panel max-w-sm bg-white dark:bg-neutral-800 shadow-xl w-full mx-auto">
       <form @submit.prevent="handleSubmit">
         <div class="px-4 py-3 border-b dark:border-neutral-700">
           <h3 class="font-medium dark:text-stone-100">Rename</h3>
@@ -66,7 +66,7 @@ async function handleSubmit() {
             ref="inputRef"
             v-model="newName"
             type="text"
-            class="w-full px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-stone-400 dark:bg-neutral-700 dark:text-stone-100"
+            class="w-full min-h-[44px] px-3 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-stone-400 dark:bg-neutral-700 dark:text-stone-100"
             :class="{ 'border-red-500': error }"
             @keydown.esc="emit('close')"
           />
@@ -77,14 +77,14 @@ async function handleSubmit() {
           <button
             type="button"
             @click="emit('close')"
-            class="px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-neutral-700 rounded-lg text-sm"
+            class="min-h-[44px] px-4 py-2 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-neutral-700 rounded-lg text-sm"
           >
             Cancel
           </button>
           <button
             type="submit"
             :disabled="loading"
-            class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 text-sm disabled:opacity-50"
+            class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 text-sm disabled:opacity-50"
           >
             {{ loading ? 'Renaming...' : 'Rename' }}
           </button>

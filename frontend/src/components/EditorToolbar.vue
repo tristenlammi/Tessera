@@ -1,18 +1,18 @@
 <template>
-  <div class="flex items-center gap-1 flex-wrap">
+  <div class="flex items-center gap-1 flex-nowrap overflow-x-auto pb-1 -mb-1 scrollbar-hide md:flex-wrap md:overflow-visible">
     <!-- Undo/Redo (always visible) -->
-    <button @click="editor?.chain().focus().undo().run()" class="p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700" title="Undo (Ctrl+Z)">
+    <button @click="editor?.chain().focus().undo().run()" class="min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center flex-shrink-0 p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700" title="Undo (Ctrl+Z)">
       <svg class="w-4 h-4 text-stone-600 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
       </svg>
     </button>
-    <button @click="editor?.chain().focus().redo().run()" class="p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700" title="Redo (Ctrl+Y)">
+    <button @click="editor?.chain().focus().redo().run()" class="min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center flex-shrink-0 p-2 rounded hover:bg-stone-100 dark:hover:bg-neutral-700" title="Redo (Ctrl+Y)">
       <svg class="w-4 h-4 text-stone-600 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10H11a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
       </svg>
     </button>
 
-    <ToolbarDivider />
+    <ToolbarDivider class="flex-shrink-0" />
 
     <!-- Bold -->
     <ToolbarButton
@@ -75,7 +75,7 @@
     </ToolbarButton>
 
     <!-- Font Family dropdown -->
-    <div v-if="show('fontFamily')" class="relative">
+    <div v-if="show('fontFamily')" class="relative flex-shrink-0 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center">
       <select
         @change="setFontFamily(($event.target as HTMLSelectElement).value)"
         class="p-1.5 rounded text-xs bg-transparent hover:bg-stone-100 dark:hover:bg-neutral-700 border-none cursor-pointer text-stone-600 dark:text-stone-400 focus:ring-0"
@@ -103,7 +103,7 @@
       <ToolbarButton :active="isActive('heading', { level: 3 })" title="Heading 3" @click="editor?.chain().focus().toggleHeading({ level: 3 }).run()">
         <span class="text-xs font-bold">H3</span>
       </ToolbarButton>
-      <ToolbarDivider />
+      <ToolbarDivider class="flex-shrink-0" />
     </template>
 
     <!-- Bullet List -->
@@ -162,7 +162,7 @@
           <path d="M3,3H21V5H3V3M9,7H21V9H9V7M3,11H21V13H3V11M9,15H21V17H9V15M3,19H21V21H3V19Z" />
         </svg>
       </ToolbarButton>
-      <ToolbarDivider />
+      <ToolbarDivider class="flex-shrink-0" />
     </template>
 
     <!-- Blockquote -->

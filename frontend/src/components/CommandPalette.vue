@@ -150,12 +150,12 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50"
+    class="fixed inset-0 z-50 flex items-start justify-center pt-[env(safe-area-inset-top)] md:pt-[15vh] pb-[env(safe-area-inset-bottom)] bg-black/50 p-4"
     @click.self="emit('close')"
   >
-    <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl w-full max-w-xl mx-4 overflow-hidden">
+    <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)]">
       <!-- Search Input -->
-      <div class="flex items-center gap-3 px-4 py-3 border-b dark:border-neutral-700">
+      <div class="flex items-center gap-3 px-4 py-3 border-b dark:border-neutral-700 min-h-[44px]">
         <svg class="w-5 h-5 text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
@@ -170,7 +170,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Results -->
-      <div class="max-h-96 overflow-auto">
+      <div class="flex-1 min-h-0 overflow-auto">
         <!-- Loading -->
         <div v-if="loading" class="flex items-center justify-center py-8">
           <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-neutral-800 dark:border-neutral-200"></div>
@@ -190,7 +190,7 @@ onUnmounted(() => {
               @click="selectItem(item)"
               @mouseenter="selectedIndex = index"
               :class="[
-                'w-full flex items-center gap-3 px-4 py-2 text-left',
+                'w-full flex items-center gap-3 px-4 py-2 min-h-[44px] text-left',
                 selectedIndex === index ? 'bg-stone-100 dark:bg-neutral-700/30 text-stone-800 dark:text-stone-200' : 'hover:bg-stone-50 dark:hover:bg-neutral-700 dark:text-stone-200'
               ]"
             >
@@ -227,7 +227,7 @@ onUnmounted(() => {
               @click="selectItem(item)"
               @mouseenter="selectedIndex = index"
               :class="[
-                'w-full flex items-center gap-3 px-4 py-2 text-left',
+                'w-full flex items-center gap-3 px-4 py-2 min-h-[44px] text-left',
                 selectedIndex === index ? 'bg-stone-100 dark:bg-neutral-700/30 text-stone-800 dark:text-stone-200' : 'hover:bg-stone-50 dark:hover:bg-neutral-700 dark:text-stone-200'
               ]"
             >

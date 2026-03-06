@@ -302,22 +302,22 @@ async function handleSend() {
 <template>
   <div
     :class="[
-      'fixed z-50 bg-white dark:bg-neutral-800 rounded-t-xl shadow-2xl border dark:border-neutral-700 flex flex-col',
+      'fixed z-50 bg-white dark:bg-neutral-800 border dark:border-neutral-700 flex flex-col',
       isMinimized
-        ? 'bottom-0 right-4 w-80 h-10'
-        : 'bottom-0 right-4 w-[560px] h-[480px]'
+        ? 'bottom-0 left-0 right-0 md:left-auto md:right-4 w-full md:w-80 h-12 md:h-10 md:rounded-t-xl md:shadow-2xl'
+        : 'inset-0 md:inset-auto md:bottom-0 md:right-4 md:w-[560px] md:h-[480px] md:rounded-t-xl md:shadow-2xl pt-[env(safe-area-inset-top)] pb-[max(1rem,env(safe-area-inset-bottom))]'
     ]"
   >
     <!-- Header -->
     <div
-      class="flex items-center justify-between px-4 py-2 bg-stone-100 dark:bg-neutral-700 rounded-t-xl cursor-pointer"
+      class="flex items-center justify-between px-4 py-2 md:py-2 bg-stone-100 dark:bg-neutral-700 md:rounded-t-xl cursor-pointer flex-shrink-0 min-h-[44px]"
       @click="isMinimized = !isMinimized"
     >
       <span class="text-sm font-medium text-stone-900 dark:text-stone-100">{{ title }}</span>
       <div class="flex items-center gap-1">
         <button
           @click.stop="isMinimized = !isMinimized"
-          class="p-1 hover:bg-stone-200 dark:hover:bg-neutral-600 rounded"
+          class="min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center p-2 hover:bg-stone-200 dark:hover:bg-neutral-600 rounded"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
@@ -325,7 +325,7 @@ async function handleSend() {
         </button>
         <button
           @click.stop="emit('close')"
-          class="p-1 hover:bg-stone-200 dark:hover:bg-neutral-600 rounded"
+          class="min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center p-2 hover:bg-stone-200 dark:hover:bg-neutral-600 rounded"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -510,11 +510,11 @@ async function handleSend() {
       </div>
 
       <!-- Body -->
-      <div class="flex-1 overflow-hidden">
+      <div class="flex-1 overflow-auto min-h-0">
         <textarea
           v-model="form.body"
           placeholder="Write your message..."
-          class="w-full h-full p-4 bg-transparent border-0 focus:ring-0 resize-none text-sm"
+          class="w-full min-h-[120px] p-4 bg-transparent border-0 focus:ring-0 resize-none text-sm block"
         ></textarea>
       </div>
 
@@ -547,12 +547,12 @@ async function handleSend() {
         @change="onFilesSelected"
       />
 
-      <!-- Footer -->
-      <div class="flex items-center justify-between px-4 py-2 border-t dark:border-neutral-700">
+      <!-- Footer: extra bottom padding on mobile so Send stays above keyboard -->
+      <div class="flex items-center justify-between px-4 py-3 border-t dark:border-neutral-700 flex-shrink-0 bg-white dark:bg-neutral-800">
         <button
           @click="handleSend"
           :disabled="loading"
-          class="px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 text-sm font-medium rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50 flex items-center gap-2"
+          class="min-h-[44px] px-4 py-2 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 text-sm font-medium rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors disabled:opacity-50 flex items-center gap-2"
         >
           <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -563,7 +563,7 @@ async function handleSend() {
 
         <div class="flex items-center gap-2">
           <!-- Attach file button -->
-          <button @click="handleAttachmentSelect" class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded" title="Attach files">
+          <button @click="handleAttachmentSelect" class="min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded" title="Attach files">
             <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
             </svg>
@@ -572,7 +572,7 @@ async function handleSend() {
           <span v-if="emailStore.currentDraft" class="text-xs text-stone-400">Draft saved</span>
           <button
             @click="emit('close')"
-            class="p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded text-red-500"
+            class="min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded text-red-500"
             title="Discard"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

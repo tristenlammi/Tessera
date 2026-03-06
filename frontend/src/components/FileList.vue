@@ -44,6 +44,7 @@ function handleContextMenu(file: FileItem, event: MouseEvent) {
         <th class="px-4 py-3 text-left font-medium">Name</th>
         <th class="px-4 py-3 text-left font-medium w-32">Size</th>
         <th class="px-4 py-3 text-left font-medium w-40">Modified</th>
+        <th class="w-12 px-2 py-3"></th>
         <th v-if="showRestore" class="px-4 py-3 text-left font-medium w-24">Actions</th>
       </tr>
     </thead>
@@ -82,10 +83,21 @@ function handleContextMenu(file: FileItem, event: MouseEvent) {
         <td class="px-4 py-2 text-sm text-stone-500 dark:text-stone-400">
           {{ formatDate(file.updated_at) }}
         </td>
+        <td class="w-12 px-2 py-2">
+          <button
+            @click.stop="handleContextMenu(file, $event)"
+            class="min-w-[44px] min-h-[44px] md:min-w-[32px] md:min-h-[32px] flex items-center justify-center p-1 -m-1 rounded hover:bg-stone-100 dark:hover:bg-neutral-700 text-stone-500 dark:text-stone-400"
+            aria-label="Open menu"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+            </svg>
+          </button>
+        </td>
         <td v-if="showRestore" class="px-4 py-2">
           <button
             @click.stop="emit('restore', file)"
-            class="text-sm text-stone-800 dark:text-stone-200 hover:text-stone-900 dark:hover:text-stone-100"
+            class="min-h-[44px] min-w-[44px] flex items-center justify-center px-3 py-2 text-sm text-stone-800 dark:text-stone-200 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
           >
             Restore
           </button>

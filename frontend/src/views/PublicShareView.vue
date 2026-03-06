@@ -72,7 +72,7 @@ onMounted(fetchShareInfo)
 </script>
 
 <template>
-  <div class="min-h-screen bg-stone-100 dark:bg-neutral-900 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-stone-100 dark:bg-neutral-900 flex items-center justify-center p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
     <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-lg max-w-md w-full p-6">
       <!-- Loading -->
       <div v-if="loading" class="flex flex-col items-center py-8">
@@ -125,7 +125,7 @@ onMounted(fetchShareInfo)
             v-model="password"
             type="password"
             placeholder="Enter password"
-            class="w-full px-4 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
+            class="w-full min-h-[44px] px-4 py-2 border dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-stone-400 focus:border-neutral-700 dark:border-neutral-300 dark:bg-neutral-700 dark:text-stone-100"
             @keyup.enter="downloadFile"
           />
           <p v-if="passwordError" class="text-sm text-red-600 dark:text-red-400">{{ passwordError }}</p>
@@ -136,7 +136,7 @@ onMounted(fetchShareInfo)
           <button
             @click="downloadFile"
             :disabled="downloading || (shareInfo.downloads_left !== null && shareInfo.downloads_left <= 0)"
-            class="w-full py-3 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+            class="w-full min-h-[44px] py-3 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
           >
             <svg v-if="!downloading" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

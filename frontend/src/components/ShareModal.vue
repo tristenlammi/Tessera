@@ -160,10 +160,10 @@ watch(() => props.fileId, () => {
 
 <template>
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
     @click.self="emit('close')"
   >
-    <div class="bg-white dark:bg-neutral-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+    <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl w-full mx-auto">
       <!-- Header -->
       <div class="flex items-center justify-between px-4 py-3 border-b dark:border-neutral-700">
         <h3 class="font-medium dark:text-stone-100">Share "{{ fileName }}"</h3>
@@ -200,7 +200,7 @@ watch(() => props.fileId, () => {
       </div>
 
       <!-- Content -->
-      <div class="p-4">
+      <div class="p-4 flex-1 overflow-auto min-h-0">
         <!-- Link Tab -->
         <div v-if="activeTab === 'link'" class="space-y-4">
           <div v-if="loading" class="flex items-center justify-center py-8">

@@ -203,8 +203,8 @@ function getFolderName(id: string): string {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-    <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col">
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-black/50">
+    <div class="modal-panel max-w-2xl bg-white dark:bg-neutral-800 shadow-xl w-full max-h-[85vh] flex flex-col mx-auto">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b dark:border-neutral-700">
         <h2 class="text-lg font-semibold text-stone-900 dark:text-stone-100">

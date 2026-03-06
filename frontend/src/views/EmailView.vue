@@ -37,6 +37,27 @@ const showDeleteConfirm = ref(false)
 const rootDropZoneActive = ref(false)
 const emailListContainer = ref<HTMLElement | null>(null)
 
+// Mobile (below lg): show one panel at a time
+const isLg = ref(typeof window !== 'undefined' && window.innerWidth >= 1024)
+const mobilePanel = ref<'folders' | 'list' | 'message'>('folders')
+function setMobilePanel(p: 'folders' | 'list' | 'message') {
+  mobilePanel.value = p
+}
+function updateIsLg() {
+  const wasLg = isLg.value
+  isLg.value = window.innerWidth >= 1024
+  // When switching to mobile, sync mobilePanel to current state
+  if (!isLg.value && wasLg) {
+    if (currentEmail.value || emailStore.threadConversation.length > 0) {
+      setMobilePanel('message')
+    } else if (currentFolder.value || currentVirtualFolder.value || currentLabel.value) {
+      setMobilePanel('list')
+    } else {
+      setMobilePanel('folders')
+    }
+  }
+}
+
 // Email context menu
 const showEmailContextMenu = ref(false)
 const contextMenuEmail = ref<EmailListItem | null>(null)
@@ -54,6 +75,8 @@ const newTaskForm = ref({
 const addToCalendar = ref(false)
 
 onMounted(async () => {
+  updateIsLg()
+  window.addEventListener('resize', updateIsLg)
   await emailStore.fetchAccounts()
   // Fetch task groups for create task modal
   await tasksStore.fetchGroups()
@@ -64,6 +87,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', updateIsLg)
   // Stop auto-refresh when leaving email view
   emailStore.stopAutoRefresh()
   window.removeEventListener('keydown', handleKeyboardShortcut)
@@ -207,6 +231,7 @@ function isEmailSelected(emailId: string): boolean {
 
 async function selectEmail(email: EmailListItem) {
   await emailStore.fetchEmail(email.id)
+  if (!isLg.value) setMobilePanel('message')
 }
 
 // Hover prefetch with 150ms debounce
@@ -232,6 +257,7 @@ function toggleStar(email: EmailListItem, event: Event) {
 // Thread functions
 function openThreadConversation(thread: EmailThread, event: Event) {
   event.stopPropagation()
+  if (!isLg.value) setMobilePanel('message')
   // For single-email threads, just open the email directly
   if (thread.email_count <= 1 && thread.latest_email) {
     emailStore.fetchEmail(thread.latest_email.id)
@@ -300,18 +326,22 @@ function closeCompose() {
 
 function selectStarred() {
   emailStore.selectVirtualFolder('starred')
+  if (!isLg.value) setMobilePanel('list')
 }
 
 function selectDrafts() {
   emailStore.selectVirtualFolder('drafts')
+  if (!isLg.value) setMobilePanel('list')
 }
 
 function selectLabel(label: EmailLabel) {
   emailStore.selectLabel(label)
+  if (!isLg.value) setMobilePanel('list')
 }
 
 function handleFolderSelect(folder: EmailFolder) {
   emailStore.selectFolder(folder)
+  if (!isLg.value) setMobilePanel('list')
 }
 
 // Folder context menu
@@ -808,6 +838,13 @@ function resizeConversationIframe(event: Event) {
 function closeConversation() {
   emailStore.closeThread()
   emailStore.currentEmail = null
+  if (!isLg.value) setMobilePanel('list')
+}
+
+// Close single-email view (mobile back)
+function closeEmailView() {
+  emailStore.currentEmail = null
+  if (!isLg.value) setMobilePanel('list')
 }
 </script>
 
@@ -839,13 +876,16 @@ function closeConversation() {
 
     <!-- Email interface -->
     <div v-else class="flex-1 flex overflow-hidden">
-      <!-- Folders sidebar -->
-      <div class="w-56 bg-white dark:bg-neutral-800 border-r dark:border-neutral-700 flex flex-col">
+      <!-- Folders sidebar: full-width on mobile when active, fixed width on lg -->
+      <div
+        class="flex flex-col bg-white dark:bg-neutral-800 border-r dark:border-neutral-700 w-full lg:w-56 flex-shrink-0 pt-[env(safe-area-inset-top)] lg:pt-0"
+        :class="{ 'hidden lg:!flex': mobilePanel !== 'folders' }"
+      >
         <!-- Compose button -->
         <div class="p-3">
           <button
             @click="openCompose('new')"
-            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-medium rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
+            class="w-full min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-medium rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -1017,11 +1057,25 @@ function closeConversation() {
         </div>
       </div>
 
-      <!-- Email list -->
-      <div class="w-96 bg-white dark:bg-neutral-800 border-r dark:border-neutral-700 flex flex-col">
+      <!-- Email list: full-width on mobile when active -->
+      <div
+        class="flex flex-col bg-white dark:bg-neutral-800 border-r dark:border-neutral-700 w-full lg:w-96 flex-shrink-0"
+        :class="{ 'hidden lg:!flex': mobilePanel !== 'list' }"
+      >
         <!-- Search bar and controls -->
         <div class="p-3 border-b dark:border-neutral-700">
           <div class="flex items-center gap-2">
+            <!-- Back to folders (mobile only) -->
+            <button
+              v-if="!isLg"
+              @click="setMobilePanel('folders')"
+              class="min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0 p-2 -m-1 rounded-lg hover:bg-stone-100 dark:hover:bg-neutral-700 text-stone-600 dark:text-stone-400"
+              aria-label="Back to folders"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
             <div class="relative flex-1">
               <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1047,7 +1101,7 @@ function closeConversation() {
             <button
               @click="toggleThreadView"
               :class="[
-                'p-2 rounded-lg transition-colors',
+                'min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center flex-shrink-0 p-2 rounded-lg transition-colors',
                 threadViewEnabled 
                   ? 'bg-stone-100 text-stone-800 dark:text-stone-200 dark:bg-neutral-700/30 dark:text-stone-400' 
                   : 'text-stone-400 hover:bg-stone-100 dark:hover:bg-neutral-700'
@@ -1352,8 +1406,11 @@ function closeConversation() {
         </div>
       </div>
 
-      <!-- Email content -->
-      <div class="flex-1 flex flex-col bg-white dark:bg-neutral-800">
+      <!-- Reading pane: full-width on mobile when active -->
+      <div
+        class="flex-1 flex flex-col bg-white dark:bg-neutral-800 min-w-0"
+        :class="{ 'hidden lg:!flex': mobilePanel !== 'message' }"
+      >
         <!-- Loading state -->
         <div v-if="emailStore.loadingEmail || emailStore.loadingConversation" class="flex-1 flex items-center justify-center">
           <svg class="w-8 h-8 animate-spin text-stone-800 dark:text-stone-200" fill="none" viewBox="0 0 24 24">
@@ -1378,7 +1435,8 @@ function closeConversation() {
           <div class="flex items-center gap-2 p-4 border-b dark:border-neutral-700">
             <button
               @click="closeConversation()"
-              class="lg:hidden p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+              class="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+              aria-label="Back to list"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -1589,8 +1647,9 @@ function closeConversation() {
           <!-- Email header -->
           <div class="flex items-center gap-2 p-4 border-b dark:border-neutral-700">
             <button
-              @click="emailStore.currentEmail = null"
-              class="lg:hidden p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+              @click="closeEmailView"
+              class="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center p-2 hover:bg-stone-100 dark:hover:bg-neutral-700 rounded-lg"
+              aria-label="Back to list"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -1835,10 +1894,10 @@ function closeConversation() {
     <Teleport to="body">
       <div
         v-if="showFolderModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
         @click.self="showFolderModal = false"
       >
-        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md p-6">
+        <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl w-full p-6">
           <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-4">
             {{ folderModalMode === 'create' ? 'Create Folder' : 'Rename Folder' }}
           </h3>
@@ -1876,10 +1935,10 @@ function closeConversation() {
     <Teleport to="body">
       <div
         v-if="showDeleteConfirm"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
         @click.self="showDeleteConfirm = false"
       >
-        <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-xl w-full max-w-md p-6">
+        <div class="modal-panel bg-white dark:bg-neutral-800 shadow-xl w-full p-6">
           <h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100 mb-2">
             Delete Folder
           </h3>
