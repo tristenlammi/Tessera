@@ -476,17 +476,13 @@
                 :aria-label="`${module.enabled ? 'Disable' : 'Enable'} ${module.name}`"
                 @click="toggleModule(module.id)"
                 :class="[
-                  'relative inline-flex flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2 dark:focus:ring-offset-neutral-800 items-center justify-center',
-                  'h-7 w-12 min-h-[44px] min-w-[44px] sm:h-6 sm:w-11 sm:min-h-0 sm:min-w-0',
-                  module.enabled ? 'bg-neutral-800 dark:bg-neutral-200' : 'bg-stone-300 dark:bg-neutral-600'
+                  'flex flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2 dark:focus:ring-offset-neutral-800 items-center',
+                  'h-6 w-11 min-h-[44px] min-w-[44px] p-0.5',
+                  module.enabled ? 'bg-neutral-800 dark:bg-neutral-200 justify-end' : 'bg-stone-300 dark:bg-neutral-600 justify-start'
                 ]"
               >
                 <span
-                  :class="[
-                    'pointer-events-none inline-block rounded-full bg-white shadow ring-0 transition-transform duration-200 ease-in-out',
-                    'h-5 w-5 flex-shrink-0',
-                    module.enabled ? 'translate-x-7 sm:translate-x-6' : 'translate-x-0.5'
-                  ]"
+                  class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition-colors duration-200"
                 />
               </button>
             </div>

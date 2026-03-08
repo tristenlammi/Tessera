@@ -14,13 +14,19 @@ const authStore = useAuthStore()
 const { isConnected } = useWebSocket()
 const { theme, toggleTheme } = useTheme()
 
-const coreNavItems = [
-  { name: 'My Files', to: '/', icon: 'folder' },
-  { name: 'Shared with Me', to: '/shared', icon: 'users' },
-  { name: 'Recent', to: '/recent', icon: 'clock' },
-  { name: 'Starred', to: '/starred', icon: 'star' },
-  { name: 'Trash', to: '/trash', icon: 'trash' }
-]
+const coreNavItems = computed(() => {
+  const items = [
+    { name: 'My Files', to: '/', icon: 'folder' },
+    ...(modulesStore.isModuleEnabled('documents')
+      ? [{ name: 'Documents', to: '/documents', icon: 'document-text' }]
+      : []),
+    { name: 'Shared with Me', to: '/shared', icon: 'users' },
+    { name: 'Recent', to: '/recent', icon: 'clock' },
+    { name: 'Starred', to: '/starred', icon: 'star' },
+    { name: 'Trash', to: '/trash', icon: 'trash' }
+  ]
+  return items
+})
 
 const moduleNavItems = computed(() => {
   const items = []
@@ -44,6 +50,9 @@ const isAdmin = computed(() => authStore.user?.role === 'admin')
 function isActive(to: string): boolean {
   if (to === '/') {
     return route.path === '/' || route.path.startsWith('/folder')
+  }
+  if (to === '/documents') {
+    return route.path === '/documents' || route.path.startsWith('/documents/')
   }
   return route.path === to || route.path.startsWith(to + '/')
 }
@@ -84,6 +93,9 @@ onMounted(() => {
       >
         <svg v-if="item.icon === 'folder'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+        </svg>
+        <svg v-else-if="item.icon === 'document-text'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         <svg v-else-if="item.icon === 'users'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
