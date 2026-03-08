@@ -457,7 +457,7 @@
                     :class="[
                       'w-6 h-6',
                       module.enabled
-                        ? 'text-stone-800 dark:text-stone-200 dark:text-stone-400'
+                        ? 'text-stone-800 dark:text-stone-200'
                         : 'text-stone-400 dark:text-stone-500'
                     ]"
                   />
@@ -470,16 +470,22 @@
                 </div>
               </div>
               <button
+                type="button"
+                role="switch"
+                :aria-checked="module.enabled"
+                :aria-label="`${module.enabled ? 'Disable' : 'Enable'} ${module.name}`"
                 @click="toggleModule(module.id)"
                 :class="[
-                  'relative inline-flex h-6 w-11 min-h-[44px] flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2 items-center justify-center',
-                  module.enabled ? 'bg-neutral-800 dark:bg-neutral-200' : 'bg-stone-200 dark:bg-neutral-600'
+                  'relative inline-flex flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2 dark:focus:ring-offset-neutral-800 items-center justify-center',
+                  'h-7 w-12 min-h-[44px] min-w-[44px] sm:h-6 sm:w-11 sm:min-h-0 sm:min-w-0',
+                  module.enabled ? 'bg-neutral-800 dark:bg-neutral-200' : 'bg-stone-300 dark:bg-neutral-600'
                 ]"
               >
                 <span
                   :class="[
-                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                    module.enabled ? 'translate-x-5' : 'translate-x-0'
+                    'pointer-events-none inline-block rounded-full bg-white shadow ring-0 transition-transform duration-200 ease-in-out',
+                    'h-5 w-5 flex-shrink-0',
+                    module.enabled ? 'translate-x-7 sm:translate-x-6' : 'translate-x-0.5'
                   ]"
                 />
               </button>
