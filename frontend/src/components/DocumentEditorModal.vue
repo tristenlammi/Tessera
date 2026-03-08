@@ -175,7 +175,9 @@ async function saveDocument(): Promise<boolean> {
   try {
     let content: string
     if (currentFormat.value === 'markdown') {
-      content = (editor.value.storage.markdown as any).getMarkdown()
+      content = typeof editor.value.getMarkdown === 'function'
+        ? editor.value.getMarkdown()
+        : editor.value.getHTML()
     } else if (currentFormat.value === 'html') {
       content = editor.value.getHTML()
     } else {

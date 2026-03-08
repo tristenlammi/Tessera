@@ -62,7 +62,9 @@ async function saveDocument() {
     const format = documentsStore.currentDocument.format || 'markdown'
     let content: string
     if (format === 'markdown') {
-      content = (editor.value.storage.markdown as any).getMarkdown()
+      content = typeof editor.value.getMarkdown === 'function'
+        ? editor.value.getMarkdown()
+        : editor.value.getHTML()
     } else if (format === 'html') {
       content = editor.value.getHTML()
     } else {
