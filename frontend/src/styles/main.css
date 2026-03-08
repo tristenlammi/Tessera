@@ -47,64 +47,91 @@ body {
   @apply bg-stone-400 dark:bg-neutral-500;
 }
 
-/* Task list checkboxes */
+/* Task list checkboxes — use !important to override Tailwind Typography prose styles */
 .ProseMirror ul[data-type="taskList"] {
-  list-style: none;
-  padding-left: 0;
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
 }
 
-.ProseMirror ul[data-type="taskList"] li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
+.ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: baseline !important;
+  gap: 0.5rem !important;
+  margin: 0.15rem 0 !important;
+  padding: 0 !important;
 }
 
-.ProseMirror ul[data-type="taskList"] li > label {
-  flex-shrink: 0;
-  margin-top: 0.25rem;
+/* Suppress the prose ::before bullet */
+.ProseMirror ul[data-type="taskList"] li[data-type="taskItem"]::before {
+  display: none !important;
+  content: none !important;
 }
 
-.ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+.ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label {
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  cursor: pointer;
+}
+
+.ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label input[type="checkbox"] {
   appearance: none;
-  width: 1.125rem;
-  height: 1.125rem;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
   border: 2px solid #d6d3d1;
   border-radius: 0.25rem;
   cursor: pointer;
   display: grid;
   place-content: center;
   transition: all 0.15s ease;
+  flex-shrink: 0;
+  margin: 0 !important;
 }
 
-.dark .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+.dark .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label input[type="checkbox"] {
   border-color: #525252;
 }
 
-.ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
+.ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label input[type="checkbox"]:checked {
   background-color: #37352f;
   border-color: #37352f;
 }
 
-.dark .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
+.dark .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label input[type="checkbox"]:checked {
   background-color: #ebebeb;
   border-color: #ebebeb;
 }
 
-.ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
+.ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label input[type="checkbox"]:checked::after {
   content: '✓';
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: white;
+  line-height: 1;
 }
 
-.dark .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
+.dark .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > label input[type="checkbox"]:checked::after {
   color: #191919;
 }
 
-.ProseMirror ul[data-type="taskList"] li > div {
-  flex: 1;
+.ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > div {
+  flex: 1 !important;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-.ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div p {
+.ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] > div > p {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ProseMirror ul[data-type="taskList"] li[data-type="taskItem"][data-checked="true"] > div p {
   text-decoration: line-through;
   opacity: 0.6;
 }
