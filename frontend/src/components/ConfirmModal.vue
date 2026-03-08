@@ -7,11 +7,13 @@ const props = withDefaults(defineProps<{
   confirmText?: string
   cancelText?: string
   danger?: boolean
+  showCancel?: boolean
 }>(), {
   title: 'Confirm',
   confirmText: 'Confirm',
   cancelText: 'Cancel',
-  danger: false
+  danger: false,
+  showCancel: true
 })
 
 const emit = defineEmits<{
@@ -52,6 +54,7 @@ onUnmounted(() => {
       <!-- Actions -->
       <div class="flex justify-end gap-2 px-4 py-3 border-t dark:border-neutral-700 bg-stone-50 dark:bg-neutral-800/50 rounded-b-lg">
         <button
+          v-if="props.showCancel"
           @click="emit('cancel')"
           class="min-h-[44px] px-4 py-2 text-sm font-medium text-stone-700 dark:text-stone-300 bg-white dark:bg-neutral-700 border border-stone-300 dark:border-neutral-700 rounded-lg hover:bg-stone-50 dark:hover:bg-neutral-600"
         >

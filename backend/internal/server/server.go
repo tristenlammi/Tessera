@@ -183,7 +183,7 @@ func (s *Server) setupRoutes() {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService, s.log, s.db)
-	fileHandler := handlers.NewFileHandler(fileService, s.log, s.hub, s.cfg.JWT.Secret, s.store)
+	fileHandler := handlers.NewFileHandler(fileService, s.log, s.hub, s.cfg.JWT.Secret, s.store, settingsRepo)
 	healthHandler := handlers.NewHealthHandler(s.log, s.db, s.rdb, s.store.Client())
 	wsHandler := ws.NewHandler(s.hub, s.log)
 	webdavServer := webdav.NewServer(fileRepo, s.store, authService, fileService, s.log)
@@ -241,6 +241,7 @@ func (s *Server) setupRoutes() {
 	// Files
 	files := protected.Group("/files")
 	files.Get("/", fileHandler.List)
+	files.Get("/documents-folder", fileHandler.GetDocumentsFolder) // Must be before /:id
 	files.Get("/:id", fileHandler.Get)
 	files.Post("/folder", fileHandler.CreateFolder)
 	files.Put("/:id", fileHandler.Update)

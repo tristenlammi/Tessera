@@ -19,11 +19,20 @@ import BulkActionsBar from '@/components/BulkActionsBar.vue'
 import VersionHistory from '@/components/VersionHistory.vue'
 import DocumentEditorModal from '@/components/DocumentEditorModal.vue'
 import FolderContextMenu from '@/components/FolderContextMenu.vue'
+import { useDocumentsFolder } from '@/composables/useDocumentsFolder'
 
 const route = useRoute()
 const router = useRouter()
 const filesStore = useFilesStore()
 const modulesStore = useModulesStore()
+const { isDocumentsFolder, ensureDocumentsFolder } = useDocumentsFolder()
+
+// Pre-fetch the documents folder id so delete protection works
+if (modulesStore.isModuleEnabled('documents')) {
+  ensureDocumentsFolder()
+}
+
+const showDocumentsFolderWarning = ref(false)
 
 const viewMode = ref<'grid' | 'list'>((localStorage.getItem('tessera-view-mode') as 'grid' | 'list') || 'grid')
 
@@ -193,7 +202,11 @@ function handleContextVersions() {
 
 function handleContextDelete() {
   if (contextMenu.value) {
-    deleteConfirm.value = contextMenu.value.file
+    if (isDocumentsFolder(contextMenu.value.file.id)) {
+      showDocumentsFolderWarning.value = true
+    } else {
+      deleteConfirm.value = contextMenu.value.file
+    }
   }
 }
 
@@ -366,16 +379,6 @@ function triggerFolderUpload() {
           >
             New Folder
           </button>
-          <button
-            v-if="modulesStore.isModuleEnabled('documents')"
-            @click="createNewDocument"
-            class="px-3 py-1.5 text-sm border border-stone-300 rounded-lg hover:bg-stone-50 dark:border-neutral-700 dark:hover:bg-neutral-700 flex items-center gap-1"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            New Document
-          </button>
           <!-- Icon Size Slider (desktop, grid view) -->
           <div v-if="viewMode === 'grid'" class="flex items-center gap-2 px-2">
             <svg class="w-3 h-3 text-stone-400" fill="currentColor" viewBox="0 0 20 20">
@@ -420,16 +423,6 @@ function triggerFolderUpload() {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
               </svg>
               New Folder
-            </button>
-            <button
-              v-if="modulesStore.isModuleEnabled('documents')"
-              @click="createNewDocument(); showOverflowMenu = false"
-              class="w-full px-4 py-3 min-h-[44px] text-left text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-neutral-700 flex items-center gap-2"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              New Document
             </button>
             <div v-if="viewMode === 'grid'" class="px-4 py-3 border-t dark:border-neutral-700">
               <div class="text-xs text-stone-500 dark:text-stone-400 mb-2">Icon size</div>
@@ -583,6 +576,17 @@ function triggerFolderUpload() {
       :danger="true"
       @confirm="confirmDelete"
       @cancel="deleteConfirm = null"
+    />
+
+    <!-- Documents Folder Delete Warning -->
+    <ConfirmModal
+      v-if="showDocumentsFolderWarning"
+      title="Cannot Delete Documents Folder"
+      message="The Documents folder cannot be deleted while the Documents module is enabled. Disable it in Admin → Optional Modules first."
+      confirm-text="OK"
+      :show-cancel="false"
+      @confirm="showDocumentsFolderWarning = false"
+      @cancel="showDocumentsFolderWarning = false"
     />
 
     <!-- Bulk Delete Confirmation Modal -->

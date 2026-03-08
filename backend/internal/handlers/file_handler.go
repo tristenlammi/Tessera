@@ -26,21 +26,28 @@ import (
 
 // FileHandler handles file operation endpoints
 type FileHandler struct {
-	fileService *services.FileService
-	log         zerolog.Logger
-	hub         *websocket.Hub
-	jwtSecret   string
-	storage     storage.Storage
+	fileService  *services.FileService
+	log          zerolog.Logger
+	hub          *websocket.Hub
+	jwtSecret    string
+	storage      storage.Storage
+	settingsRepo settingsRepo
+}
+
+// settingsRepo is the minimal interface needed to check module settings.
+type settingsRepo interface {
+	GetModules(ctx context.Context) (map[string]bool, error)
 }
 
 // NewFileHandler creates a new file handler
-func NewFileHandler(fileService *services.FileService, log zerolog.Logger, hub *websocket.Hub, jwtSecret string, store storage.Storage) *FileHandler {
+func NewFileHandler(fileService *services.FileService, log zerolog.Logger, hub *websocket.Hub, jwtSecret string, store storage.Storage, sr settingsRepo) *FileHandler {
 	return &FileHandler{
-		fileService: fileService,
-		log:         log,
-		hub:         hub,
-		jwtSecret:   jwtSecret,
-		storage:     store,
+		fileService:  fileService,
+		log:          log,
+		hub:          hub,
+		jwtSecret:    jwtSecret,
+		storage:      store,
+		settingsRepo: sr,
 	}
 }
 
@@ -437,6 +444,19 @@ func (h *FileHandler) Update(c *fiber.Ctx) error {
 	return c.JSON(file)
 }
 
+// GetDocumentsFolder finds or creates the root "Documents" folder for the current user.
+func (h *FileHandler) GetDocumentsFolder(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	folder, err := h.fileService.EnsureDocumentsFolder(c.Context(), userID)
+	if err != nil {
+		h.log.Error().Err(err).Msg("Failed to ensure documents folder")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to get documents folder",
+		})
+	}
+	return c.JSON(folder)
+}
+
 // Delete moves a file to trash
 func (h *FileHandler) Delete(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
@@ -446,6 +466,15 @@ func (h *FileHandler) Delete(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid file ID",
 		})
+	}
+
+	// Guard: prevent deleting the Documents folder while the module is enabled
+	if h.fileService.IsDocumentsFolder(c.Context(), fileID, userID) {
+		if mods, err := h.settingsRepo.GetModules(c.Context()); err == nil && mods["documents"] {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "The Documents folder cannot be deleted while the Documents module is enabled. Disable it in Admin → Optional Modules first.",
+			})
+		}
 	}
 
 	// Check if permanent delete is requested

@@ -97,6 +97,30 @@ func (s *FileService) CreateFolder(ctx context.Context, input CreateFolderInput)
 	return folder, nil
 }
 
+// EnsureDocumentsFolder finds or creates the root-level "Documents" folder for a user.
+func (s *FileService) EnsureDocumentsFolder(ctx context.Context, ownerID uuid.UUID) (*models.File, error) {
+	folder, err := s.fileRepo.GetByName(ctx, ownerID, nil, "Documents")
+	if err == nil {
+		return folder, nil
+	}
+	if err != repository.ErrFileNotFound {
+		return nil, err
+	}
+	return s.CreateFolder(ctx, CreateFolderInput{
+		OwnerID: ownerID,
+		Name:    "Documents",
+	})
+}
+
+// IsDocumentsFolder reports whether fileID is the root "Documents" folder for ownerID.
+func (s *FileService) IsDocumentsFolder(ctx context.Context, fileID, ownerID uuid.UUID) bool {
+	folder, err := s.fileRepo.GetByName(ctx, ownerID, nil, "Documents")
+	if err != nil {
+		return false
+	}
+	return folder.ID == fileID
+}
+
 // UploadInput contains upload metadata
 type UploadInput struct {
 	OwnerID  uuid.UUID

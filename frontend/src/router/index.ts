@@ -83,8 +83,8 @@ const router = createRouter({
           meta: { module: 'documents' }
         },
         {
-          path: 'documents/:id',
-          name: 'document-edit',
+          path: 'documents/doc/:fileId',
+          name: 'documents-doc',
           component: () => import('@/views/DocumentsView.vue'),
           meta: { module: 'documents' }
         },
