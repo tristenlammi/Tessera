@@ -247,6 +247,22 @@ func (s *Service) QueueEpisode(ctx context.Context, seriesID int64, season, epis
 	return s.enqueue(&Job{Kind: "episode", SeriesID: seriesID, Season: season, Episode: episode, Title: title}), nil
 }
 
+// QueueSeries enqueues an ensure job for every episode of one show that has a file but
+// lacks a kept language — the middle ground between one episode and the whole library.
+// Returns how many were queued (already-queued episodes are deduped by enqueue).
+func (s *Service) QueueSeries(ctx context.Context, seriesID int64) (int, error) {
+	if _, err := s.series.Get(ctx, seriesID); err != nil {
+		return 0, err
+	}
+	n := 0
+	for _, e := range s.missingEpisodes(ctx, seriesID) {
+		if _, err := s.QueueEpisode(ctx, seriesID, e.season, e.episode); err == nil {
+			n++
+		}
+	}
+	return n, nil
+}
+
 // OnMovieImported is the import hook: a movie that just landed gets its subtitles ensured
 // now, rather than whenever the next 6-hourly sweep happens to run.
 func (s *Service) OnMovieImported(ctx context.Context, movieID int64) {

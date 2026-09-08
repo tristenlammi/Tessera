@@ -568,9 +568,24 @@ function SeriesGroupRow({ g, first, open, onToggle, flash, onQueued }: {
 
   const pct = g.episodes ? Math.round((g.covered / g.episodes) * 100) : 0;
 
+  // Whole show at once — every episode still missing a kept language. The Library
+  // offered one episode or the entire library and nothing between.
+  const [showBusy, setShowBusy] = useState(false);
+  const [showQueued, setShowQueued] = useState(false);
+  const ensureShow = async () => {
+    setShowBusy(true);
+    try {
+      const r = await api.subtitleQueueSeries(g.series_id);
+      setShowQueued(true);
+      flash(r.queued ? `Queued ${r.queued} episode${r.queued === 1 ? "" : "s"} of ${g.title}` : `${g.title}: nothing to do — every episode has its subtitles`);
+      onQueued();
+    } catch (e) { flash((e as Error).message); } finally { setShowBusy(false); }
+  };
+
   return (
     <div style={{ borderTop: first ? "none" : "1px solid var(--line-soft)" }}>
-      <button onClick={onToggle} className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-[var(--panel-2)]">
+      <div className="flex items-center gap-2 pr-3 hover:bg-[var(--panel-2)]">
+      <button onClick={onToggle} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left">
         <span className="w-3 flex-none text-[10px] text-ink-faint">{open ? "▾" : "▸"}</span>
         <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold">
           {g.title} <span className="font-normal text-ink-faint">{g.year || ""}</span>
@@ -587,6 +602,17 @@ function SeriesGroupRow({ g, first, open, onToggle, flash, onQueued }: {
           {g.missing ? `${g.missing} missing` : "complete"}
         </span>
       </button>
+      <button
+        type="button"
+        onClick={ensureShow}
+        disabled={showBusy || showQueued || !g.missing}
+        title={g.missing ? `Queue the ${g.missing} episode${g.missing === 1 ? "" : "s"} still missing a kept language` : "Every episode already has its subtitles"}
+        className="flex-none rounded-md px-2.5 py-1 text-[11px] font-semibold disabled:opacity-40"
+        style={{ border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)" }}
+      >
+        {showQueued ? "Queued" : "Ensure show"}
+      </button>
+      </div>
 
       {open && (
         <div className="px-3 pb-3">

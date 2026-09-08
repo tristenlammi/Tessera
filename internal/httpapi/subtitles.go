@@ -189,6 +189,21 @@ func (a *api) handleSubtitleLibrary(w http.ResponseWriter, r *http.Request) {
 	a.writeJSON(w, http.StatusOK, map[string]any{"items": list})
 }
 
+// handleSubtitleQueueSeries queues subtitle-ensure jobs for every episode of a show
+// still missing a kept language.
+func (a *api) handleSubtitleQueueSeries(w http.ResponseWriter, r *http.Request) {
+	id, ok := a.pathID(w, r)
+	if !ok {
+		return
+	}
+	n, err := a.deps.Subtitles.QueueSeries(r.Context(), id)
+	if err != nil {
+		a.writeError(w, http.StatusNotFound, "series not found")
+		return
+	}
+	a.writeJSON(w, http.StatusAccepted, map[string]any{"queued": n})
+}
+
 // handleSubtitleCoverage returns the Overview's totals from the last library pass.
 func (a *api) handleSubtitleCoverage(w http.ResponseWriter, r *http.Request) {
 	a.writeJSON(w, http.StatusOK, a.deps.Subtitles.Coverage())
