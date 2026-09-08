@@ -744,6 +744,8 @@ export interface SubFileEntry {
 export interface SubtitleJob {
   id: number; kind: "movie" | "episode"; movie_id?: number; series_id?: number; season?: number; episode?: number;
   title: string; state: "queued" | "running" | "done" | "skipped" | "failed"; note?: string; at: number;
+  progress?: number; // 0-100 during an AI run
+  stage?: string;    // what a running job is doing
 }
 export interface WhisperModel { name: string; label: string; size_mb: number; present: boolean; downloading: boolean }
 export interface WhisperStatus { binary_ready: boolean; ready: boolean; models: WhisperModel[] }

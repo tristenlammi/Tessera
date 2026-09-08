@@ -1,12 +1,15 @@
 package subtitles
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -129,7 +132,7 @@ func (w *whisperGen) modelPath(translate bool) string {
 // generate produces an SRT for one language from a video's audio: extract 16 kHz mono → run
 // whisper.cpp (VAD-fronted when the VAD model is present) → the SRT sidecar, then strip stock-phrase
 // hallucinations. translate=true asks Whisper to translate the (foreign) audio to English.
-func (w *whisperGen) generate(ctx context.Context, ffmpeg, videoPath, srtPath, lang string, translate bool) error {
+func (w *whisperGen) generate(ctx context.Context, ffmpeg, videoPath, srtPath, lang string, translate bool, progress func(pct int)) error {
 	model := w.modelPath(translate)
 	if model == "" {
 		return fmt.Errorf("no whisper model available for %s", ifElse(translate, "translation", "transcription"))
@@ -153,7 +156,17 @@ func (w *whisperGen) generate(ctx context.Context, ffmpeg, videoPath, srtPath, l
 	}
 
 	// 2. Transcribe/translate to SRT.
-	args := []string{"-m", model, "-f", wav, "-osrt", "-of", outBase, "-t", strconv.Itoa(threads())}
+	//
+	// -ml/-sow shape the cues. Left alone, whisper emits whatever it decoded as one
+	// segment — routinely two or three sentences over ten seconds, which a player shows
+	// as a wall of text. Capping a cue at 84 characters (two subtitle lines) and splitting
+	// on word boundaries gives ordinary subtitle-sized cues; max-len also switches on
+	// token-level timestamps, so each split cue gets its own accurate start time rather
+	// than a share of the segment's.
+	//
+	// -pp prints "progress = N%" lines, which runWhisper turns into the job's progress.
+	args := []string{"-m", model, "-f", wav, "-osrt", "-of", outBase, "-t", strconv.Itoa(threads()),
+		"-ml", "84", "-sow", "-pp"}
 	if translate {
 		args = append(args, "--translate")
 	} else if lang != "" {
@@ -162,13 +175,13 @@ func (w *whisperGen) generate(ctx context.Context, ffmpeg, videoPath, srtPath, l
 	if w.vadSupported && w.hasModel(vadModel) {
 		args = append(args, "--vad", "--vad-model", filepath.Join(w.modelsDir, vadModel))
 	}
-	out, err := exec.CommandContext(ctx, w.bin, args...).CombinedOutput()
+	out, err := runWhisper(ctx, w.bin, args, progress)
 	if err != nil && w.noGPUFlag && ctx.Err() == nil {
 		// A GPU build that can't initialise its device (driver missing in the container,
 		// /dev/dri not passed through, an out-of-memory on a small card) fails outright
 		// rather than degrading. Retry on the CPU: slower, but it produces the subtitle.
 		gpuErr := tailStr(out, 300)
-		out, err = exec.CommandContext(ctx, w.bin, append(args, "--no-gpu")...).CombinedOutput()
+		out, err = runWhisper(ctx, w.bin, append(args, "--no-gpu"), progress)
 		if err == nil {
 			w.setBackend("cpu")
 			return w.finishSRT(outSRT, srtPath, out, "whisper ran on the CPU after the GPU attempt failed: "+gpuErr)
@@ -195,6 +208,49 @@ func (w *whisperGen) finishSRT(outSRT, srtPath string, out []byte, note string) 
 		return err
 	}
 	return os.WriteFile(srtPath, []byte(filterStockPhrases(string(b))), 0o644)
+}
+
+// progressRe matches whisper-cli's -pp output: "whisper_print_progress_callback: progress =  25%".
+var progressRe = regexp.MustCompile(`progress\s*=\s*(\d{1,3})%`)
+
+// runWhisper runs whisper-cli, streaming its output so progress lines reach the caller
+// while it runs, and returns the full combined output for diagnostics afterwards. The old
+// CombinedOutput held everything until exit — fine for errors, useless for a bar.
+func runWhisper(ctx context.Context, bin string, args []string, progress func(int)) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, bin, args...)
+	pr, pw := io.Pipe()
+	cmd.Stdout = pw
+	cmd.Stderr = pw
+	if err := cmd.Start(); err != nil {
+		pw.Close()
+		return nil, err
+	}
+	var buf bytes.Buffer
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		sc := bufio.NewScanner(pr)
+		sc.Buffer(make([]byte, 64<<10), 1<<20)
+		last := -1
+		for sc.Scan() {
+			line := sc.Bytes()
+			buf.Write(line)
+			buf.WriteByte('\n')
+			if progress == nil {
+				continue
+			}
+			if m := progressRe.FindSubmatch(line); m != nil {
+				if pct, err := strconv.Atoi(string(m[1])); err == nil && pct != last && pct >= 0 && pct <= 100 {
+					last = pct
+					progress(pct)
+				}
+			}
+		}
+	}()
+	err := cmd.Wait()
+	pw.Close()
+	<-done
+	return buf.Bytes(), err
 }
 
 // tailStr returns the last n bytes of out as a single trimmed line (for error diagnostics).

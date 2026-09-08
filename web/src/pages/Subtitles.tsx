@@ -196,11 +196,23 @@ function Queue({ jobs }: { jobs: SubtitleJob[] }) {
   );
 }
 function ActiveRow({ j }: { j: SubtitleJob }) {
+  const running = j.state === "running";
+  const pct = running && j.progress ? Math.min(100, Math.max(0, j.progress)) : 0;
   return (
-    <div className="flex items-center gap-2.5 text-[12px]">
-      <StateBadge state={j.state} />
-      <span className="flex-1 truncate font-semibold">{j.title}</span>
-      {j.state === "running" && <span className="h-3 w-3 flex-none animate-spin rounded-full" style={{ border: "2px solid var(--line)", borderTopColor: "var(--accent)" }} />}
+    <div className="flex flex-col gap-1 text-[12px]">
+      <div className="flex items-center gap-2.5">
+        <StateBadge state={j.state} />
+        <span className="flex-1 truncate font-semibold">{j.title}</span>
+        {running && j.stage && <span className="truncate font-mono text-[10.5px] text-ink-faint">{j.stage}</span>}
+        {running && pct > 0 && <span className="w-[38px] flex-none text-right font-mono text-[10.5px] text-ink-dim">{pct}%</span>}
+        {running && pct === 0 && <span className="h-3 w-3 flex-none animate-spin rounded-full" style={{ border: "2px solid var(--line)", borderTopColor: "var(--accent)" }} />}
+      </div>
+      {/* whisper reports progress in 5% steps; anything else finishes before a bar would help. */}
+      {running && pct > 0 && (
+        <div className="h-1 w-full overflow-hidden rounded-full" style={{ background: "var(--panel-2)" }}>
+          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "var(--accent)", transition: "width 600ms linear" }} />
+        </div>
+      )}
     </div>
   );
 }

@@ -31,6 +31,10 @@ type Job struct {
 	State    JobState `json:"state"`
 	Note     string   `json:"note,omitempty"`
 	At       int64    `json:"at"` // unix seconds queued
+	// Progress is 0-100 while an AI run is in flight (extraction and downloads are too
+	// quick to bother). Stays 0 for everything else.
+	Progress int    `json:"progress,omitempty"`
+	Stage    string `json:"stage,omitempty"` // what the running job is doing right now
 }
 
 // key identifies the file a job is for, so the same file can't be queued twice.

@@ -84,6 +84,7 @@ func (s *Service) process(ctx context.Context, job *Job) {
 
 	extracted := 0
 	if len(extractLangs) > 0 {
+		s.update(job, func(j *Job) { j.Stage = "extracting embedded subtitles" })
 		n, err := s.extractForLangs(ctx, path, subs, extractLangs)
 		if err != nil {
 			s.event("warn", fmt.Sprintf("%s: extract failed: %v", title, err))
@@ -93,6 +94,7 @@ func (s *Service) process(ctx context.Context, job *Job) {
 	downloaded := 0
 	if len(downloadLangs) > 0 {
 		// One hash per file, shared by every language's search.
+		s.update(job, func(j *Job) { j.Stage = "searching OpenSubtitles" })
 		hash, herr := osHash(path)
 		if herr != nil {
 			s.log.Debug("subtitles: could not hash file for provider search", "path", path, "err", herr)
@@ -122,7 +124,9 @@ afterDownloads:
 		}
 		s.event("info", fmt.Sprintf("AI %s %s (%s)…", verb, title, t.lang))
 		started := time.Now()
-		if err := s.whisper.generate(ctx, s.ffmpeg, path, sidecarPath(path, strings.ToLower(t.lang)), t.lang, t.translate); err != nil {
+		s.update(job, func(j *Job) { j.Stage = "AI " + verb + " (" + t.lang + ")"; j.Progress = 0 })
+		onProgress := func(pct int) { s.update(job, func(j *Job) { j.Progress = pct }) }
+		if err := s.whisper.generate(ctx, s.ffmpeg, path, sidecarPath(path, strings.ToLower(t.lang)), t.lang, t.translate, onProgress); err != nil {
 			s.event("warn", fmt.Sprintf("%s: AI %s failed: %v", title, t.lang, err))
 		} else {
 			generated++
