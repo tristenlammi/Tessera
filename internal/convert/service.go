@@ -31,6 +31,7 @@ const (
 	keyReclaimed      = "convert_reclaimed_bytes"
 	keyKeepAudioLangs = "convert_keep_audio_langs" // CSV; empty = keep all audio
 	keyKeepSubLangs   = "convert_keep_sub_langs"   // CSV; empty = keep all subtitles
+	keyDropImageSubs  = "convert_drop_image_subs"  // bool; drop PGS/VobSub when a text sub exists
 	keyAddStereo      = "convert_add_stereo"       // add an AAC 2.0 downmix beside surround
 	keyLoudnorm       = "convert_loudnorm"         // EBU R128 loudness normalize
 	keyTargetCodec    = "convert_target_codec"     // "hevc" | "av1" — what the library is converted to
@@ -564,7 +565,13 @@ func (s *Service) defaultPlan(ctx context.Context) Plan {
 			AddStereo: s.settings.GetBool(ctx, keyAddStereo, false),
 			Loudnorm:  s.settings.GetBool(ctx, keyLoudnorm, false),
 		},
-		Subs: SubPlan{KeepLangs: splitCSV(s.settings.Get(ctx, keyKeepSubLangs, ""))},
+		Subs: SubPlan{
+			KeepLangs: splitCSV(s.settings.Get(ctx, keyKeepSubLangs, "")),
+			// On by default: image subtitles are the single most common reason Plex
+			// transcodes a file that would otherwise direct-play, and the guard in
+			// keptSubs means "on" can never strip a language's only subtitle.
+			DropImage: s.settings.GetBool(ctx, keyDropImageSubs, true),
+		},
 	}
 }
 
@@ -603,7 +610,7 @@ func needsOf(mi *MediaInfo, dp Plan, target string, recode bool) Needs {
 	}
 	return Needs{
 		Video: isCandidateCodec(mi.VideoCodec, target, recode),
-		Subs:  len(dp.Subs.KeepLangs) > 0 && len(keptSubs(mi, dp)) < len(mi.Subs),
+		Subs:  (len(dp.Subs.KeepLangs) > 0 || dp.Subs.DropImage) && len(keptSubs(mi, dp)) < len(mi.Subs),
 		Audio: len(dp.Audio.KeepLangs) > 0 && len(keptAudio(mi, dp)) < len(mi.Audio),
 	}
 }
@@ -625,7 +632,14 @@ func (s *Service) planForFile(ctx context.Context, path string) Plan {
 	if err != nil {
 		return s.defaultPlan(ctx)
 	}
-	return s.planFor(ctx, s.NeedsFor(ctx, mi))
+	dp := withSidecars(s.defaultPlan(ctx), path, nil)
+	n := needsOf(mi, dp, s.targetCodec(ctx), s.recodesModern(ctx))
+	if n.Video {
+		return dp
+	}
+	r := s.RemuxPlan(ctx)
+	r.Subs.TextSidecarLangs = dp.Subs.TextSidecarLangs
+	return r
 }
 
 func (s *Service) planFor(ctx context.Context, n Needs) Plan {
@@ -1142,7 +1156,7 @@ func (s *Service) sample(ctx context.Context, movieID int64, plan Plan) (SampleR
 		args := []string{"-y", "-hide_banner", "-ss", fmt.Sprintf("%.2f", sl.start), "-t", fmt.Sprintf("%.2f", sl.length)}
 		args = append(args, globalArgs(enc, false, s.vaapiDev(ctx))...) // sample = software decode (short, keep it simple/robust)
 		args = append(args, "-i", src)
-		args = append(args, compileOutputArgs(enc, mi, plan, false, s.cpuCores(ctx), s.noNumaPools)...)
+		args = append(args, compileOutputArgs(enc, mi, withSidecars(plan, src, nil), false, s.cpuCores(ctx), s.noNumaPools)...)
 		args = append(args, dst)
 		cmd := exec.CommandContext(ctx, s.ffmpeg, args...)
 		lowPriority(cmd)
@@ -2177,7 +2191,7 @@ func (s *Service) encode(ctx context.Context, job *Job, src, dst string, mi *Med
 		"-progress", "pipe:1", "-threads", strconv.Itoa(cores)}
 	args = append(args, globalArgs(enc, hwDecode, s.vaapiDev(ctx))...) // device / hwaccel init must precede the input
 	args = append(args, "-i", src)
-	args = append(args, compileOutputArgs(enc, mi, plan, hwDecode, cores, s.noNumaPools)...)
+	args = append(args, compileOutputArgs(enc, mi, withSidecars(plan, src, nil), hwDecode, cores, s.noNumaPools)...)
 	args = append(args, dst)
 
 	err := s.runWithProgress(ctx, job, args, mi.DurationSec)

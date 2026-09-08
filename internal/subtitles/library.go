@@ -132,11 +132,11 @@ func bestSource(embedded []SubTrack, lang string, canDownload bool) string {
 			return "extract"
 		}
 	}
-	for _, t := range embedded {
-		if !t.Text && langMatches(t.Lang, lang) {
-			return "ocr"
-		}
-	}
+	// An embedded IMAGE track (PGS/VobSub) would be the next-best source — but OCR isn't
+	// implemented, and routing to it sent every PGS-only file to "pending" without ever
+	// trying a download. That is precisely the file that most needs a text subtitle: an
+	// image track is what makes Plex burn subtitles in and transcode the video. So fall
+	// through to the sources that exist. When OCR ships it slots in here.
 	if canDownload {
 		return "download"
 	}

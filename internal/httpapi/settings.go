@@ -75,6 +75,7 @@ func (a *api) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 		"convert_skip_hardlinked":  a.deps.Settings.GetBool(ctx, "convert_skip_hardlinked", true),
 		"convert_keep_audio_langs": a.deps.Settings.Get(ctx, "convert_keep_audio_langs", ""),
 		"convert_keep_sub_langs":   a.deps.Settings.Get(ctx, "convert_keep_sub_langs", ""),
+		"convert_drop_image_subs":  a.deps.Settings.GetBool(ctx, "convert_drop_image_subs", true),
 		"convert_add_stereo":       a.deps.Settings.GetBool(ctx, "convert_add_stereo", false),
 		"convert_loudnorm":         a.deps.Settings.GetBool(ctx, "convert_loudnorm", false),
 		// Convert — focused model: target codec, subtitle toggle, schedule, quality safety.
@@ -134,6 +135,7 @@ func (a *api) handleUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		ConvertSkipHardlinked *bool   `json:"convert_skip_hardlinked"`
 		ConvertKeepAudioLangs *string `json:"convert_keep_audio_langs"`
 		ConvertKeepSubLangs   *string `json:"convert_keep_sub_langs"`
+		ConvertDropImageSubs  *bool   `json:"convert_drop_image_subs"`
 		ConvertAddStereo      *bool   `json:"convert_add_stereo"`
 		ConvertLoudnorm       *bool   `json:"convert_loudnorm"`
 		ConvertTargetCodec    *string `json:"convert_target_codec"`
@@ -266,6 +268,9 @@ func (a *api) handleUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.ConvertKeepSubLangs != nil && !save(a.deps.Settings.Set(ctx, "convert_keep_sub_langs", strings.TrimSpace(*req.ConvertKeepSubLangs))) {
+		return
+	}
+	if req.ConvertDropImageSubs != nil && !save(a.deps.Settings.SetBool(ctx, "convert_drop_image_subs", *req.ConvertDropImageSubs)) {
 		return
 	}
 	if req.ConvertAddStereo != nil && !save(a.deps.Settings.SetBool(ctx, "convert_add_stereo", *req.ConvertAddStereo)) {

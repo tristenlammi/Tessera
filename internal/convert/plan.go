@@ -34,6 +34,20 @@ type SubPlan struct {
 	// audio, so "en" and "eng" both work, and an untagged track is kept rather than
 	// guessed at.
 	KeepLangs []string
+	// DropImage removes image-based subtitle tracks (PGS, VobSub, DVB). Plex can't send
+	// those to most clients as-is: it burns them into the picture, which means
+	// transcoding the video every time that subtitle is on. A text subtitle for the
+	// same language direct-plays.
+	//
+	// Guarded: an image track is only dropped when a TEXT subtitle for its language
+	// exists — an embedded text track that survives the filter, or an .srt sidecar (see
+	// TextSidecarLangs). Otherwise the image track is the only subtitle there is, and
+	// it stays until the Subtitles module has produced a text one.
+	DropImage bool
+	// TextSidecarLangs lists the languages that have an external .srt beside THIS file.
+	// Per-file, filled in by the caller (withSidecars) right before use; the rest of the
+	// plan comes from settings.
+	TextSidecarLangs []string
 }
 
 // AudioPlan is the audio portion of a Plan.

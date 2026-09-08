@@ -2,6 +2,8 @@ package convert
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -740,22 +742,112 @@ func cpuVideoArgs(name, codec string, crf int, tenBit bool, cores int, hdrParams
 // keptSubs applies the subtitle language filter. With no filter every track is kept, so
 // the untouched path stays byte-identical to what it was.
 func keptSubs(mi *MediaInfo, plan Plan) []SubStream {
-	if len(plan.Subs.KeepLangs) == 0 {
-		return mi.Subs
-	}
-	out := make([]SubStream, 0, len(mi.Subs))
-	for _, s := range mi.Subs {
-		if langIn(s.Lang, plan.Subs.KeepLangs) {
-			out = append(out, s)
+	out := mi.Subs
+	if len(plan.Subs.KeepLangs) > 0 {
+		out = make([]SubStream, 0, len(mi.Subs))
+		for _, s := range mi.Subs {
+			if langIn(s.Lang, plan.Subs.KeepLangs) {
+				out = append(out, s)
+			}
+		}
+		// Never strip every subtitle. If the filter matches nothing, the tags are wrong
+		// or unexpected, and silently shipping a file with no subtitles at all is worse
+		// than keeping the clutter.
+		if len(out) == 0 {
+			out = mi.Subs
 		}
 	}
-	// Never strip every subtitle. If the filter matches nothing, the tags are wrong or
-	// unexpected, and silently shipping a file with no subtitles at all is worse than
-	// keeping the clutter.
-	if len(out) == 0 {
-		return mi.Subs
+	if !plan.Subs.DropImage {
+		return out
+	}
+	// Image tracks go only where a text subtitle for that language will remain: an
+	// embedded text track that survived the language filter, or a sidecar. An untagged
+	// image track is dropped only if some text subtitle exists at all — we can't know
+	// its language, but we do know the viewer isn't left with nothing.
+	textLangs := map[string]bool{}
+	anyText := false
+	for _, s := range out {
+		if s.Text {
+			textLangs[normLang(strings.ToLower(s.Lang))] = true
+			anyText = true
+		}
+	}
+	for _, l := range plan.Subs.TextSidecarLangs {
+		textLangs[normLang(strings.ToLower(l))] = true
+		anyText = true
+	}
+	kept := make([]SubStream, 0, len(out))
+	for _, s := range out {
+		if s.Text {
+			kept = append(kept, s)
+			continue
+		}
+		l := strings.ToLower(strings.TrimSpace(s.Lang))
+		hasText := anyText && (l == "" || l == "und" || textLangs[normLang(l)])
+		if !hasText {
+			kept = append(kept, s) // the only subtitle in its language — stays
+		}
+	}
+	// Same rule as above — never leave a file with no subtitles at all — but a sidecar
+	// counts. Every image track going because an .srt sits beside the file is the goal,
+	// not the failure case.
+	if len(kept) == 0 && len(out) > 0 && !anyText {
+		return out
+	}
+	return kept
+}
+
+// sidecarLangs lists the languages with an external .srt next to path, by the
+// "<name>.<lang>.srt" convention the Subtitles module writes. Cache is optional and keyed
+// by directory: a season folder holds many episodes, and the index pass would otherwise
+// ReadDir the same folder once per episode.
+func sidecarLangs(path string, cache map[string][]string) []string {
+	if path == "" {
+		return nil
+	}
+	dir := filepath.Dir(path)
+	base := strings.ToLower(strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)))
+	var names []string
+	if cache != nil {
+		if got, ok := cache[dir]; ok {
+			names = got
+		}
+	}
+	if names == nil {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			return nil
+		}
+		names = make([]string, 0, len(entries))
+		for _, e := range entries {
+			if !e.IsDir() {
+				names = append(names, e.Name())
+			}
+		}
+		if cache != nil {
+			cache[dir] = names
+		}
+	}
+	var out []string
+	for _, n := range names {
+		ln := strings.ToLower(n)
+		if !strings.HasSuffix(ln, ".srt") || !strings.HasPrefix(ln, base+".") {
+			continue
+		}
+		// "<base>.<lang>.srt", possibly "<base>.<lang>.forced.srt": take the segment
+		// right after the base.
+		rest := strings.TrimSuffix(strings.TrimPrefix(ln, base+"."), ".srt")
+		if lang, _, _ := strings.Cut(rest, "."); lang != "" && len(lang) <= 3 {
+			out = append(out, lang)
+		}
 	}
 	return out
+}
+
+// withSidecars returns the plan with TextSidecarLangs filled in for one file.
+func withSidecars(plan Plan, path string, cache map[string][]string) Plan {
+	plan.Subs.TextSidecarLangs = sidecarLangs(path, cache)
+	return plan
 }
 
 // NeedsTrackCleanup reports whether a remux would actually drop anything from this file.
@@ -767,7 +859,7 @@ func NeedsTrackCleanup(mi *MediaInfo, plan Plan) bool {
 	if mi == nil {
 		return false
 	}
-	if len(plan.Subs.KeepLangs) > 0 && len(keptSubs(mi, plan)) < len(mi.Subs) {
+	if (len(plan.Subs.KeepLangs) > 0 || plan.Subs.DropImage) && len(keptSubs(mi, plan)) < len(mi.Subs) {
 		return true
 	}
 	if len(plan.Audio.KeepLangs) > 0 && len(keptAudio(mi, plan)) < len(mi.Audio) {

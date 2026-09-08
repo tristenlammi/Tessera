@@ -323,7 +323,7 @@ func (s *Service) LibraryTVSeries(ctx context.Context) ([]SeriesRollup, error) {
 	// view does — and it's still one query with no filesystem access, which was the
 	// actual cost. Only the aggregate crosses the wire.
 	rows, err := s.index.db.QueryContext(ctx,
-		`SELECT series_id, size_bytes, video_codec, info_json
+		`SELECT series_id, size_bytes, video_codec, info_json, path
 		   FROM convert_library WHERE media_type = 'episode'`)
 	if err != nil {
 		return nil, err
@@ -331,10 +331,11 @@ func (s *Service) LibraryTVSeries(ctx context.Context) ([]SeriesRollup, error) {
 	defer rows.Close()
 
 	agg := map[int64]*SeriesRollup{}
+	dirCache := map[string][]string{} // one ReadDir per season folder, not per episode
 	for rows.Next() {
 		var id, size int64
-		var codec, infoJSON string
-		if err := rows.Scan(&id, &size, &codec, &infoJSON); err != nil {
+		var codec, infoJSON, path string
+		if err := rows.Scan(&id, &size, &codec, &infoJSON, &path); err != nil {
 			return nil, err
 		}
 		r := agg[id]
@@ -351,7 +352,7 @@ func (s *Service) LibraryTVSeries(ctx context.Context) ([]SeriesRollup, error) {
 		probed := infoJSON != "" && json.Unmarshal([]byte(infoJSON), &mi) == nil
 		needs := Needs{Video: isCandidateCodec(codec, target, recode)}
 		if probed {
-			needs = needsOf(&mi, dp, target, recode)
+			needs = needsOf(&mi, withSidecars(dp, path, dirCache), target, recode)
 		}
 		if !needs.Any() {
 			continue
@@ -498,17 +499,18 @@ func (s *Service) LibraryStats(ctx context.Context) (*LibraryStats, error) {
 	// convertible their codec looks.
 	skipped := s.skips.permanentKeys(ctx)
 	rows, err := s.index.db.QueryContext(ctx,
-		`SELECT media_type, movie_id, series_id, season, episode, size_bytes, video_codec, info_json
+		`SELECT media_type, movie_id, series_id, season, episode, size_bytes, video_codec, info_json, path
 		   FROM convert_library`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+	dirCache := map[string][]string{}
 	for rows.Next() {
-		var mediaType, codec, infoJSON string
+		var mediaType, codec, infoJSON, path string
 		var movieID, seriesID, size int64
 		var season, episode int
-		if err := rows.Scan(&mediaType, &movieID, &seriesID, &season, &episode, &size, &codec, &infoJSON); err != nil {
+		if err := rows.Scan(&mediaType, &movieID, &seriesID, &season, &episode, &size, &codec, &infoJSON, &path); err != nil {
 			return nil, err
 		}
 		key := movieKey(movieID)
@@ -529,7 +531,7 @@ func (s *Service) LibraryStats(ctx context.Context) (*LibraryStats, error) {
 		convertible := false
 		if probed {
 			hdr = mi.HDR
-			needs := needsOf(&mi, dp, target, recode)
+			needs := needsOf(&mi, withSidecars(dp, path, dirCache), target, recode)
 			convertible = needs.Any()
 			switch {
 			case needs.Video:
@@ -616,6 +618,7 @@ func (s *Service) indexedCandidates(ctx context.Context, mediaType string, serie
 	dp := s.defaultPlan(ctx)
 	target := s.targetCodec(ctx)
 	recode := s.recodesModern(ctx)
+	dirCache := map[string][]string{}
 	var out []Candidate
 	for rows.Next() {
 		var r indexRow
@@ -635,7 +638,7 @@ func (s *Service) indexedCandidates(ctx context.Context, mediaType string, serie
 				c.Info = &mi
 				// The gap is derived here, not stored — changing the target codec or the
 				// kept languages takes effect immediately with no reindex.
-				c.Needs = needsOf(&mi, dp, target, recode)
+				c.Needs = needsOf(&mi, withSidecars(dp, r.Path, dirCache), target, recode)
 				c.Candidate = c.Needs.Any()
 				// Only a re-encode reclaims space. A track-only rewrite copies the video,
 				// so estimating a saving there would promise space that never arrives.

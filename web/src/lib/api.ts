@@ -389,6 +389,7 @@ export interface AppSettings {
   convert_skip_hardlinked: boolean;
   convert_keep_audio_langs: string;
   convert_keep_sub_langs: string;
+  convert_drop_image_subs: boolean;
   convert_add_stereo: boolean;
   convert_loudnorm: boolean;
   convert_quality_gate: boolean;

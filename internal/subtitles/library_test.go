@@ -33,9 +33,15 @@ func TestBestSource(t *testing.T) {
 	if got := bestSource([]SubTrack{textEn, pgsEn}, "en", true); got != "extract" {
 		t.Errorf("with embedded text, source = %q, want extract", got)
 	}
-	// Only an English image sub → OCR.
-	if got := bestSource([]SubTrack{pgsEn}, "en", true); got != "ocr" {
-		t.Errorf("with image sub only, source = %q, want ocr", got)
+	// Only an English image sub. OCR would be the next-best source, but it isn't
+	// implemented, and routing there sent every PGS-only file to "pending" without ever
+	// trying a download — the file that most needs a text subtitle, since an image track
+	// is what makes Plex burn subtitles in and transcode. Until OCR exists, fall through.
+	if got := bestSource([]SubTrack{pgsEn}, "en", true); got != "download" {
+		t.Errorf("with image sub only + provider, source = %q, want download", got)
+	}
+	if got := bestSource([]SubTrack{pgsEn}, "en", false); got != "ai" {
+		t.Errorf("with image sub only + no provider, source = %q, want ai", got)
 	}
 	// No English track, but the provider can download → download.
 	if got := bestSource([]SubTrack{textFr}, "en", true); got != "download" {
