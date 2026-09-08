@@ -54,6 +54,8 @@ type Service struct {
 	cancelRun context.CancelFunc // cancels the running job's context (Stop button)
 	logMu     sync.Mutex
 	logBuf    []LogLine // recent activity console lines, for the Logs tab
+
+	snap librarySnapshot // the last library pass; what the Overview and Library tab read
 }
 
 // NewService wires the module over the shared Movies/Series catalogs + a subtitle provider. db is

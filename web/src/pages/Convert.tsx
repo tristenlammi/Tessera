@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { PageHeader } from "../components/PageHeader";
+import { RescanButton, ago } from "../components/RescanButton";
 import { api, type ConvertCandidate, type ConvertSeriesRollup, type ConvertLibraryStats, type ConvertBlocked, type ConvertSkipped, type ConvertEncoder, type ConvertJob, type ConvertSample, type AppSettings } from "../lib/api";
 
 // Convert (Tdarr replacement) — the four-tab experience from the design mockup, wired to
@@ -59,6 +60,21 @@ export function Convert() {
   const loadSettings = useCallback(
     () => api.settings().then(setSettings).catch((e) => { console.error("convert: settings load failed", e); }),
     []);
+  // One rescan for both the Overview's ↻ and the Library's button: start it, hold until it
+  // finishes (bounded, so a stalled scan can't pin the UI), then reload the figures.
+  const rescanLibrary = useCallback(async (): Promise<boolean> => {
+    const r = await api.convertReindex();
+    if (!r.started) { flash(r.reason ?? "A scan is already running."); return false; }
+    flash("Rescanning the library…");
+    for (let i = 0; i < 240; i++) {
+      await new Promise((res) => setTimeout(res, 2000));
+      const st = await api.convertReindexStatus().catch(() => ({ running: false }));
+      if (!st.running) break;
+    }
+    await loadStats();
+    flash("Library rescanned.");
+    return true;
+  }, [flash, loadStats]);
   useEffect(() => { loadHw(); loadStats(); loadSettings(); }, [loadHw, loadStats, loadSettings]);
 
   const anyActive = jobs.some((j) => ACTIVE.has(j.state));
@@ -175,9 +191,9 @@ export function Convert() {
             <button onClick={() => { loadStats(); loadHw(); }} className="rounded px-2 py-1 text-[11.5px] font-semibold" style={{ border: "1px solid var(--avoid)" }}>Retry</button>
           </div>
         )}
-        {tab === "overview" && <Overview hw={hw} stats={stats} jobs={jobs} settings={settings} onShowProblems={() => setTab("problems")} />}
+        {tab === "overview" && <Overview hw={hw} stats={stats} jobs={jobs} settings={settings} onShowProblems={() => setTab("problems")} onRescan={rescanLibrary} />}
         {tab === "queue" && <Queue jobs={jobs} flash={flash} onChanged={() => { api.convertJobs().then(setJobs).catch(() => {}); loadStats(); }} />}
-        {tab === "library" && <Library flash={flash} onQueued={() => api.convertJobs().then(setJobs)} />}
+        {tab === "library" && <Library flash={flash} onQueued={() => api.convertJobs().then(setJobs)} onRescan={rescanLibrary} />}
         {tab === "problems" && <Problems flash={flash} />}
         {tab === "logs" && <LogsConsole />}
         {tab === "settings" && <ConvertSettings flash={flash} />}
@@ -363,7 +379,8 @@ const cardStyle = { border: "1px solid var(--line)", background: "var(--panel)" 
 const lbl = "font-mono text-[9.5px] font-bold uppercase tracking-[0.11em] text-ink-faint";
 
 /* ============================= OVERVIEW ============================= */
-function Overview({ hw, stats, jobs, settings, onShowProblems }: { onShowProblems: () => void; hw: { selected: ConvertEncoder; encoders: ConvertEncoder[]; reclaimed_bytes: number } | null; stats: ConvertLibraryStats | null; jobs: ConvertJob[]; settings: AppSettings | null }) {
+function Overview({ hw, stats, jobs, settings, onShowProblems, onRescan }: { onShowProblems: () => void; onRescan: () => Promise<boolean>; hw: { selected: ConvertEncoder; encoders: ConvertEncoder[]; reclaimed_bytes: number } | null; stats: ConvertLibraryStats | null; jobs: ConvertJob[]; settings: AppSettings | null }) {
+  const [rescanning, setRescanning] = useState(false);
   // Which slice of the library the codec bar describes. It covered movies only before, which
   // hid the fact that TV is the overwhelming majority of files.
   const [scope, setScope] = useState<"total" | "movies" | "tv">("total");
@@ -378,7 +395,12 @@ function Overview({ hw, stats, jobs, settings, onShowProblems }: { onShowProblem
       <div className="grid gap-3.5" style={{ gridTemplateColumns: "1.1fr 1fr 0.95fr" }}>
         {/* reclaimed */}
         <div className={card} style={cardStyle}>
-          <div className={lbl}>Space reclaimed</div>
+          <div className="flex items-center justify-between">
+            <div className={lbl}>Space reclaimed</div>
+            {/* The figures are a cached pass over the index; the tooltip says how old. */}
+            <RescanButton busy={rescanning} title={stats?.as_of ? `Rescan the library · figures as of ${ago(stats.as_of)}` : "Rescan the library"}
+              onClick={async () => { setRescanning(true); try { await onRescan(); } catch { /* flashed by the caller */ } finally { setRescanning(false); } }} />
+          </div>
           <div className="mt-2 text-[30px] font-extrabold tracking-tight">{fmtSize(hw?.reclaimed_bytes)}</div>
           <div className="mt-3 border-t pt-3 text-[12px] text-ink-dim" style={{ borderColor: "var(--line-soft)" }}>
             <span style={{ color: "var(--good)" }}>~{fmtSize(t?.reclaimable)}</span> more reclaimable ·{" "}
@@ -848,7 +870,7 @@ function Pill({ active, disabled, onClick, children }: { active: boolean; disabl
   );
 }
 
-function Library({ flash, onQueued }: { flash: (m: string) => void; onQueued: () => void }) {
+function Library({ flash, onQueued, onRescan }: { flash: (m: string) => void; onQueued: () => void; onRescan: () => Promise<boolean> }) {
   const [media, setMedia] = useState<"movies" | "tv">("movies");
   // The TV tab browses shows first and only fetches episodes for the one you open —
   // fetching every episode in the library is what used to make this tab unusable.
@@ -1013,19 +1035,7 @@ Originals move to the recycle bin. You can cancel from the Queue tab.`)) return;
           onClick={async () => {
             setBusy("reindex");
             try {
-              const r = await api.convertReindex();
-              if (!r.started) { flash(r.reason ?? "A scan is already running."); setBusy(null); return; }
-              flash("Rescanning the library…");
-              // Hold "Scanning…" until it finishes, then reload — a background scan the
-              // user has to guess the end of is barely better than no button at all.
-              // Bounded so a stalled scan can't disable the toolbar forever.
-              for (let i = 0; i < 240; i++) {
-                await new Promise((res) => setTimeout(res, 2000));
-                const st = await api.convertReindexStatus().catch(() => ({ running: false }));
-                if (!st.running) break;
-              }
-              setRefreshKey((k) => k + 1);
-              flash("Library rescanned.");
+              if (await onRescan()) setRefreshKey((k) => k + 1);
             } catch (e) { flash((e as Error).message); } finally { setBusy(null); }
           }}
           disabled={busy !== null}

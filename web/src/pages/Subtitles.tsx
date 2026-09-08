@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { PageHeader } from "../components/PageHeader";
-import { api, type SubtitleSettings, type SubFileEntry, type SubSeriesGroup, type SubtitleJob, type SubLangStatus, type WhisperStatus } from "../lib/api";
+import { RescanButton, scanTitle } from "../components/RescanButton";
+import { api, type SubtitleSettings, type SubFileEntry, type SubSeriesGroup, type SubtitleJob, type SubtitleCoverage, type SubLangStatus, type WhisperStatus } from "../lib/api";
 
 type Tab = "overview" | "queue" | "library" | "logs" | "settings";
 const ACTIVE = new Set(["queued", "running"]);
@@ -92,7 +93,7 @@ export function Subtitles() {
           })}
         </div>
 
-        {tab === "overview" && <Overview jobs={jobs} settings={settings} />}
+        {tab === "overview" && <Overview jobs={jobs} settings={settings} flash={flash} />}
         {tab === "queue" && <Queue jobs={jobs} onChange={() => api.subtitleJobs().then(setJobs).catch(() => {})} flash={flash} />}
         {tab === "library" && <Library flash={flash} onQueued={() => api.subtitleJobs().then(setJobs)} />}
         {tab === "logs" && <LogsConsole />}
@@ -104,29 +105,43 @@ export function Subtitles() {
 }
 
 /* ============================= OVERVIEW ============================= */
-function Overview({ jobs, settings }: { jobs: SubtitleJob[]; settings: SubtitleSettings | null }) {
-  const [cov, setCov] = useState<{ files: number; covered: number; missing: number } | null>(null);
+function Overview({ jobs, settings, flash }: { jobs: SubtitleJob[]; settings: SubtitleSettings | null; flash: (m: string) => void }) {
+  // The totals come from the server's last library pass. This used to fetch the flat
+  // list of every file — a directory listing per file, 25,000 of them — every time the
+  // tab opened.
+  const [cov, setCov] = useState<SubtitleCoverage | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(() => api.subtitleCoverage().then(setCov).catch(() => {}), []);
+  useEffect(() => { load(); }, [load]);
+  // While a pass is running, keep asking until it lands.
   useEffect(() => {
-    let alive = true;
-    Promise.all([api.subtitleLibrary("movies"), api.subtitleLibrary("tv")]).then(([m, tv]) => {
-      if (!alive) return;
-      const all = [...m, ...tv];
-      const covered = all.filter((f) => f.missing === 0).length;
-      setCov({ files: all.length, covered, missing: all.length - covered });
-    }).catch(() => setCov({ files: 0, covered: 0, missing: 0 }));
-    return () => { alive = false; };
-  }, []);
+    if (!cov?.scanning) return;
+    const t = setInterval(load, 3000);
+    return () => clearInterval(t);
+  }, [cov?.scanning, load]);
+  const rescan = async () => {
+    setBusy(true);
+    try { const r = await api.subtitleRescan(); flash(r.started ? "Rescanning the library…" : "A scan is already running."); await load(); }
+    catch (e) { flash(e instanceof Error ? e.message : "Couldn't start a scan"); }
+    finally { setBusy(false); }
+  };
   const active = sortActive(jobs);
-  const pct = cov && cov.files ? Math.round((cov.covered / cov.files) * 100) : 0;
+  const scanned = !!cov && cov.scanned_at > 0;
+  const pct = scanned && cov.files ? Math.round((cov.covered / cov.files) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-3.5">
       <div className="grid gap-3.5" style={{ gridTemplateColumns: "1.1fr 1fr 1fr" }}>
         <div className={card} style={cardStyle}>
-          <div className={lbl}>Coverage</div>
-          <div className="mt-2 text-[30px] font-extrabold tracking-tight">{cov ? `${pct}%` : "…"}</div>
+          <div className="flex items-center justify-between">
+            <div className={lbl}>Coverage</div>
+            <RescanButton busy={busy || !!cov?.scanning} onClick={rescan} title={scanTitle(cov)} />
+          </div>
+          <div className="mt-2 text-[30px] font-extrabold tracking-tight">{scanned ? `${pct}%` : "…"}</div>
           <div className="mt-3 border-t pt-3 text-[12px] text-ink-dim" style={{ borderColor: "var(--line-soft)" }}>
-            {cov ? <><b style={{ color: "var(--good)" }}>{cov.covered}</b> fully subtitled · <b style={{ color: cov.missing ? "var(--avoid)" : "var(--ink)" }}>{cov.missing}</b> missing a language · {cov.files} files</> : "Scanning your library…"}
+            {scanned
+              ? <><b style={{ color: "var(--good)" }}>{cov.covered.toLocaleString()}</b> fully subtitled · <b style={{ color: cov.missing ? "var(--avoid)" : "var(--ink)" }}>{cov.missing.toLocaleString()}</b> missing a language · {cov.files.toLocaleString()} files</>
+              : "Scanning your library — the first pass after startup takes a few minutes."}
           </div>
         </div>
         <div className={card} style={cardStyle}>
@@ -233,6 +248,10 @@ function ActiveRow({ j, onCancel, busy }: { j: SubtitleJob; onCancel?: () => voi
   const running = j.state === "running";
   const stopping = running && j.note === "stopping…";
   const pct = running && j.progress ? Math.min(100, Math.max(0, j.progress)) : 0;
+  // Elapsed since the worker picked it up, and a straight-line ETA once there's enough
+  // progress to extrapolate from. The list is polled every 1.5s, so this stays live.
+  const elapsed = running && j.started_at ? Date.now() / 1000 - j.started_at : 0;
+  const eta = elapsed > 0 && pct >= 5 ? (elapsed * (100 - pct)) / pct : 0;
   return (
     <div className="flex flex-col gap-1 text-[12px]">
       <div className="flex items-center gap-2.5">
@@ -240,6 +259,7 @@ function ActiveRow({ j, onCancel, busy }: { j: SubtitleJob; onCancel?: () => voi
         <span className="flex-1 truncate font-semibold">{j.title}</span>
         {stopping ? <span className="font-mono text-[10.5px] text-ink-faint">stopping…</span>
           : running && j.stage && <span className="truncate font-mono text-[10.5px] text-ink-faint">{j.stage}</span>}
+        {running && elapsed > 0 && <span className="flex-none font-mono text-[10.5px] text-ink-faint">{fmtElapsed(elapsed)}{eta > 0 ? ` · ~${fmtElapsed(eta)} left` : ""}</span>}
         {running && pct > 0 && <span className="w-[38px] flex-none text-right font-mono text-[10.5px] text-ink-dim">{pct}%</span>}
         {running && pct === 0 && <span className="h-3 w-3 flex-none animate-spin rounded-full" style={{ border: "2px solid var(--line)", borderTopColor: "var(--accent)" }} />}
         {/* Stop kills the running ffmpeg/whisper; Remove just drops a queued job. */}
@@ -259,6 +279,11 @@ function ActiveRow({ j, onCancel, busy }: { j: SubtitleJob; onCancel?: () => voi
       )}
     </div>
   );
+}
+function fmtElapsed(sec: number): string {
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return h ? `${h}h ${String(m).padStart(2, "0")}m` : m ? `${m}m ${String(s).padStart(2, "0")}s` : `${s}s`;
 }
 function StateBadge({ state }: { state: string }) {
   const s = state === "done" ? { bg: "var(--good-soft, rgba(127,176,105,.16))", fg: "var(--good)" }
@@ -288,6 +313,9 @@ type Filter = "missing" | "pgs" | "text" | "external";
 function Library({ flash, onQueued }: { flash: (m: string) => void; onQueued: () => void }) {
   const [media, setMedia] = useState<"movies" | "tv">("movies");
   const [items, setItems] = useState<SubFileEntry[] | null>(null);
+  const [scanning, setScanning] = useState(false); // no pass has completed yet (just after startup)
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [rescanBusy, setRescanBusy] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [queued, setQueued] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "missing", dir: "desc" });
@@ -297,8 +325,25 @@ function Library({ flash, onQueued }: { flash: (m: string) => void; onQueued: ()
     setItems(null); setQueued(new Set()); setFilters(new Set());
     // TV is rendered per show by TVLibrary, which fetches its own rolled-up list.
     if (media === "tv") return;
-    api.subtitleLibrary(media).then(setItems).catch(() => setItems([]));
-  }, [media]);
+    api.subtitleLibrary(media).then((r) => { setItems(r.items); setScanning(!!r.scanning); }).catch(() => setItems([]));
+  }, [media, refreshKey]);
+
+  // Start a fresh pass and hold the spinner until it lands, then reload. Bounded so a
+  // stalled pass can't pin the button.
+  const rescan = async () => {
+    setRescanBusy(true);
+    try {
+      const r = await api.subtitleRescan();
+      flash(r.started ? "Rescanning the library…" : "A scan is already running — waiting for it.");
+      for (let i = 0; i < 300; i++) {
+        await new Promise((res) => setTimeout(res, 2000));
+        const c = await api.subtitleCoverage().catch(() => null);
+        if (c && !c.scanning) break;
+      }
+      setRefreshKey((k) => k + 1);
+      flash("Library rescanned.");
+    } catch (e) { flash((e as Error).message); } finally { setRescanBusy(false); }
+  };
 
   const ensure = async (f: SubFileEntry) => {
     const key = rowKey(f);
@@ -356,18 +401,22 @@ function Library({ flash, onQueued }: { flash: (m: string) => void; onQueued: ()
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="inline-flex w-fit rounded-lg p-0.5" style={{ background: "var(--panel-2)", border: "1px solid var(--line)" }}>
-        {(["movies", "tv"] as const).map((m) => (
-          <button key={m} onClick={() => setMedia(m)} className="rounded-md px-3.5 py-1.5 text-[12px] font-semibold" style={{ background: media === m ? "var(--accent)" : "transparent", color: media === m ? "var(--accent-ink)" : "var(--ink-faint)" }}>
-            {m === "movies" ? "Movies" : "TV Shows"}{items && media === m && m === "movies" ? <span className="ml-1.5 font-mono text-[10px] opacity-70">{items.length.toLocaleString()}</span> : null}
-          </button>
-        ))}
+      <div className="flex items-center justify-between">
+        <div className="inline-flex w-fit rounded-lg p-0.5" style={{ background: "var(--panel-2)", border: "1px solid var(--line)" }}>
+          {(["movies", "tv"] as const).map((m) => (
+            <button key={m} onClick={() => setMedia(m)} className="rounded-md px-3.5 py-1.5 text-[12px] font-semibold" style={{ background: media === m ? "var(--accent)" : "transparent", color: media === m ? "var(--accent-ink)" : "var(--ink-faint)" }}>
+              {m === "movies" ? "Movies" : "TV Shows"}{items && media === m && m === "movies" ? <span className="ml-1.5 font-mono text-[10px] opacity-70">{items.length.toLocaleString()}</span> : null}
+            </button>
+          ))}
+        </div>
+        {/* The lists come from the server's last pass; this asks for a new one. */}
+        <RescanButton busy={rescanBusy} onClick={rescan} title="Rescan the library for new files and subtitles" />
       </div>
 
       {media === "tv" ? (
-        <TVLibrary flash={flash} onQueued={onQueued} />
-      ) : items === null ? (
-        <div className="rounded-xl p-10 text-center text-[12.5px] text-ink-dim" style={{ border: "1px solid var(--line)" }}>Scanning your {noun}…</div>
+        <TVLibrary key={refreshKey} flash={flash} onQueued={onQueued} />
+      ) : items === null || (scanning && items.length === 0) ? (
+        <div className="rounded-xl p-10 text-center text-[12.5px] text-ink-dim" style={{ border: "1px solid var(--line)" }}>Scanning your {noun}…{items !== null && " The first pass after startup takes a few minutes."}</div>
       ) : items.length === 0 ? (
         <div className="rounded-xl p-10 text-center text-[12.5px] text-ink-dim" style={{ border: "1px solid var(--line)" }}>No downloaded {noun} yet.</div>
       ) : (
@@ -418,12 +467,13 @@ function Library({ flash, onQueued }: { flash: (m: string) => void; onQueued: ()
 // you actually open.
 function TVLibrary({ flash, onQueued }: { flash: (m: string) => void; onQueued: () => void }) {
   const [groups, setGroups] = useState<SubSeriesGroup[] | null>(null);
+  const [scanning, setScanning] = useState(false);
   const [query, setQuery] = useState("");
   const [onlyGaps, setOnlyGaps] = useState(false);
   const [open, setOpen] = useState<number | null>(null);
 
   useEffect(() => {
-    api.subtitleSeriesGroups().then(setGroups).catch(() => setGroups([]));
+    api.subtitleSeriesGroups().then((r) => { setGroups(r.groups); setScanning(!!r.scanning); }).catch(() => setGroups([]));
   }, []);
 
   const view = useMemo(() => {
@@ -443,8 +493,8 @@ function TVLibrary({ flash, onQueued }: { flash: (m: string) => void; onQueued: 
     return { eps, missing, shows };
   }, [groups]);
 
-  if (groups === null) {
-    return <div className="rounded-xl p-10 text-center text-[12.5px] text-ink-dim" style={{ border: "1px solid var(--line)" }}>Scanning your shows…</div>;
+  if (groups === null || (scanning && groups.length === 0)) {
+    return <div className="rounded-xl p-10 text-center text-[12.5px] text-ink-dim" style={{ border: "1px solid var(--line)" }}>Scanning your shows…{groups !== null && " The first pass after startup takes a few minutes."}</div>;
   }
   if (groups.length === 0) {
     return <div className="rounded-xl p-10 text-center text-[12.5px] text-ink-dim" style={{ border: "1px solid var(--line)" }}>No downloaded episodes yet.</div>;

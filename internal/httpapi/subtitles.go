@@ -147,15 +147,12 @@ func (a *api) handleSubtitleLibrary(w http.ResponseWriter, r *http.Request) {
 	// page can render — at library scale that's tens of thousands of rows and a probe
 	// sweep per page load. Shows first, episodes only for the one you open.
 	if media == "tv" && q.Get("group") == "series" {
-		groups, err := a.deps.Subtitles.SeriesGroups(r.Context())
-		if err != nil {
-			a.writeError(w, http.StatusInternalServerError, "could not load subtitle library")
-			return
-		}
+		// From the last library pass, not a fresh walk — see librarySnapshot.
+		groups, scanned := a.deps.Subtitles.SnapshotGroups()
 		if groups == nil {
 			groups = []subtitles.SeriesGroup{}
 		}
-		a.writeJSON(w, http.StatusOK, map[string]any{"groups": groups})
+		a.writeJSON(w, http.StatusOK, map[string]any{"groups": groups, "scanning": !scanned})
 		return
 	}
 	if media == "tv" && q.Get("series") != "" {
@@ -173,6 +170,14 @@ func (a *api) handleSubtitleLibrary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if media == "movies" {
+		list, scanned := a.deps.Subtitles.SnapshotMovies()
+		if list == nil {
+			list = []subtitles.FileSubs{}
+		}
+		a.writeJSON(w, http.StatusOK, map[string]any{"items": list, "scanning": !scanned})
+		return
+	}
 	list, err := a.deps.Subtitles.Library(r.Context(), media)
 	if err != nil {
 		a.writeError(w, http.StatusInternalServerError, "could not load subtitle library")
@@ -182,6 +187,18 @@ func (a *api) handleSubtitleLibrary(w http.ResponseWriter, r *http.Request) {
 		list = []subtitles.FileSubs{}
 	}
 	a.writeJSON(w, http.StatusOK, map[string]any{"items": list})
+}
+
+// handleSubtitleCoverage returns the Overview's totals from the last library pass.
+func (a *api) handleSubtitleCoverage(w http.ResponseWriter, r *http.Request) {
+	a.writeJSON(w, http.StatusOK, a.deps.Subtitles.Coverage())
+}
+
+// handleSubtitleRescan starts a fresh library pass in the background.
+func (a *api) handleSubtitleRescan(w http.ResponseWriter, r *http.Request) {
+	// Not the request's context: the pass outlives the response.
+	started := a.deps.Subtitles.Rescan(context.WithoutCancel(r.Context()))
+	a.writeJSON(w, http.StatusAccepted, map[string]any{"started": started})
 }
 
 func (a *api) handleSubtitleMovies(w http.ResponseWriter, r *http.Request) {

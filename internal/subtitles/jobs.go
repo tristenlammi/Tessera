@@ -41,8 +41,9 @@ type Job struct {
 	At       int64    `json:"at"` // unix seconds queued
 	// Progress is 0-100 while an AI run is in flight (extraction and downloads are too
 	// quick to bother). Stays 0 for everything else.
-	Progress int    `json:"progress,omitempty"`
-	Stage    string `json:"stage,omitempty"` // what the running job is doing right now
+	Progress  int    `json:"progress,omitempty"`
+	Stage     string `json:"stage,omitempty"`      // what the running job is doing right now
+	StartedAt int64  `json:"started_at,omitempty"` // unix seconds the worker picked it up
 }
 
 // key identifies the file a job is for, so the same file can't be queued twice.
@@ -69,6 +70,8 @@ type LogLine struct {
 // slice grows; the caller always returns immediately.
 func (s *Service) Run(ctx context.Context) {
 	s.log.Info("subtitles: worker started")
+	s.ensureVADModel()
+	s.Rescan(ctx) // first library pass, in the background; the pages read it
 	for {
 		job := s.pop()
 		if job == nil {

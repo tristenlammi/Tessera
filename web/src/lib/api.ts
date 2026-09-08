@@ -746,6 +746,15 @@ export interface SubtitleJob {
   title: string; state: "queued" | "running" | "done" | "skipped" | "failed" | "cancelled"; note?: string; at: number;
   progress?: number; // 0-100 during an AI run
   stage?: string;    // what a running job is doing
+  started_at?: number; // unix seconds the worker picked it up
+}
+// SubtitleCoverage is the Overview's totals, from the last library pass (not a live walk).
+export interface SubtitleCoverage {
+  files: number; covered: number; missing: number;
+  movies: { files: number; covered: number; missing: number };
+  tv: { files: number; covered: number; missing: number };
+  scanned_at: number; // 0 until the first pass completes
+  scanning: boolean;
 }
 export interface WhisperModel { name: string; label: string; size_mb: number; present: boolean; downloading: boolean }
 export interface WhisperStatus { binary_ready: boolean; ready: boolean; models: WhisperModel[] }
@@ -794,7 +803,7 @@ export interface ConvertMediaStats {
 export interface BookSeriesEntry { book_id?: number; title: string; position?: number; has_file: boolean; missing: boolean }
 export interface BookSeries { name: string; entries: BookSeriesEntry[]; gaps: number }
 
-export interface ConvertLibraryStats { movies: ConvertMediaStats; tv: ConvertMediaStats; total: ConvertMediaStats }
+export interface ConvertLibraryStats { movies: ConvertMediaStats; tv: ConvertMediaStats; total: ConvertMediaStats; as_of?: number }
 export interface ConvertAllResult { movies: number; episodes: number; queued: number; blocklisted: number }
 
 export interface ConvertSeriesRollup {
@@ -1243,11 +1252,13 @@ export const api = {
   subtitleSettings: () => req<SubtitleSettings>("/api/v1/subtitles/settings"),
   updateSubtitleSettings: (body: { movies_auto?: boolean; series_auto?: boolean; languages?: string[] }) =>
     req<SubtitleSettings>("/api/v1/subtitles/settings", { method: "PUT", body: JSON.stringify(body) }),
-  subtitleLibrary: (media: "movies" | "tv" = "movies") => req<{ items: SubFileEntry[] }>(`/api/v1/subtitles/library${media === "tv" ? "?media=tv" : ""}`).then((r) => r.items),
+  subtitleLibrary: (media: "movies" | "tv" = "movies") => req<{ items: SubFileEntry[]; scanning?: boolean }>(`/api/v1/subtitles/library${media === "tv" ? "?media=tv" : ""}`),
+  subtitleCoverage: () => req<SubtitleCoverage>("/api/v1/subtitles/coverage"),
+  subtitleRescan: () => req<{ started: boolean }>("/api/v1/subtitles/library/rescan", { method: "POST" }),
   // TV rolled up per show. The flat list is one probed row per episode, which at
   // library scale is tens of thousands of rows before the page can render.
   subtitleSeriesGroups: () =>
-    req<{ groups: SubSeriesGroup[] }>("/api/v1/subtitles/library?media=tv&group=series").then((r) => r.groups),
+    req<{ groups: SubSeriesGroup[]; scanning?: boolean }>("/api/v1/subtitles/library?media=tv&group=series"),
   subtitleSeriesEpisodes: (seriesID: number) =>
     req<{ items: SubFileEntry[] }>(`/api/v1/subtitles/library?media=tv&series=${seriesID}`).then((r) => r.items),
   subtitleJobs: () => req<{ jobs: SubtitleJob[] }>("/api/v1/subtitles/jobs").then((r) => r.jobs),

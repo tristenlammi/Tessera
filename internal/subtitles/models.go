@@ -76,8 +76,25 @@ func (s *Service) DownloadModel(name string) error {
 			return
 		}
 		s.event("info", "✓ Downloaded "+name+" — local AI is ready")
+		if name != vadModel {
+			s.ensureVADModel()
+		}
 	}()
 	return nil
+}
+
+// ensureVADModel fetches the VAD model (3 MB) when a transcription model is present but
+// it isn't. It was listed as "recommended" and left to the user; without it whisper
+// transcribes music and silence, and what it produces there is a repeated invented line
+// for as long as the gap lasts, at several times the cost. Not optional in practice.
+func (s *Service) ensureVADModel() {
+	w := s.whisper
+	if w == nil || w.bin == "" || !w.vadSupported || !w.available() || w.hasModel(vadModel) {
+		return
+	}
+	if err := s.DownloadModel(vadModel); err == nil {
+		s.event("info", "Fetching the VAD model so AI runs skip music and silence")
+	}
 }
 
 func (w *whisperGen) isDownloading(name string) bool {

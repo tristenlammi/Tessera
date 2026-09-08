@@ -7,13 +7,19 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
 // libraryIndex is the persisted answer to "what's in the library and what codec is it".
 // Listing reads this table instead of walking the library and probing per request — see
 // migration 0058 for why.
-type libraryIndex struct{ db *sql.DB }
+type libraryIndex struct {
+	db *sql.DB
+	// gen counts writes, so the cached views built over the index (libcache.go) know
+	// when they're stale.
+	gen atomic.Uint64
+}
 
 // indexRow is one indexed file.
 type indexRow struct {
@@ -100,6 +106,9 @@ func (ix *libraryIndex) upsert(ctx context.Context, r indexRow) error {
 		   info_json = excluded.info_json, indexed_at = datetime('now')`,
 		r.Path, r.MediaType, r.MovieID, r.SeriesID, r.Season, r.Episode, r.Title, r.Year,
 		r.PosterURL, r.SizeBytes, r.Codec, infoJSON)
+	if err == nil {
+		ix.gen.Add(1)
+	}
 	return err
 }
 
@@ -111,6 +120,7 @@ func (ix *libraryIndex) prune(ctx context.Context, mediaType string, seriesID in
 			continue
 		}
 		_, _ = ix.db.ExecContext(ctx, `DELETE FROM convert_library WHERE path = ?`, path)
+		ix.gen.Add(1)
 	}
 }
 
@@ -191,6 +201,7 @@ func (s *Service) IndexMovie(ctx context.Context, movieID int64) error {
 	_, _ = s.index.db.ExecContext(ctx,
 		`DELETE FROM convert_library WHERE media_type = 'movie' AND movie_id = ? AND path <> ?`,
 		m.ID, m.MovieFilePath)
+	s.index.gen.Add(1)
 	return nil
 }
 
@@ -308,9 +319,9 @@ type SeriesRollup struct {
 	EstBytes    int64  `json:"est_bytes"` // estimated size of the convertible files after conversion
 }
 
-// LibraryTVSeries returns the per-series roll-up for the TV tab — one grouped query over
-// the index, no per-episode work.
-func (s *Service) LibraryTVSeries(ctx context.Context) ([]SeriesRollup, error) {
+// computeLibraryTVSeries returns the per-series roll-up for the TV tab — one grouped query
+// over the index, no per-episode work. LibraryTVSeries (libcache.go) is the cached front.
+func (s *Service) computeLibraryTVSeries(ctx context.Context) ([]SeriesRollup, error) {
 	if s.index == nil {
 		return nil, nil
 	}
@@ -426,6 +437,7 @@ type LibraryStats struct {
 	Movies MediaStats `json:"movies"`
 	TV     MediaStats `json:"tv"`
 	Total  MediaStats `json:"total"`
+	AsOf   int64      `json:"as_of"` // unix seconds the figures were computed (they're cached)
 }
 
 // addHDR counts a file's HDR format. These drive the format cards in setup: they turn
@@ -486,8 +498,9 @@ func codecClass(c string) string {
 	}
 }
 
-// LibraryStats aggregates the whole index in one pass.
-func (s *Service) LibraryStats(ctx context.Context) (*LibraryStats, error) {
+// computeLibraryStats aggregates the whole index in one pass. LibraryStats (libcache.go)
+// is the cached front for it.
+func (s *Service) computeLibraryStats(ctx context.Context) (*LibraryStats, error) {
 	out := &LibraryStats{}
 	if s.index == nil {
 		return out, nil

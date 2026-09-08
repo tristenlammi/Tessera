@@ -176,6 +176,11 @@ type Service struct {
 	indexScanning atomic.Bool
 	lastSweep     time.Time
 
+	// Cached views over the index — see libcache.go.
+	libCacheMu sync.Mutex
+	statsCache libCacheEntry[*LibraryStats]
+	tvCache    libCacheEntry[[]SeriesRollup]
+
 	mu        sync.Mutex
 	reclaimMu sync.Mutex // guards the reclaimed-bytes read-modify-write across workers
 	jobs      []*Job
@@ -983,6 +988,7 @@ func (s *Service) Skips(ctx context.Context) ([]Skipped, error) {
 
 // ClearSkip forgets an item's skip (or all of them) so it's retried next time.
 func (s *Service) ClearSkip(ctx context.Context, key string) error {
+	s.invalidateLibraryCache()
 	if key == "" {
 		return s.skips.clearAll(ctx)
 	}
@@ -1012,6 +1018,7 @@ func (s *Service) titleForKey(ctx context.Context, kind string, movieID, seriesI
 // ClearBlocklist forgets an item's failures (or all of them when key is empty) so it will be
 // retried by the next convert.
 func (s *Service) ClearBlocklist(ctx context.Context, key string) error {
+	s.invalidateLibraryCache()
 	if key == "" {
 		_, err := s.failures.db.ExecContext(ctx, `DELETE FROM convert_failures`)
 		return err

@@ -25,6 +25,8 @@ type whisperGen struct {
 	modelsDir    string // where the GGML model files live (data dir / whisper)
 	vadSupported bool   // whether this whisper-cli build understands --vad
 	noGPUFlag    bool   // whether this build understands --no-gpu (i.e. was built with a GPU backend)
+	noFallback   bool   // --no-fallback available
+	suppressNST  bool   // --suppress-nst available
 	dlMu         sync.Mutex
 	dl           map[string]bool // model filenames currently downloading
 
@@ -93,8 +95,15 @@ func detectWhisper(modelsDir string) *whisperGen {
 		out, _ := exec.Command(bin, "--help").CombinedOutput()
 		w.vadSupported = strings.Contains(string(out), "--vad")
 		w.noGPUFlag = strings.Contains(string(out), "--no-gpu")
+		w.noFallback = strings.Contains(string(out), "--no-fallback")
+		w.suppressNST = strings.Contains(string(out), "--suppress-nst")
 	}
 	return w
+}
+
+// vadActive reports whether runs are VAD-fronted: the build supports it and the model is here.
+func (w *whisperGen) vadActive() bool {
+	return w != nil && w.vadSupported && w.hasModel(vadModel)
 }
 
 func (w *whisperGen) hasModel(name string) bool {
@@ -172,8 +181,20 @@ func (w *whisperGen) generate(ctx context.Context, ffmpeg, videoPath, srtPath, l
 	} else if lang != "" {
 		args = append(args, "-l", lang)
 	}
-	if w.vadSupported && w.hasModel(vadModel) {
+	if w.vadActive() {
 		args = append(args, "--vad", "--vad-model", filepath.Join(w.modelsDir, vadModel))
+	}
+	// Temperature fallback re-decodes a window up to five more times when the first
+	// decode looks poor. The windows that look poor are music, silence and crowd noise,
+	// and every retry there produces the same invented line — the "I'm not saying this is
+	// how I'm going to be" once a second in the log — so it multiplies the run time for
+	// nothing. VAD is the right tool for those stretches; the fallback is switched off.
+	// Non-speech tokens (♪, [Music]) are suppressed for the same reason.
+	if w.noFallback {
+		args = append(args, "-nf")
+	}
+	if w.suppressNST {
+		args = append(args, "--suppress-nst")
 	}
 	out, err := runWhisper(ctx, w.bin, args, progress)
 	if err != nil && w.noGPUFlag && ctx.Err() == nil {

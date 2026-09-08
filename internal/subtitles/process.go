@@ -19,7 +19,7 @@ func (s *Service) process(ctx context.Context, job *Job) {
 		s.finish(job, StateFailed, "file is gone")
 		return
 	}
-	s.update(job, func(j *Job) { j.State = StateRunning })
+	s.update(job, func(j *Job) { j.State = StateRunning; j.StartedAt = time.Now().Unix() })
 
 	mi, _ := s.probeCached(ctx, path) // best-effort; nil → no embedded tracks known
 	var subs []SubTrack
@@ -132,7 +132,11 @@ afterDownloads:
 		if t.translate {
 			verb = "translating → en"
 		}
-		s.event("info", fmt.Sprintf("AI %s %s (%s)…", verb, title, t.lang))
+		vad := "off — music and silence get transcribed too"
+		if s.whisper.vadActive() {
+			vad = "on"
+		}
+		s.event("info", fmt.Sprintf("AI %s %s (%s)… VAD %s", verb, title, t.lang, vad))
 		started := time.Now()
 		s.update(job, func(j *Job) { j.Stage = "AI " + verb + " (" + t.lang + ")"; j.Progress = 0 })
 		onProgress := func(pct int) { s.update(job, func(j *Job) { j.Progress = pct }) }
@@ -143,8 +147,14 @@ afterDownloads:
 			s.event("warn", fmt.Sprintf("%s: AI %s failed: %v", title, t.lang, err))
 		} else {
 			generated++
-			s.event("info", fmt.Sprintf("%s: AI subtitle written (%s) in %s on %s", title, t.lang,
-				time.Since(started).Round(time.Second), s.whisper.Backend()))
+			took := time.Since(started)
+			msg := fmt.Sprintf("%s: AI subtitle written (%s) in %s on %s", title, t.lang, took.Round(time.Second), s.whisper.Backend())
+			if mi != nil && mi.DurationSec > 0 && took > 0 {
+				// The number that says whether the GPU is pulling its weight.
+				dur := float64(mi.DurationSec)
+				msg += fmt.Sprintf(" — %s of audio, %.1f× realtime", fmtAudio(dur), dur/took.Seconds())
+			}
+			s.event("info", msg)
 		}
 	}
 
@@ -177,6 +187,7 @@ afterDownloads:
 	s.event("info", fmt.Sprintf("✓ %s — %s", title, note))
 	if extracted+downloaded+generated > 0 {
 		s.finish(job, StateDone, note)
+		s.refreshSnapshot(ctx, job)
 	} else {
 		s.finish(job, StateSkipped, note)
 	}

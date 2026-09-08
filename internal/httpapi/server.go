@@ -312,6 +312,8 @@ func New(d Deps) *http.Server {
 
 	// Subtitles (Bazarr replacement — external SRT sidecars over the Movies/Series catalogs).
 	mux.HandleFunc("GET "+base+"/api/v1/subtitles/library", a.protected(a.handleSubtitleLibrary))
+	mux.HandleFunc("GET "+base+"/api/v1/subtitles/coverage", a.protected(a.handleSubtitleCoverage))
+	mux.HandleFunc("POST "+base+"/api/v1/subtitles/library/rescan", a.requireRole(auth.RoleManager, a.handleSubtitleRescan))
 	mux.HandleFunc("GET "+base+"/api/v1/subtitles/models", a.protected(a.handleSubtitleModels))
 	mux.HandleFunc("POST "+base+"/api/v1/subtitles/models/{name}", a.requireRole(auth.RoleManager, a.handleSubtitleDownloadModel))
 	mux.HandleFunc("GET "+base+"/api/v1/subtitles/jobs", a.protected(a.handleSubtitleJobs))

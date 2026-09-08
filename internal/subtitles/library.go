@@ -194,42 +194,12 @@ func (s *Service) SeriesGroups(ctx context.Context) ([]SeriesGroup, error) {
 	}
 	out := make([]SeriesGroup, 0, len(list))
 	for _, sm := range list {
-		full, err := s.series.Get(ctx, sm.ID)
-		if err != nil {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		g, ok := s.groupFor(ctx, sm.ID, langs)
+		if !ok {
 			continue
-		}
-		g := SeriesGroup{SeriesID: full.ID, Title: full.Title, Year: full.Year, PosterURL: full.PosterURL}
-		for _, sn := range full.Seasons {
-			seasonHasFile := false
-			for _, e := range sn.Episodes {
-				if !e.HasFile || e.FilePath == "" {
-					continue
-				}
-				seasonHasFile = true
-				g.Episodes++
-				have := map[string]bool{}
-				for _, p := range presentLanguages(e.FilePath, langs, false) {
-					have[strings.ToLower(p)] = true
-				}
-				complete := true
-				for _, l := range langs {
-					if !have[strings.ToLower(l)] {
-						complete = false
-						break
-					}
-				}
-				if complete {
-					g.Covered++
-				} else {
-					g.Missing++
-				}
-			}
-			if seasonHasFile {
-				g.Seasons++
-			}
-		}
-		if g.Episodes == 0 {
-			continue // nothing on disk — nothing to subtitle
 		}
 		out = append(out, g)
 	}
