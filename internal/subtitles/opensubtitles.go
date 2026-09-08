@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,6 +30,50 @@ type OpenSubtitles struct {
 
 	mu    sync.Mutex
 	token string // cached bearer token from /login
+
+	// Download quota, as the API reports it. Free accounts get a handful of downloads
+	// a day; once spent, every /download answers 406 until the reset. Tracking it means
+	// the pipeline can stop asking — and the UI can say why — instead of logging a
+	// failure per file for the rest of the day.
+	quotaMu        sync.Mutex
+	quotaRemaining int       // -1 = never reported
+	quotaResetAt   time.Time // zero = not paused
+}
+
+// ErrQuotaExhausted means the provider's daily download allowance is spent.
+var ErrQuotaExhausted = errors.New("opensubtitles: daily download quota used up")
+
+// Quota implements quotaReporter.
+func (o *OpenSubtitles) Quota() (int, time.Time) {
+	o.quotaMu.Lock()
+	defer o.quotaMu.Unlock()
+	if !o.quotaResetAt.IsZero() && time.Now().After(o.quotaResetAt) {
+		o.quotaResetAt = time.Time{} // reset has passed — try again
+	}
+	return o.quotaRemaining, o.quotaResetAt
+}
+
+// quotaPaused reports whether downloads should be skipped until the reset.
+func (o *OpenSubtitles) quotaPaused() bool {
+	_, reset := o.Quota()
+	return !reset.IsZero()
+}
+
+// noteQuota records what a /download response said about the allowance.
+func (o *OpenSubtitles) noteQuota(remaining int, resetUTC string, exhausted bool) {
+	o.quotaMu.Lock()
+	defer o.quotaMu.Unlock()
+	o.quotaRemaining = remaining
+	if !exhausted {
+		o.quotaResetAt = time.Time{}
+		return
+	}
+	// Prefer the API's own reset time; fall back to a day, which is the documented window.
+	if t, err := time.Parse(time.RFC3339, resetUTC); err == nil && t.After(time.Now()) {
+		o.quotaResetAt = t
+	} else {
+		o.quotaResetAt = time.Now().Add(24 * time.Hour)
+	}
 }
 
 // NewOpenSubtitles builds the provider from config credentials (any may be empty).
@@ -44,11 +89,12 @@ func NewOpenSubtitles(apiKey, username, password string) *OpenSubtitles {
 // in the settings menu take effect without a restart.
 func NewOpenSubtitlesFunc(apiKey, username, password func() string) *OpenSubtitles {
 	return &OpenSubtitles{
-		http:       &http.Client{Timeout: 25 * time.Second},
-		apiKeyFn:   apiKey,
-		usernameFn: username,
-		passwordFn: password,
-		ua:         "Arrmada/1.0",
+		http:           &http.Client{Timeout: 25 * time.Second},
+		apiKeyFn:       apiKey,
+		usernameFn:     username,
+		passwordFn:     password,
+		ua:             "Arrmada/1.0",
+		quotaRemaining: -1,
 	}
 }
 
@@ -147,6 +193,9 @@ func (o *OpenSubtitles) Search(ctx context.Context, sr SearchRequest) ([]Subtitl
 	} else {
 		q.Set("type", "movie")
 	}
+	if sr.MovieHash != "" {
+		q.Set("moviehash", sr.MovieHash)
+	}
 	resp, err := o.req(ctx, http.MethodGet, "/subtitles", q, nil, "")
 	if err != nil {
 		return nil, err
@@ -163,6 +212,7 @@ func (o *OpenSubtitles) Search(ctx context.Context, sr SearchRequest) ([]Subtitl
 				Release         string `json:"release"`
 				DownloadCount   int    `json:"download_count"`
 				HearingImpaired bool   `json:"hearing_impaired"`
+				HashMatch       bool   `json:"moviehash_match"`
 				Files           []struct {
 					FileID int `json:"file_id"`
 				} `json:"files"`
@@ -183,14 +233,29 @@ func (o *OpenSubtitles) Search(ctx context.Context, sr SearchRequest) ([]Subtitl
 			Release:         d.Attributes.Release,
 			Downloads:       d.Attributes.DownloadCount,
 			HearingImpaired: d.Attributes.HearingImpaired,
+			HashMatch:       d.Attributes.HashMatch,
 		})
 	}
-	sort.SliceStable(out, func(i, j int) bool { return out[i].Downloads > out[j].Downloads })
+	// Ranking: a hash match is in sync by construction and beats everything; then a
+	// plain subtitle over a hearing-impaired one (the SDH cues are noise for most
+	// viewers, though an SDH file is still far better than none); then popularity.
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].HashMatch != out[j].HashMatch {
+			return out[i].HashMatch
+		}
+		if out[i].HearingImpaired != out[j].HearingImpaired {
+			return !out[i].HearingImpaired
+		}
+		return out[i].Downloads > out[j].Downloads
+	})
 	return out, nil
 }
 
 // Download resolves a file id to a temporary link, then fetches the subtitle bytes.
 func (o *OpenSubtitles) Download(ctx context.Context, fileID string) ([]byte, error) {
+	if o.quotaPaused() {
+		return nil, ErrQuotaExhausted
+	}
 	token, err := o.login(ctx)
 	if err != nil {
 		return nil, err
@@ -202,13 +267,31 @@ func (o *OpenSubtitles) Download(ctx context.Context, fileID string) ([]byte, er
 	}
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
-	if resp.StatusCode != http.StatusOK {
+	var out struct {
+		Link         string `json:"link"`
+		Remaining    int    `json:"remaining"`
+		ResetTimeUTC string `json:"reset_time_utc"`
+		Message      string `json:"message"`
+	}
+	_ = json.Unmarshal(raw, &out)
+	switch resp.StatusCode {
+	case http.StatusOK:
+		o.noteQuota(out.Remaining, out.ResetTimeUTC, out.Remaining <= 0)
+	case http.StatusNotAcceptable, http.StatusTooManyRequests:
+		// 406 is the documented "quota exceeded"; 429 is the per-second limiter.
+		// Either way, stop asking until the reset rather than failing every file.
+		o.noteQuota(0, out.ResetTimeUTC, true)
+		return nil, ErrQuotaExhausted
+	case http.StatusUnauthorized:
+		// The cached token expired. Drop it so the next attempt logs in again.
+		o.mu.Lock()
+		o.token = ""
+		o.mu.Unlock()
+		return nil, fmt.Errorf("opensubtitles download: session expired, will re-login")
+	default:
 		return nil, fmt.Errorf("opensubtitles download: HTTP %d", resp.StatusCode)
 	}
-	var out struct {
-		Link string `json:"link"`
-	}
-	if err := json.Unmarshal(raw, &out); err != nil || out.Link == "" {
+	if out.Link == "" {
 		return nil, fmt.Errorf("opensubtitles download: no link in response")
 	}
 	// Fetch the actual subtitle file from the temporary link.
@@ -229,5 +312,28 @@ func (o *OpenSubtitles) Download(ctx context.Context, fileID string) ([]byte, er
 	if err != nil {
 		return nil, err
 	}
+	// The bytes go straight to a sidecar next to the media, so make sure they are a
+	// subtitle and not an HTML error page or an archive that would sit there as a
+	// broken .srt forever.
+	if !looksLikeSRT(data) {
+		return nil, fmt.Errorf("opensubtitles fetch: response isn't an SRT file")
+	}
 	return data, nil
+}
+
+// looksLikeSRT is a cheap sanity check: an SRT has a "-->" timing arrow within its first
+// few kilobytes, and never starts with an HTML tag or a ZIP signature.
+func looksLikeSRT(b []byte) bool {
+	if len(b) < 8 {
+		return false
+	}
+	head := b
+	if len(head) > 4096 {
+		head = head[:4096]
+	}
+	trimmed := bytes.TrimLeft(head, "\xEF\xBB\xBF \t\r\n")
+	if bytes.HasPrefix(trimmed, []byte("<")) || bytes.HasPrefix(b, []byte("PK\x03\x04")) {
+		return false
+	}
+	return bytes.Contains(head, []byte("-->"))
 }

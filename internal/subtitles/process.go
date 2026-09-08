@@ -2,6 +2,7 @@ package subtitles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -89,13 +90,29 @@ func (s *Service) process(ctx context.Context, job *Job) {
 		extracted = n
 	}
 	downloaded := 0
-	for _, l := range downloadLangs {
-		if okDL, err := s.grabOne(ctx, imdb, title, year, season, episode, path, l); err != nil {
-			s.event("warn", fmt.Sprintf("%s: download %s failed: %v", title, l, err))
-		} else if okDL {
-			downloaded++
+	if len(downloadLangs) > 0 {
+		// One hash per file, shared by every language's search.
+		hash, herr := osHash(path)
+		if herr != nil {
+			s.log.Debug("subtitles: could not hash file for provider search", "path", path, "err", herr)
+		}
+		for _, l := range downloadLangs {
+			okDL, err := s.grabOne(ctx, imdb, title, year, season, episode, path, hash, l)
+			switch {
+			case errors.Is(err, ErrQuotaExhausted):
+				// Say it once per job and stop trying: every further language would fail
+				// the same way. The sweep re-queues the file after the quota resets.
+				s.event("warn", fmt.Sprintf("%s: OpenSubtitles daily download quota is used up — will retry after it resets", title))
+				pending += len(downloadLangs) - downloaded
+				goto afterDownloads
+			case err != nil:
+				s.event("warn", fmt.Sprintf("%s: download %s failed: %v", title, l, err))
+			case okDL:
+				downloaded++
+			}
 		}
 	}
+afterDownloads:
 	generated := 0
 	for _, t := range aiTasks {
 		verb := "transcribing"

@@ -16,6 +16,10 @@ type SearchRequest struct {
 	Season   int // 0 for movies
 	Episode  int
 	Language string // ISO 639-1 code, e.g. "en"
+	// MovieHash is the OpenSubtitles hash of the actual file (see osHash). Optional; when
+	// present, results uploaded against this exact release rank first — those are the
+	// ones that are genuinely in sync.
+	MovieHash string
 }
 
 // SubtitleResult is one candidate subtitle from a provider.
@@ -25,6 +29,7 @@ type SubtitleResult struct {
 	Release         string
 	Downloads       int
 	HearingImpaired bool
+	HashMatch       bool // uploaded against this exact file — in sync by construction
 }
 
 // Provider searches for and downloads external subtitles. Providers sit behind this

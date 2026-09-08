@@ -619,7 +619,7 @@ function SettingsTab({ settings, onPatch, flash }: { settings: SubtitleSettings;
 
       <div className={card} style={cardStyle}>
         <div className="text-[14px] font-bold">Automatic</div>
-        <div className="mt-0.5 text-[11.5px] text-ink-faint">When on, Arrmada periodically ensures missing subtitles in the background. Off = run it yourself from the Library.</div>
+        <div className="mt-0.5 text-[11.5px] text-ink-faint">When on, every new download gets its subtitles as soon as it imports, and a sweep every six hours catches anything still missing (including releases whose subtitles appeared later). Off = run it yourself from the Library.</div>
         <div className="mt-3 flex flex-col gap-2.5">
           <ToggleRow label="Auto-ensure movies" on={settings.movies_auto} onToggle={(v) => onPatch({ movies_auto: v })} />
           <ToggleRow label="Auto-ensure series" on={settings.series_auto} onToggle={(v) => onPatch({ series_auto: v })} />
@@ -636,7 +636,15 @@ function SettingsTab({ settings, onPatch, flash }: { settings: SubtitleSettings;
             {settings.can_download ? "ready" : settings.provider_ready ? "search only" : "not configured"}
           </span>
           <span className="text-ink-dim">
-            {settings.can_download ? "Downloading enabled." : "Set ARRMADA_OPENSUBTITLES_API_KEY (+ USERNAME/PASSWORD to download) in .env. In-app credentials are coming."}
+            {settings.can_download
+              ? settings.quota_reset_at > 0
+                ? `Daily download quota used up — resumes ${new Date(settings.quota_reset_at * 1000).toLocaleString()}.`
+                : settings.quota_remaining >= 0
+                  ? `Downloading enabled · ${settings.quota_remaining} downloads left today.`
+                  : "Downloading enabled."
+              : settings.provider_ready
+                ? "Searching works; add your OpenSubtitles username and password under Settings → API keys to download."
+                : "Add an OpenSubtitles API key (free) under Settings → API keys, plus your account username and password to download."}
           </span>
         </div>
       </div>

@@ -452,6 +452,8 @@ func main() {
 		if err := convertSvc.IndexSeries(ctx, seriesID); err != nil {
 			log.Warn("convert: reindex after import failed", "series_id", seriesID, "err", err)
 		}
+		// Subtitles for what just landed, now — not at the next 6-hourly sweep.
+		subtitlesSvc.OnSeriesImported(ctx, seriesID)
 	})
 	// Movie imports need the same treatment: without it a new or upgraded movie was
 	// invisible to Convert until the daily 03:00 index sweep — and permanently, if the
@@ -469,6 +471,7 @@ func main() {
 						if err := convertSvc.IndexMovie(runCtx, id); err != nil {
 							log.Warn("convert: reindex after movie import failed", "movie_id", id, "err", err)
 						}
+						subtitlesSvc.OnMovieImported(runCtx, id)
 					}
 				}
 			}

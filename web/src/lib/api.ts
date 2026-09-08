@@ -725,6 +725,9 @@ export interface SubtitleSettings {
   provider_ready: boolean;
   can_download: boolean;
   ai_ready: boolean;
+  quota_remaining: number; // -1 = unknown
+  quota_reset_at: number; // unix seconds; 0 = not paused
+  pending: number;
 }
 export interface SubTrack { index: number; codec: string; lang: string; text: boolean; forced?: boolean }
 export interface SubLangStatus { lang: string; have: boolean; source?: "extract" | "ocr" | "download" | "ai" }

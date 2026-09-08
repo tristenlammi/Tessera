@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/tristenlammi/arrmada/internal/movies"
 	"github.com/tristenlammi/arrmada/internal/series"
@@ -23,6 +24,14 @@ const (
 // defaultLanguages is used until the admin configures otherwise.
 var defaultLanguages = []string{"en"}
 
+// Auto-ensure defaults ON. The point of the module is that a new download has its
+// subtitles without anyone asking; a default that needed switching on meant the import
+// hook and the sweep both existed and neither ever ran.
+const (
+	defaultMoviesAuto = true
+	defaultSeriesAuto = true
+)
+
 // Service is the Subtitles module's logic: it derives per-title subtitle status from disk
 // (sidecars) and grabs missing subtitles from the provider, saving them alongside media.
 type Service struct {
@@ -36,12 +45,13 @@ type Service struct {
 	whisper  *whisperGen
 	log      *slog.Logger
 
-	mu     sync.Mutex
-	jobs   []*Job    // recent subtitle-ensure jobs (newest first), for the Queue tab
-	queue  chan *Job // work handed to the worker
-	nextID int64
-	logMu  sync.Mutex
-	logBuf []LogLine // recent activity console lines, for the Logs tab
+	mu      sync.Mutex
+	jobs    []*Job        // recent subtitle-ensure jobs (newest first), for the Queue tab
+	pending []*Job        // waiting for the worker, oldest first — unbounded, see Run
+	wake    chan struct{} // nudges the worker when pending gains a job
+	nextID  int64
+	logMu   sync.Mutex
+	logBuf  []LogLine // recent activity console lines, for the Logs tab
 }
 
 // NewService wires the module over the shared Movies/Series catalogs + a subtitle provider. db is
@@ -52,7 +62,7 @@ func NewService(db *sql.DB, mv *movies.Service, sr *series.Service, set *setting
 		movies: mv, series: sr, settings: set, provider: provider,
 		ffmpeg: ffmpeg, ffprobe: ffprobe, cache: &probeCache{db: db},
 		whisper: detectWhisper(whisperModelsDir), log: log,
-		queue: make(chan *Job, 256),
+		wake: make(chan struct{}, 1),
 	}
 }
 
@@ -64,18 +74,41 @@ type Settings struct {
 	ProviderReady bool     `json:"provider_ready"` // can search
 	CanDownload   bool     `json:"can_download"`   // can actually grab (needs account)
 	AIReady       bool     `json:"ai_ready"`       // local whisper.cpp binary + a model present
+	// Download quota, when the provider reports one. OpenSubtitles free accounts get a
+	// small number of downloads a day; once it's spent every download fails until the
+	// reset, and the UI should say that rather than showing a run of failures.
+	QuotaRemaining int   `json:"quota_remaining"` // -1 = unknown
+	QuotaResetAt   int64 `json:"quota_reset_at"`  // unix seconds; 0 = not paused
+	Pending        int   `json:"pending"`         // jobs waiting for the worker
 }
 
 // GetSettings returns the current configuration + provider status.
 func (s *Service) GetSettings(ctx context.Context) Settings {
-	return Settings{
-		MoviesAuto:    s.settings.GetBool(ctx, keyMoviesAuto, false),
-		SeriesAuto:    s.settings.GetBool(ctx, keySeriesAuto, false),
-		Languages:     s.languages(ctx),
-		ProviderReady: s.provider.Available(),
-		CanDownload:   s.provider.CanDownload(),
-		AIReady:       s.whisper.available(),
+	out := Settings{
+		MoviesAuto:     s.settings.GetBool(ctx, keyMoviesAuto, defaultMoviesAuto),
+		SeriesAuto:     s.settings.GetBool(ctx, keySeriesAuto, defaultSeriesAuto),
+		Languages:      s.languages(ctx),
+		ProviderReady:  s.provider.Available(),
+		CanDownload:    s.provider.CanDownload(),
+		AIReady:        s.whisper.available(),
+		QuotaRemaining: -1,
+		Pending:        s.Pending(),
 	}
+	if q, ok := s.provider.(quotaReporter); ok {
+		remaining, resetAt := q.Quota()
+		out.QuotaRemaining = remaining
+		if !resetAt.IsZero() && resetAt.After(time.Now()) {
+			out.QuotaResetAt = resetAt.Unix()
+		}
+	}
+	return out
+}
+
+// quotaReporter is implemented by providers that meter downloads.
+type quotaReporter interface {
+	// Quota returns downloads remaining (-1 unknown) and when a spent quota resets (zero
+	// time when not paused).
+	Quota() (remaining int, resetAt time.Time)
 }
 
 // SetSettings updates whichever fields are provided (nil = leave unchanged).
@@ -210,8 +243,9 @@ func (s *Service) GrabMovie(ctx context.Context, id int64) (int, error) {
 	langs := s.languages(ctx)
 	missing := missingOf(langs, presentLanguages(m.MovieFilePath, langs, true))
 	grabbed := 0
+	hash, _ := osHash(m.MovieFilePath) // "" on error: the search still works, just unranked by sync
 	for _, lang := range missing {
-		ok, err := s.grabOne(ctx, m.IMDBID, m.Title, m.Year, 0, 0, m.MovieFilePath, lang)
+		ok, err := s.grabOne(ctx, m.IMDBID, m.Title, m.Year, 0, 0, m.MovieFilePath, hash, lang)
 		if err != nil {
 			s.log.Warn("subtitle grab failed", "movie", m.Title, "lang", lang, "err", err)
 			continue
@@ -236,8 +270,13 @@ func (s *Service) GrabSeries(ctx context.Context, id int64) (int, error) {
 			if !ep.HasFile || ep.FilePath == "" {
 				continue
 			}
-			for _, lang := range missingOf(langs, presentLanguages(ep.FilePath, langs, false)) {
-				ok, err := s.grabOne(ctx, full.IMDBID, full.Title, full.Year, ep.SeasonNumber, ep.EpisodeNumber, ep.FilePath, lang)
+			missing := missingOf(langs, presentLanguages(ep.FilePath, langs, false))
+			if len(missing) == 0 {
+				continue
+			}
+			hash, _ := osHash(ep.FilePath)
+			for _, lang := range missing {
+				ok, err := s.grabOne(ctx, full.IMDBID, full.Title, full.Year, ep.SeasonNumber, ep.EpisodeNumber, ep.FilePath, hash, lang)
 				if err != nil {
 					s.log.Warn("subtitle grab failed", "series", full.Title, "s", ep.SeasonNumber, "e", ep.EpisodeNumber, "lang", lang, "err", err)
 					continue
@@ -270,9 +309,10 @@ func (s *Service) AutoGrab(ctx context.Context) {
 
 // grabOne searches for and downloads the best subtitle for one media file + language,
 // writing it as a sidecar. Returns whether a file was written.
-func (s *Service) grabOne(ctx context.Context, imdb, title string, year, season, episode int, mediaPath, lang string) (bool, error) {
+func (s *Service) grabOne(ctx context.Context, imdb, title string, year, season, episode int, mediaPath, hash, lang string) (bool, error) {
 	results, err := s.provider.Search(ctx, SearchRequest{
 		IMDBID: imdb, Title: title, Year: year, Season: season, Episode: episode, Language: lang,
+		MovieHash: hash,
 	})
 	if err != nil {
 		return false, err
@@ -288,7 +328,8 @@ func (s *Service) grabOne(ctx context.Context, imdb, title string, year, season,
 	if err := os.WriteFile(dst, data, 0o644); err != nil {
 		return false, err
 	}
-	s.log.Info("subtitle saved", "path", dst, "lang", lang, "release", results[0].Release)
+	s.log.Info("subtitle saved", "path", dst, "lang", lang, "release", results[0].Release,
+		"hash_match", results[0].HashMatch, "hearing_impaired", results[0].HearingImpaired)
 	return true, nil
 }
 
@@ -298,19 +339,4 @@ func nonNil(s []string) []string {
 		return []string{}
 	}
 	return s
-}
-
-// missingOf returns wanted languages not in present.
-func missingOf(wanted, present []string) []string {
-	have := make(map[string]bool, len(present))
-	for _, p := range present {
-		have[strings.ToLower(p)] = true
-	}
-	var out []string
-	for _, w := range wanted {
-		if !have[strings.ToLower(w)] {
-			out = append(out, w)
-		}
-	}
-	return out
 }
