@@ -42,8 +42,9 @@ export default function App() {
     return <Login />;
   }
 
-  // From outside the LAN, EVERYONE (even an admin) is limited to Discover — the
-  // rest of the app is only reachable on the local network. Backend enforces too.
+  // "external" is the server's verdict that this session is limited to Discover: from
+  // outside the LAN and not staff. Admins and managers get the whole app wherever they
+  // sign in from; the backend enforces the same rule.
   if (external) {
     return (
       <Routes>

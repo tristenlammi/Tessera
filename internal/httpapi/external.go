@@ -5,6 +5,8 @@ import (
 	"net"
 	"net/http"
 	"strings"
+
+	"github.com/tristenlammi/arrmada/internal/auth"
 )
 
 type extCtxKey int
@@ -66,7 +68,15 @@ func forwardedClientIP(r *http.Request) net.IP {
 	return nil
 }
 
-// isExternalRequest reads the classification stamped by externalGate.
+// isStaffRequest reports whether the request carries a signed-in admin or manager.
+// authenticate runs before the gate, so the session is already resolved here.
+func isStaffRequest(r *http.Request) bool {
+	u, ok := userFrom(r)
+	return ok && u != nil && !u.Disabled && u.Role.AtLeast(auth.RoleManager)
+}
+
+// isExternalRequest reads the scope stamped by externalGate: true means this request
+// is limited to Discover (outside the LAN and not staff).
 func isExternalRequest(r *http.Request) bool {
 	v, _ := r.Context().Value(externalCtxKey).(bool)
 	return v
@@ -103,9 +113,16 @@ func externalAllowed(path string) bool {
 
 // externalGate classifies each request (LAN vs external) and, for external
 // requests, blocks everything but the Discover-scope API + the SPA shell.
+//
+// Staff are exempt: an admin or manager who has signed in gets the whole app from
+// wherever they are. The Discover-only scope is for the accounts made for it
+// (requesters, read-only) and for anyone not signed in. It used to apply to everyone,
+// which meant the owner opening the app through their own tunnel hostname — from
+// their own sofa — got the requester's view with no menus. Login is rate-limited, so
+// what an internet visitor can reach without a staff password is unchanged.
 func (a *api) externalGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		external := a.classifyExternal(r)
+		external := a.classifyExternal(r) && !isStaffRequest(r)
 		r = r.WithContext(context.WithValue(r.Context(), externalCtxKey, external))
 		if external && !externalAllowed(a.pathAfterBase(r.URL.Path)) {
 			a.writeError(w, http.StatusForbidden, "not available outside your network")
