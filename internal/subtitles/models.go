@@ -18,7 +18,7 @@ var whisperAssets = []struct {
 }{
 	{modelTurbo, "large-v3-turbo — fast English transcription", "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin", 1600},
 	{modelLarge, "large-v3 — required to translate foreign audio to English", "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin", 3100},
-	{vadModel, "Silero VAD — suppresses non-speech hallucination (recommended)", "https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v5.1.2.bin", 3},
+	{vadModel, "Silero VAD — skips music and silence (fetched automatically)", "https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v6.2.0.bin", 1},
 }
 
 // ModelInfo is a whisper asset's state for the Settings UI.

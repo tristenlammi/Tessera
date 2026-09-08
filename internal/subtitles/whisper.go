@@ -83,7 +83,7 @@ func backendOf(out []byte) string {
 const (
 	modelTurbo = "ggml-large-v3-turbo.bin"
 	modelLarge = "ggml-large-v3.bin"
-	vadModel   = "ggml-silero-v5.1.2.bin"
+	vadModel   = "ggml-silero-v6.2.0.bin"
 )
 
 func detectWhisper(modelsDir string) *whisperGen {
@@ -166,16 +166,13 @@ func (w *whisperGen) generate(ctx context.Context, ffmpeg, videoPath, srtPath, l
 
 	// 2. Transcribe/translate to SRT.
 	//
-	// -ml/-sow shape the cues. Left alone, whisper emits whatever it decoded as one
-	// segment — routinely two or three sentences over ten seconds, which a player shows
-	// as a wall of text. Capping a cue at 84 characters (two subtitle lines) and splitting
-	// on word boundaries gives ordinary subtitle-sized cues; max-len also switches on
-	// token-level timestamps, so each split cue gets its own accurate start time rather
-	// than a share of the segment's.
+	// Plain segments, deliberately: -ml/-sow (split long segments in whisper) run on its
+	// experimental token-level timestamps, which put three words on screen for a moment
+	// each, out of step with the audio. Segment timestamps are the reliable ones; the
+	// cues are shaped afterwards in shapeCues (cues.go).
 	//
 	// -pp prints "progress = N%" lines, which runWhisper turns into the job's progress.
-	args := []string{"-m", model, "-f", wav, "-osrt", "-of", outBase, "-t", strconv.Itoa(threads()),
-		"-ml", "84", "-sow", "-pp"}
+	args := []string{"-m", model, "-f", wav, "-osrt", "-of", outBase, "-t", strconv.Itoa(threads()), "-pp"}
 	if translate {
 		args = append(args, "--translate")
 	} else if lang != "" {
@@ -228,7 +225,7 @@ func (w *whisperGen) finishSRT(outSRT, srtPath string, out []byte, note string) 
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(srtPath, []byte(filterStockPhrases(string(b))), 0o644)
+	return os.WriteFile(srtPath, []byte(shapeCues(filterStockPhrases(string(b)))), 0o644)
 }
 
 // progressRe matches whisper-cli's -pp output: "whisper_print_progress_callback: progress =  25%".

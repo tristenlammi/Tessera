@@ -50,16 +50,28 @@ RUN apk add --no-cache wget tar && set -eux; \
 # downloads them on demand into the data dir.
 # Built on Debian, matching the runtime: a musl-linked binary can't run on a glibc image.
 FROM debian:bookworm-slim AS whisper
-ARG WHISPER_VERSION=v1.7.5
+# v1.9.2+ matters: earlier builds didn't map timestamps back through VAD correctly
+# (v1.8.4 fixed drift, v1.9.2 the token-level ones), which is what misaligned subtitles.
+ARG WHISPER_VERSION=v1.9.3
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git cmake g++ make ca-certificates libvulkan-dev glslc && rm -rf /var/lib/apt/lists/*
+        git cmake g++ make ca-certificates libvulkan-dev glslc spirv-headers && rm -rf /var/lib/apt/lists/*
+# Bookworm's Vulkan headers (1.3.239) predate VK_EXT_layer_settings, which ggml's Vulkan
+# backend now uses; the headers are header-only, so install a current set under
+# /usr/local and point CMake at them. The loader (libvulkan-dev) stays the distro's.
+ARG VULKAN_HEADERS_VERSION=v1.4.357
+RUN git clone --depth 1 --branch ${VULKAN_HEADERS_VERSION} https://github.com/KhronosGroup/Vulkan-Headers /src/vk-headers && \
+    cmake -S /src/vk-headers -B /src/vk-headers/build && \
+    cmake --install /src/vk-headers/build --prefix /usr/local
+# No trailing "|| true" on this chain: it used to swallow a failed build and produce an
+# image with no whisper-cli in it, which the app then reported as "AI unavailable".
 RUN git clone --depth 1 --branch ${WHISPER_VERSION} https://github.com/ggerganov/whisper.cpp /src/whisper && \
     cd /src/whisper && \
-    cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_VULKAN=1 && \
+    cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_VULKAN=1 \
+          -DVulkan_INCLUDE_DIR=/usr/local/include && \
     cmake --build build -j"$(nproc)" && \
-    (cp build/bin/whisper-cli /usr/local/bin/whisper-cli 2>/dev/null || cp build/bin/main /usr/local/bin/whisper-cli) && \
+    cp build/bin/whisper-cli /usr/local/bin/whisper-cli && \
     strip /usr/local/bin/whisper-cli && \
-    ldd /usr/local/bin/whisper-cli || true
+    (ldd /usr/local/bin/whisper-cli || true)
 
 # --- Stage 4: runtime ---
 #
