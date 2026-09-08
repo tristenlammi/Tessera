@@ -626,7 +626,7 @@ function SettingsTab({ settings, onPatch, flash }: { settings: SubtitleSettings;
         </div>
       </div>
 
-      <LocalAI flash={flash} />
+      <LocalAI flash={flash} backend={settings.ai_backend} />
 
       <div className={card} style={cardStyle}>
         <div className="text-[14px] font-bold">OpenSubtitles (optional download source)</div>
@@ -651,7 +651,7 @@ function SettingsTab({ settings, onPatch, flash }: { settings: SubtitleSettings;
     </div>
   );
 }
-function LocalAI({ flash }: { flash: (m: string) => void }) {
+function LocalAI({ flash, backend }: { flash: (m: string) => void; backend?: string }) {
   const [status, setStatus] = useState<WhisperStatus | null>(null);
   const load = useCallback(() => api.subtitleModels().then(setStatus).catch(() => setStatus(null)), []);
   useEffect(() => {
@@ -673,6 +673,17 @@ function LocalAI({ flash }: { flash: (m: string) => void }) {
         </span>
       </div>
       <div className="mt-0.5 text-[11.5px] text-ink-faint">Generates subtitles from a file's audio when no better source exists — 100% local, no key. Download a model to enable it (large files, runs in the background).</div>
+      {/* Which compute backend the last run used. A Vulkan build with no visible device runs
+          on the CPU without complaint, so "ready" alone can hide a GPU that isn't being used. */}
+      {st?.ready && (
+        <div className="mt-1.5 text-[11.5px]" style={{ color: backend === "vulkan" ? "var(--good)" : "var(--ink-dim)" }}>
+          {backend === "vulkan"
+            ? "Running on the GPU (Vulkan)."
+            : backend === "cpu"
+              ? "Running on the CPU. If this host has a GPU, check that /dev/dri is passed to the container and vulkaninfo inside it lists a device."
+              : "Backend not known yet — it's reported after the first subtitle is generated."}
+        </div>
+      )}
       {st && !st.binary_ready && <div className="mt-2 text-[11.5px]" style={{ color: "var(--avoid)" }}>whisper-cli isn't in this build yet — update to a build that bundles it.</div>}
       <div className="mt-3 flex flex-col gap-2">
         {(st?.models ?? []).map((m) => (

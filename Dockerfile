@@ -42,15 +42,20 @@ RUN apk add --no-cache wget tar && set -eux; \
     /usr/local/bin/dovi_tool --version && /usr/local/bin/hdr10plus_tool --version
 
 # --- Stage 3b: whisper.cpp CLI (local AI subtitle generation) ---
-# CPU build for now — reliable everywhere; GPU (Vulkan on the Arc) is a follow-up. Models are NOT
-# baked in (multi-GB); the app downloads them on demand into the data dir.
+# Built with the Vulkan backend so the GPU that already does hardware transcoding (Intel
+# Arc / any Mesa- or proprietary-Vulkan card behind /dev/dri) also runs the AI. Vulkan
+# is the one backend that covers Intel, AMD and NVIDIA from a single binary; on a host
+# with no usable Vulkan device whisper-cli falls back to the CPU on its own, and the app
+# retries with --no-gpu if it doesn't. Models are NOT baked in (multi-GB); the app
+# downloads them on demand into the data dir.
 # Built on Debian, matching the runtime: a musl-linked binary can't run on a glibc image.
 FROM debian:bookworm-slim AS whisper
 ARG WHISPER_VERSION=v1.7.5
-RUN apt-get update && apt-get install -y --no-install-recommends         git cmake g++ make ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git cmake g++ make ca-certificates libvulkan-dev glslc && rm -rf /var/lib/apt/lists/*
 RUN git clone --depth 1 --branch ${WHISPER_VERSION} https://github.com/ggerganov/whisper.cpp /src/whisper && \
     cd /src/whisper && \
-    cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF && \
+    cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_VULKAN=1 && \
     cmake --build build -j"$(nproc)" && \
     (cp build/bin/whisper-cli /usr/local/bin/whisper-cli 2>/dev/null || cp build/bin/main /usr/local/bin/whisper-cli) && \
     strip /usr/local/bin/whisper-cli && \
@@ -74,8 +79,12 @@ FROM debian:bookworm-slim
 # apprise (Python) is bundled for notifications — one image, 80+ services, no extra container.
 # jellyfin-ffmpeg7 brings libva and the Intel drivers it needs for /dev/dri passthrough.
 # libgomp1 is whisper-cli's OpenMP runtime; vainfo helps diagnose the GPU.
+# libvulkan1 + mesa-vulkan-drivers give whisper-cli's Vulkan backend an Intel/AMD device
+# through the same /dev/dri passthrough VAAPI uses; vulkaninfo (vulkan-tools) shows whether
+# the container can actually see it.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates curl gnupg gosu python3 python3-pip libgomp1 vainfo && \
+        ca-certificates curl gnupg gosu python3 python3-pip libgomp1 vainfo \
+        libvulkan1 mesa-vulkan-drivers vulkan-tools && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://repo.jellyfin.org/jellyfin_team.gpg.key \
         | gpg --dearmor -o /etc/apt/keyrings/jellyfin.gpg && \

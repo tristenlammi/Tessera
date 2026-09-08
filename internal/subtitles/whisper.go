@@ -1,11 +1,14 @@
 package subtitles
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -18,8 +21,55 @@ type whisperGen struct {
 	bin          string // whisper-cli path ("" = not installed)
 	modelsDir    string // where the GGML model files live (data dir / whisper)
 	vadSupported bool   // whether this whisper-cli build understands --vad
+	noGPUFlag    bool   // whether this build understands --no-gpu (i.e. was built with a GPU backend)
 	dlMu         sync.Mutex
 	dl           map[string]bool // model filenames currently downloading
+
+	// backend is what the last run actually used: "vulkan", "cpu", or "" before any run.
+	// Learned from whisper-cli's own output rather than guessed from the build, since a
+	// Vulkan build on a host with no visible device silently runs on the CPU.
+	backendMu sync.Mutex
+	backend   string
+}
+
+// Backend reports which compute backend the AI last ran on, for the status panel.
+func (w *whisperGen) Backend() string {
+	if w == nil {
+		return ""
+	}
+	w.backendMu.Lock()
+	defer w.backendMu.Unlock()
+	return w.backend
+}
+
+func (w *whisperGen) setBackend(b string) {
+	w.backendMu.Lock()
+	w.backend = b
+	w.backendMu.Unlock()
+}
+
+// threads is how many CPU threads to give whisper-cli. Its default is 4, which on a
+// 24-core host left five-sixths of the machine idle and made a 45-minute episode take
+// most of an hour. Diminishing returns past ~16 on the decoder, so cap there.
+func threads() int {
+	n := runtime.NumCPU()
+	if n > 16 {
+		n = 16
+	}
+	if n < 1 {
+		n = 1
+	}
+	return n
+}
+
+// backendOf reads which backend whisper-cli reported using. The Vulkan build prints a
+// "ggml_vulkan: Found N Vulkan devices" line at startup when it has a device; without one
+// it says nothing about Vulkan and runs on the CPU.
+func backendOf(out []byte) string {
+	if bytes.Contains(out, []byte("ggml_vulkan: Found")) || bytes.Contains(out, []byte("Vulkan0")) {
+		return "vulkan"
+	}
+	return "cpu"
 }
 
 // GGML model + VAD filenames (from ggerganov/whisper.cpp on Hugging Face). turbo is fast and used
@@ -39,6 +89,7 @@ func detectWhisper(modelsDir string) *whisperGen {
 		// nothing. Probe the help text once so we only pass it when supported.
 		out, _ := exec.Command(bin, "--help").CombinedOutput()
 		w.vadSupported = strings.Contains(string(out), "--vad")
+		w.noGPUFlag = strings.Contains(string(out), "--no-gpu")
 	}
 	return w
 }
@@ -102,7 +153,7 @@ func (w *whisperGen) generate(ctx context.Context, ffmpeg, videoPath, srtPath, l
 	}
 
 	// 2. Transcribe/translate to SRT.
-	args := []string{"-m", model, "-f", wav, "-osrt", "-of", outBase}
+	args := []string{"-m", model, "-f", wav, "-osrt", "-of", outBase, "-t", strconv.Itoa(threads())}
 	if translate {
 		args = append(args, "--translate")
 	} else if lang != "" {
@@ -112,9 +163,28 @@ func (w *whisperGen) generate(ctx context.Context, ffmpeg, videoPath, srtPath, l
 		args = append(args, "--vad", "--vad-model", filepath.Join(w.modelsDir, vadModel))
 	}
 	out, err := exec.CommandContext(ctx, w.bin, args...).CombinedOutput()
+	if err != nil && w.noGPUFlag && ctx.Err() == nil {
+		// A GPU build that can't initialise its device (driver missing in the container,
+		// /dev/dri not passed through, an out-of-memory on a small card) fails outright
+		// rather than degrading. Retry on the CPU: slower, but it produces the subtitle.
+		gpuErr := tailStr(out, 300)
+		out, err = exec.CommandContext(ctx, w.bin, append(args, "--no-gpu")...).CombinedOutput()
+		if err == nil {
+			w.setBackend("cpu")
+			return w.finishSRT(outSRT, srtPath, out, "whisper ran on the CPU after the GPU attempt failed: "+gpuErr)
+		}
+	}
 	if err != nil {
 		return fmt.Errorf("whisper: %w: %s", err, tailStr(out, 400))
 	}
+	w.setBackend(backendOf(out))
+	return w.finishSRT(outSRT, srtPath, out, "")
+}
+
+// finishSRT checks whisper actually wrote something, strips stock-phrase hallucinations,
+// and writes the sidecar next to the video.
+func (w *whisperGen) finishSRT(outSRT, srtPath string, out []byte, note string) error {
+	_ = note // surfaced by the caller's event log via Backend(); kept for the error path
 	if fi, statErr := os.Stat(outSRT); statErr != nil || fi.Size() == 0 {
 		return fmt.Errorf("whisper produced no subtitle output: %s", tailStr(out, 400))
 	}

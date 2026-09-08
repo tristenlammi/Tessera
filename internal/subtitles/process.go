@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 // process ensures the kept-language subtitles exist for one file, using the best source available
@@ -120,10 +121,13 @@ afterDownloads:
 			verb = "translating → en"
 		}
 		s.event("info", fmt.Sprintf("AI %s %s (%s)…", verb, title, t.lang))
+		started := time.Now()
 		if err := s.whisper.generate(ctx, s.ffmpeg, path, sidecarPath(path, strings.ToLower(t.lang)), t.lang, t.translate); err != nil {
 			s.event("warn", fmt.Sprintf("%s: AI %s failed: %v", title, t.lang, err))
 		} else {
 			generated++
+			s.event("info", fmt.Sprintf("%s: AI subtitle written (%s) in %s on %s", title, t.lang,
+				time.Since(started).Round(time.Second), s.whisper.Backend()))
 		}
 	}
 

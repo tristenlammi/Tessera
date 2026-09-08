@@ -726,6 +726,7 @@ export interface SubtitleSettings {
   provider_ready: boolean;
   can_download: boolean;
   ai_ready: boolean;
+  ai_backend: string; // "vulkan" | "cpu" | "" until the first run
   quota_remaining: number; // -1 = unknown
   quota_reset_at: number; // unix seconds; 0 = not paused
   pending: number;

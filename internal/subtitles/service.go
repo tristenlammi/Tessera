@@ -74,6 +74,7 @@ type Settings struct {
 	ProviderReady bool     `json:"provider_ready"` // can search
 	CanDownload   bool     `json:"can_download"`   // can actually grab (needs account)
 	AIReady       bool     `json:"ai_ready"`       // local whisper.cpp binary + a model present
+	AIBackend     string   `json:"ai_backend"`     // "vulkan" | "cpu" | "" until the first run
 	// Download quota, when the provider reports one. OpenSubtitles free accounts get a
 	// small number of downloads a day; once it's spent every download fails until the
 	// reset, and the UI should say that rather than showing a run of failures.
@@ -91,6 +92,7 @@ func (s *Service) GetSettings(ctx context.Context) Settings {
 		ProviderReady:  s.provider.Available(),
 		CanDownload:    s.provider.CanDownload(),
 		AIReady:        s.whisper.available(),
+		AIBackend:      s.whisper.Backend(),
 		QuotaRemaining: -1,
 		Pending:        s.Pending(),
 	}
