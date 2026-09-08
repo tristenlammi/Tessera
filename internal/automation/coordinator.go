@@ -69,19 +69,21 @@ type Coordinator struct {
 	stallProgress map[int64]stallSample
 
 	// onSeriesImported fires after episodes land, so the Convert library index can
-	// refresh just that show rather than waiting for the nightly sweep. Optional.
-	onSeriesImported func(ctx context.Context, seriesID int64)
+	// refresh just that show rather than waiting for the nightly sweep, and Subtitles
+	// can fetch for exactly the episodes that arrived. Optional.
+	onSeriesImported func(ctx context.Context, seriesID int64, episodes []series.EpisodeRef)
 }
 
 // SetSeriesImportedHook registers a callback run after a series import writes episodes.
-func (c *Coordinator) SetSeriesImportedHook(fn func(ctx context.Context, seriesID int64)) {
+// episodes is what the import placed — just those, not the whole show.
+func (c *Coordinator) SetSeriesImportedHook(fn func(ctx context.Context, seriesID int64, episodes []series.EpisodeRef)) {
 	c.onSeriesImported = fn
 }
 
 // seriesImported notifies the hook, if one is registered.
-func (c *Coordinator) seriesImported(ctx context.Context, seriesID int64) {
+func (c *Coordinator) seriesImported(ctx context.Context, seriesID int64, episodes []series.EpisodeRef) {
 	if c.onSeriesImported != nil {
-		c.onSeriesImported(ctx, seriesID)
+		c.onSeriesImported(ctx, seriesID, episodes)
 	}
 }
 

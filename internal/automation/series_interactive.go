@@ -486,7 +486,8 @@ func (c *Coordinator) ManualImportSeries(ctx context.Context, seriesID int64, pa
 	// still has gaps, so when a fix changes what WOULD have imported, pointing manual
 	// import at the folder is what applies it.
 	if fi, statErr := os.Stat(path); statErr == nil && fi.IsDir() {
-		placed, matched, unresolved, importFailed := c.importSeriesInto(ctx, s, path, true)
+		placedRefs, matched, unresolved, importFailed := c.importSeriesInto(ctx, s, path, true)
+		placed := len(placedRefs)
 		if matched == 0 {
 			return fmt.Errorf("none of the video files in that folder could be matched to an episode of %q", s.Title)
 		}
@@ -494,7 +495,7 @@ func (c *Coordinator) ManualImportSeries(ctx context.Context, seriesID int64, pa
 			"placed", placed, "matched", matched, "unresolved", unresolved, "failed", importFailed)
 		if placed > 0 {
 			c.series.AddEvent(ctx, seriesID, "imported", fmt.Sprintf("Imported %d episode%s from %s", placed, plural(placed), filepath.Base(path)))
-			c.seriesImported(ctx, seriesID)
+			c.seriesImported(ctx, seriesID, placedRefs)
 		}
 		// If the folder is a download the client still holds, record its hash as
 		// handled (when nothing failed) — otherwise the 30s sweep re-scans it, places
@@ -513,7 +514,7 @@ func (c *Coordinator) ManualImportSeries(ctx context.Context, seriesID int64, pa
 	}
 	if !ok {
 		// Anime file numbered absolutely (no SxxExx) — resolve + place by absolute number.
-		if s.IsAnime() && c.importAbsoluteEpisode(ctx, s, folder, path) > 0 {
+		if s.IsAnime() && len(c.importAbsoluteEpisode(ctx, s, folder, path)) > 0 {
 			return nil
 		}
 		return fmt.Errorf("couldn't detect a season/episode from that filename")

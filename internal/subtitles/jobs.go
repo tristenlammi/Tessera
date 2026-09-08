@@ -2,9 +2,12 @@ package subtitles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/tristenlammi/arrmada/internal/series"
 )
 
 // JobState is the lifecycle of a subtitle-ensure job.
@@ -16,7 +19,12 @@ const (
 	StateDone    JobState = "done"
 	StateSkipped JobState = "skipped"
 	StateFailed  JobState = "failed"
+	// StateCancelled: stopped by the user, either before it ran or part-way through.
+	StateCancelled JobState = "cancelled"
 )
+
+// ErrJobNotActive is returned by Cancel for a job that is already finished (or unknown).
+var ErrJobNotActive = errors.New("job is not queued or running")
 
 // Job is one file's "make sure the kept-language subtitles exist" task — the unit the Queue tab
 // shows. Extraction and downloads happen inside process().
@@ -71,7 +79,94 @@ func (s *Service) Run(ctx context.Context) {
 			}
 			continue
 		}
-		s.process(ctx, job)
+		jctx, done := s.startJob(ctx, job)
+		s.process(jctx, job)
+		done()
+	}
+}
+
+// startJob gives a job its own cancellable context and records it as the running job, so
+// Cancel can reach it. The returned func releases both; call it when process returns.
+func (s *Service) startJob(ctx context.Context, job *Job) (context.Context, func()) {
+	jctx, cancel := context.WithCancel(ctx)
+	s.mu.Lock()
+	s.running = job
+	s.cancelRun = cancel
+	s.mu.Unlock()
+	return jctx, func() {
+		cancel()
+		s.mu.Lock()
+		if s.running == job {
+			s.running = nil
+			s.cancelRun = nil
+		}
+		s.mu.Unlock()
+	}
+}
+
+// Cancel stops one job. A queued job is dropped from the queue on the spot; the running
+// job has its context cancelled, which kills the ffmpeg/whisper child process, and the
+// worker then records it as cancelled — whisper writes its SRT to a temp path and only
+// moves it next to the video on success, so nothing half-written is left behind.
+func (s *Service) Cancel(id int64) error {
+	s.mu.Lock()
+	var job *Job
+	for _, j := range s.jobs {
+		if j.ID == id {
+			job = j
+			break
+		}
+	}
+	if job == nil {
+		s.mu.Unlock()
+		return ErrJobNotActive
+	}
+	switch job.State {
+	case StateQueued:
+		s.dropPendingLocked(job)
+		job.State = StateCancelled
+		job.Note = "removed from the queue"
+		s.mu.Unlock()
+		s.event("info", "Removed "+job.Title+" from the queue")
+		return nil
+	case StateRunning:
+		if s.running == job && s.cancelRun != nil {
+			s.cancelRun()
+		}
+		job.Note = "stopping…"
+		s.mu.Unlock()
+		s.event("info", "Stopping "+job.Title)
+		return nil
+	default:
+		s.mu.Unlock()
+		return ErrJobNotActive
+	}
+}
+
+// ClearQueue drops every queued job (the running one is left alone — use Cancel for it).
+// Returns how many were dropped.
+func (s *Service) ClearQueue() int {
+	s.mu.Lock()
+	n := len(s.pending)
+	for _, j := range s.pending {
+		j.State = StateCancelled
+		j.Note = "queue cleared"
+	}
+	s.pending = nil
+	s.mu.Unlock()
+	if n > 0 {
+		s.event("info", fmt.Sprintf("Cleared %d queued job(s)", n))
+	}
+	return n
+}
+
+// dropPendingLocked removes a job from the pending list; the mutex must be held.
+func (s *Service) dropPendingLocked(job *Job) {
+	for i, j := range s.pending {
+		if j == job {
+			s.pending = append(s.pending[:i], s.pending[i+1:]...)
+			return
+		}
 	}
 }
 
@@ -160,18 +255,21 @@ func (s *Service) OnMovieImported(ctx context.Context, movieID int64) {
 	}
 }
 
-// OnSeriesImported is the import hook for TV. The import only reports the series, not
-// which episodes it wrote, so every episode of that show still missing a kept language is
-// queued — for a fresh import that is the new episode(s), and anything older that was
-// missing gets picked up along the way. Sidecar check only; nothing is probed.
-func (s *Service) OnSeriesImported(ctx context.Context, seriesID int64) {
+// OnSeriesImported is the import hook for TV: the episodes the import just placed get
+// their subtitles ensured now. Only those — it used to be told just the series and queued
+// every episode of the show still missing a language, so one new episode of a long-running
+// show put the whole back-catalogue in the queue in front of whatever came next. Anything
+// older that is missing is the 6-hourly sweep's job.
+func (s *Service) OnSeriesImported(ctx context.Context, seriesID int64, episodes []series.EpisodeRef) {
 	if !s.settings.GetBool(ctx, keySeriesAuto, defaultSeriesAuto) {
 		return
 	}
 	n := 0
-	for _, e := range s.missingEpisodes(ctx, seriesID) {
-		if _, err := s.QueueEpisode(ctx, seriesID, e.season, e.episode); err == nil {
+	for _, e := range episodes {
+		if _, err := s.QueueEpisode(ctx, seriesID, e.Season, e.Episode); err == nil {
 			n++
+		} else {
+			s.log.Debug("subtitles: import hook skipped episode", "series_id", seriesID, "season", e.Season, "episode", e.Episode, "err", err)
 		}
 	}
 	if n > 0 {
@@ -275,9 +373,9 @@ func (s *Service) update(job *Job, fn func(*Job)) {
 	s.mu.Unlock()
 }
 
-// finish sets a job's terminal state + note.
+// finish sets a job's terminal state + note, and clears the in-flight stage/progress.
 func (s *Service) finish(job *Job, state JobState, note string) {
-	s.update(job, func(j *Job) { j.State = state; j.Note = note })
+	s.update(job, func(j *Job) { j.State = state; j.Note = note; j.Stage = ""; j.Progress = 0 })
 }
 
 // event appends a line to the activity console (kept to the last 500) and mirrors it to the log.

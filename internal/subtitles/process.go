@@ -82,11 +82,15 @@ func (s *Service) process(ctx context.Context, job *Job) {
 		return
 	}
 
+	// stopped reports whether the user (or shutdown) cancelled the job; every stage's
+	// error is really this when it's set, so the note says "stopped", not "failed".
+	stopped := func() bool { return ctx.Err() != nil }
+
 	extracted := 0
 	if len(extractLangs) > 0 {
 		s.update(job, func(j *Job) { j.Stage = "extracting embedded subtitles" })
 		n, err := s.extractForLangs(ctx, path, subs, extractLangs)
-		if err != nil {
+		if err != nil && !stopped() {
 			s.event("warn", fmt.Sprintf("%s: extract failed: %v", title, err))
 		}
 		extracted = n
@@ -100,6 +104,9 @@ func (s *Service) process(ctx context.Context, job *Job) {
 			s.log.Debug("subtitles: could not hash file for provider search", "path", path, "err", herr)
 		}
 		for _, l := range downloadLangs {
+			if stopped() {
+				break
+			}
 			okDL, err := s.grabOne(ctx, imdb, title, year, season, episode, path, hash, l)
 			switch {
 			case errors.Is(err, ErrQuotaExhausted):
@@ -118,6 +125,9 @@ func (s *Service) process(ctx context.Context, job *Job) {
 afterDownloads:
 	generated := 0
 	for _, t := range aiTasks {
+		if stopped() {
+			break
+		}
 		verb := "transcribing"
 		if t.translate {
 			verb = "translating → en"
@@ -127,6 +137,9 @@ afterDownloads:
 		s.update(job, func(j *Job) { j.Stage = "AI " + verb + " (" + t.lang + ")"; j.Progress = 0 })
 		onProgress := func(pct int) { s.update(job, func(j *Job) { j.Progress = pct }) }
 		if err := s.whisper.generate(ctx, s.ffmpeg, path, sidecarPath(path, strings.ToLower(t.lang)), t.lang, t.translate, onProgress); err != nil {
+			if stopped() {
+				break
+			}
 			s.event("warn", fmt.Sprintf("%s: AI %s failed: %v", title, t.lang, err))
 		} else {
 			generated++
@@ -147,6 +160,15 @@ afterDownloads:
 	}
 	if pending > 0 {
 		parts = append(parts, fmt.Sprintf("%d pending (OCR/AI)", pending))
+	}
+	if stopped() {
+		note := "stopped"
+		if len(parts) > 0 {
+			note = "stopped after " + strings.Join(parts, " · ")
+		}
+		s.event("info", fmt.Sprintf("■ %s — %s", title, note))
+		s.finish(job, StateCancelled, note)
+		return
 	}
 	if len(parts) == 0 {
 		parts = append(parts, "nothing produced")

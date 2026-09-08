@@ -448,12 +448,12 @@ func main() {
 	})
 	// A finished import reindexes only that show, so a new episode is convertible
 	// immediately without re-walking the whole library.
-	coordinator.SetSeriesImportedHook(func(ctx context.Context, seriesID int64) {
+	coordinator.SetSeriesImportedHook(func(ctx context.Context, seriesID int64, episodes []series.EpisodeRef) {
 		if err := convertSvc.IndexSeries(ctx, seriesID); err != nil {
 			log.Warn("convert: reindex after import failed", "series_id", seriesID, "err", err)
 		}
 		// Subtitles for what just landed, now — not at the next 6-hourly sweep.
-		subtitlesSvc.OnSeriesImported(ctx, seriesID)
+		subtitlesSvc.OnSeriesImported(ctx, seriesID, episodes)
 	})
 	// Movie imports need the same treatment: without it a new or upgraded movie was
 	// invisible to Convert until the daily 03:00 index sweep — and permanently, if the

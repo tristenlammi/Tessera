@@ -303,7 +303,8 @@ func (c *Coordinator) ImportReview(ctx context.Context, id, targetID int64) erro
 		if err != nil {
 			return err
 		}
-		n, matched, unresolved, failed := c.importSeriesInto(ctx, s, r.ContentPath, true)
+		placed, matched, unresolved, failed := c.importSeriesInto(ctx, s, r.ContentPath, true)
+		n := len(placed)
 		if matched == 0 {
 			// Wrapped in ErrNothingToImport so the API answers 422 rather than 500: the
 			// request was understood and the server is fine, the download just doesn't
@@ -321,7 +322,7 @@ func (c *Coordinator) ImportReview(ctx context.Context, id, targetID int64) erro
 			return fmt.Errorf("%w: no video files were found in that download to import into %q", ErrNothingToImport, s.Title)
 		}
 		c.series.AddEvent(ctx, s.ID, "imported", fmt.Sprintf("Imported %d episode%s from review: %s", n, plural(n), r.Name))
-		c.seriesImported(ctx, s.ID)
+		c.seriesImported(ctx, s.ID, placed)
 	case "movie":
 		if c.movies == nil {
 			return fmt.Errorf("movies module unavailable")
@@ -400,7 +401,10 @@ func (c *Coordinator) ImportReview(ctx context.Context, id, targetID int64) erro
 // grab, an uploaded torrent, a manual import, an approved review. The gate exists to stop
 // the AUTOMATION downgrading a file; when the user picked the release, "is it better" was
 // already answered by them choosing it.
-func (c *Coordinator) importSeriesInto(ctx context.Context, s series.Series, contentPath string, force bool) (placed, matched, unresolved, failed int) {
+//
+// placed lists the episodes that got a new file, so callers can act on exactly those
+// (the subtitles hook used to be handed only the series and queued the whole show).
+func (c *Coordinator) importSeriesInto(ctx context.Context, s series.Series, contentPath string, force bool) (placed []series.EpisodeRef, matched, unresolved, failed int) {
 	// Unpack any archives first (scene releases ship the episode inside a RAR set — this
 	// is the Unpackerr job). Recursive, so a season pack's per-episode subfolders unpack.
 	if fi, err := os.Stat(contentPath); err == nil && fi.IsDir() {
@@ -414,11 +418,11 @@ func (c *Coordinator) importSeriesInto(ctx context.Context, s series.Series, con
 	if err != nil {
 		c.log.Warn("series import: couldn't scan the download folder for videos",
 			"series", s.Title, "content_path", contentPath, "err", err)
-		return 0, 0, 0, 0
+		return nil, 0, 0, 0
 	}
 	if len(videos) == 0 {
 		c.log.Warn("series import: no video files found in the download (all archives? nested oddly?)", "series", s.Title, "content_path", contentPath)
-		return 0, 0, 0, 0
+		return nil, 0, 0, 0
 	}
 	c.log.Info("series import: scanning download", "series", s.Title, "videos", len(videos), "content_path", contentPath)
 	// Route episodes into the show's existing on-disk folder when it has one, so a
@@ -534,7 +538,7 @@ func (c *Coordinator) importSeriesInto(ctx context.Context, s series.Series, con
 			if !ok {
 				// No SxxExx — for anime this is an absolute-numbered file ("Show - 137"):
 				// resolve the absolute number and place it under that season/episode.
-				placed += c.importAbsoluteEpisode(ctx, s, folder, v.Path)
+				placed = append(placed, c.importAbsoluteEpisode(ctx, s, folder, v.Path)...)
 				continue
 			}
 			if ei.Method == "already" {
@@ -557,7 +561,7 @@ func (c *Coordinator) importSeriesInto(ctx context.Context, s series.Series, con
 					continue
 				}
 				if c.series.SupersedeEpisodeFile(ctx, s.ID, rs, re, ei.TargetPath, ei.SizeBytes, sourceName) == nil {
-					placed++
+					placed = append(placed, series.EpisodeRef{Season: rs, Episode: re})
 				}
 			}
 			continue
@@ -587,7 +591,7 @@ func (c *Coordinator) importSeriesInto(ctx context.Context, s series.Series, con
 		}
 		for _, w := range wanted {
 			if c.series.SupersedeEpisodeFile(ctx, s.ID, w.Season, w.Episode, ei.TargetPath, ei.SizeBytes, sourceName) == nil {
-				placed++
+				placed = append(placed, w)
 			}
 		}
 	}
@@ -632,12 +636,12 @@ func (c *Coordinator) refsAgreeWithFile(ctx context.Context, seriesID int64, rel
 // importAbsoluteEpisode places an anime file that carries only an absolute episode
 // number (no SxxExx). It resolves the number to a (season, episode) via the series'
 // metadata, then places + marks it. Returns how many episodes it imported.
-func (c *Coordinator) importAbsoluteEpisode(ctx context.Context, s series.Series, folder, path string) int {
+func (c *Coordinator) importAbsoluteEpisode(ctx context.Context, s series.Series, folder, path string) []series.EpisodeRef {
 	if !s.IsAnime() {
-		return 0
+		return nil
 	}
 	refs := c.series.ResolveEpisodes(ctx, s.ID, parser.Parse(filepath.Base(path)))
-	n := 0
+	var placed []series.EpisodeRef
 	for _, ref := range refs {
 		ei, ok, err := c.imp.ImportEpisodeAs(folder, s.Title, s.Year, ref.Season, ref.Episode, path)
 		if err != nil || !ok || ei.Method == "already" {
@@ -653,10 +657,10 @@ func (c *Coordinator) importAbsoluteEpisode(ctx context.Context, s series.Series
 			}
 		}
 		if c.series.SupersedeEpisodeFile(ctx, s.ID, ref.Season, ref.Episode, ei.TargetPath, ei.SizeBytes, sourceName) == nil {
-			n++
+			placed = append(placed, ref)
 		}
 	}
-	return n
+	return placed
 }
 
 // episodesOf returns every episode number an imported file covers (a double-

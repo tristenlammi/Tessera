@@ -93,7 +93,7 @@ export function Subtitles() {
         </div>
 
         {tab === "overview" && <Overview jobs={jobs} settings={settings} />}
-        {tab === "queue" && <Queue jobs={jobs} />}
+        {tab === "queue" && <Queue jobs={jobs} onChange={() => api.subtitleJobs().then(setJobs).catch(() => {})} flash={flash} />}
         {tab === "library" && <Library flash={flash} onQueued={() => api.subtitleJobs().then(setJobs)} />}
         {tab === "logs" && <LogsConsole />}
         {tab === "settings" && settings && <SettingsTab settings={settings} onPatch={patchSettings} flash={flash} />}
@@ -116,7 +116,7 @@ function Overview({ jobs, settings }: { jobs: SubtitleJob[]; settings: SubtitleS
     }).catch(() => setCov({ files: 0, covered: 0, missing: 0 }));
     return () => { alive = false; };
   }, []);
-  const active = jobs.filter((j) => ACTIVE.has(j.state));
+  const active = sortActive(jobs);
   const pct = cov && cov.files ? Math.round((cov.covered / cov.files) * 100) : 0;
 
   return (
@@ -169,14 +169,40 @@ function Row2({ label, on, soon }: { label: string; on: boolean; soon?: boolean 
 }
 
 /* ============================= QUEUE ============================= */
-function Queue({ jobs }: { jobs: SubtitleJob[] }) {
-  const active = jobs.filter((j) => ACTIVE.has(j.state));
+function Queue({ jobs, onChange, flash }: { jobs: SubtitleJob[]; onChange: () => void; flash: (m: string) => void }) {
+  // The API lists newest-first (right for "Recent"), which put the running job — the
+  // oldest active one — at the bottom. Show it the way the worker sees it: what's running
+  // on top, then what's next, in the order it will run.
+  const active = sortActive(jobs);
   const done = jobs.filter((j) => !ACTIVE.has(j.state));
+  const running = active.filter((j) => j.state === "running").length;
+  const queued = active.length - running;
+  const [busy, setBusy] = useState(false);
+  const cancel = async (j: SubtitleJob) => {
+    setBusy(true);
+    try { await api.subtitleCancelJob(j.id); onChange(); }
+    catch (e) { flash(e instanceof Error ? e.message : "Couldn't stop that job"); }
+    finally { setBusy(false); }
+  };
+  const clear = async () => {
+    setBusy(true);
+    try { const r = await api.subtitleClearQueue(); flash(`Removed ${r.cleared} queued job${r.cleared === 1 ? "" : "s"}.`); onChange(); }
+    catch (e) { flash(e instanceof Error ? e.message : "Couldn't clear the queue"); }
+    finally { setBusy(false); }
+  };
   return (
     <div className="flex flex-col gap-3.5">
       <div className={card} style={cardStyle}>
-        <div className="text-[14px] font-bold">Active <span className="font-mono text-[11px] text-ink-faint">{active.length} running</span></div>
-        {active.length === 0 ? <div className="mt-2 text-[12px] text-ink-dim">Nothing in the queue right now.</div> : <div className="mt-2 flex flex-col gap-1.5">{active.map((j) => <ActiveRow key={j.id} j={j} />)}</div>}
+        <div className="flex items-center gap-2">
+          <div className="text-[14px] font-bold">Active <span className="font-mono text-[11px] text-ink-faint">{running} running · {queued} queued</span></div>
+          <div className="flex-1" />
+          {queued > 0 && (
+            <button type="button" onClick={clear} disabled={busy} className="rounded-md border px-2 py-1 text-[11px] font-semibold hover:bg-[var(--panel-2)] disabled:opacity-50" style={{ borderColor: "var(--line)", color: "var(--ink-dim)" }}>
+              Clear queue
+            </button>
+          )}
+        </div>
+        {active.length === 0 ? <div className="mt-2 text-[12px] text-ink-dim">Nothing in the queue right now.</div> : <div className="mt-2 flex flex-col gap-1.5">{active.map((j) => <ActiveRow key={j.id} j={j} onCancel={() => cancel(j)} busy={busy} />)}</div>}
       </div>
       {done.length > 0 && (
         <div className={card} style={cardStyle}>
@@ -195,17 +221,35 @@ function Queue({ jobs }: { jobs: SubtitleJob[] }) {
     </div>
   );
 }
-function ActiveRow({ j }: { j: SubtitleJob }) {
+// sortActive lists the running job first, then the queue in the order the worker will
+// take it (oldest first). The API's newest-first order put the running job at the bottom.
+function sortActive(jobs: SubtitleJob[]): SubtitleJob[] {
+  return jobs
+    .filter((j) => ACTIVE.has(j.state))
+    .sort((a, b) => (a.state === b.state ? a.at - b.at || a.id - b.id : a.state === "running" ? -1 : 1));
+}
+
+function ActiveRow({ j, onCancel, busy }: { j: SubtitleJob; onCancel?: () => void; busy?: boolean }) {
   const running = j.state === "running";
+  const stopping = running && j.note === "stopping…";
   const pct = running && j.progress ? Math.min(100, Math.max(0, j.progress)) : 0;
   return (
     <div className="flex flex-col gap-1 text-[12px]">
       <div className="flex items-center gap-2.5">
         <StateBadge state={j.state} />
         <span className="flex-1 truncate font-semibold">{j.title}</span>
-        {running && j.stage && <span className="truncate font-mono text-[10.5px] text-ink-faint">{j.stage}</span>}
+        {stopping ? <span className="font-mono text-[10.5px] text-ink-faint">stopping…</span>
+          : running && j.stage && <span className="truncate font-mono text-[10.5px] text-ink-faint">{j.stage}</span>}
         {running && pct > 0 && <span className="w-[38px] flex-none text-right font-mono text-[10.5px] text-ink-dim">{pct}%</span>}
         {running && pct === 0 && <span className="h-3 w-3 flex-none animate-spin rounded-full" style={{ border: "2px solid var(--line)", borderTopColor: "var(--accent)" }} />}
+        {/* Stop kills the running ffmpeg/whisper; Remove just drops a queued job. */}
+        {onCancel && (
+          <button type="button" onClick={onCancel} disabled={busy || stopping} title={running ? "Stop this job" : "Remove from the queue"}
+            className="flex-none rounded-md border px-1.5 py-0.5 text-[10.5px] font-semibold hover:bg-[var(--panel-2)] disabled:opacity-50"
+            style={{ borderColor: "var(--line)", color: running ? "var(--reject)" : "var(--ink-dim)" }}>
+            {running ? "Stop" : "Remove"}
+          </button>
+        )}
       </div>
       {/* whisper reports progress in 5% steps; anything else finishes before a bar would help. */}
       {running && pct > 0 && (
@@ -220,6 +264,7 @@ function StateBadge({ state }: { state: string }) {
   const s = state === "done" ? { bg: "var(--good-soft, rgba(127,176,105,.16))", fg: "var(--good)" }
     : state === "failed" ? { bg: "var(--reject-soft)", fg: "var(--reject)" }
     : state === "running" ? { bg: "var(--accent-soft)", fg: "var(--accent)" }
+    : state === "cancelled" ? { bg: "var(--panel-2)", fg: "var(--ink-dim)" }
     : { bg: "var(--panel-2)", fg: "var(--ink-faint)" };
   return <span className="rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase" style={{ background: s.bg, color: s.fg }}>{state}</span>;
 }

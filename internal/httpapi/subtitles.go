@@ -32,6 +32,24 @@ func (a *api) handleSubtitleJobs(w http.ResponseWriter, r *http.Request) {
 	a.writeJSON(w, http.StatusOK, map[string]any{"jobs": jobs})
 }
 
+// handleSubtitleCancelJob stops one job: drops it if queued, kills it if running.
+func (a *api) handleSubtitleCancelJob(w http.ResponseWriter, r *http.Request) {
+	id, ok := a.pathID(w, r)
+	if !ok {
+		return
+	}
+	if err := a.deps.Subtitles.Cancel(id); err != nil {
+		a.writeError(w, http.StatusConflict, err.Error())
+		return
+	}
+	a.writeJSON(w, http.StatusOK, map[string]any{"status": "cancelling"})
+}
+
+// handleSubtitleClearQueue drops every queued (not yet started) job.
+func (a *api) handleSubtitleClearQueue(w http.ResponseWriter, r *http.Request) {
+	a.writeJSON(w, http.StatusOK, map[string]any{"cleared": a.deps.Subtitles.ClearQueue()})
+}
+
 // handleSubtitleLogs returns the recent Subtitles activity console lines.
 func (a *api) handleSubtitleLogs(w http.ResponseWriter, r *http.Request) {
 	logs := a.deps.Subtitles.Logs()

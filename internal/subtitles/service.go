@@ -45,13 +45,15 @@ type Service struct {
 	whisper  *whisperGen
 	log      *slog.Logger
 
-	mu      sync.Mutex
-	jobs    []*Job        // recent subtitle-ensure jobs (newest first), for the Queue tab
-	pending []*Job        // waiting for the worker, oldest first — unbounded, see Run
-	wake    chan struct{} // nudges the worker when pending gains a job
-	nextID  int64
-	logMu   sync.Mutex
-	logBuf  []LogLine // recent activity console lines, for the Logs tab
+	mu        sync.Mutex
+	jobs      []*Job        // recent subtitle-ensure jobs (newest first), for the Queue tab
+	pending   []*Job        // waiting for the worker, oldest first — unbounded, see Run
+	wake      chan struct{} // nudges the worker when pending gains a job
+	nextID    int64
+	running   *Job               // the job the worker is on, if any
+	cancelRun context.CancelFunc // cancels the running job's context (Stop button)
+	logMu     sync.Mutex
+	logBuf    []LogLine // recent activity console lines, for the Logs tab
 }
 
 // NewService wires the module over the shared Movies/Series catalogs + a subtitle provider. db is

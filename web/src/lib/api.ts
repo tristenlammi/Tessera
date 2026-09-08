@@ -743,7 +743,7 @@ export interface SubFileEntry {
 }
 export interface SubtitleJob {
   id: number; kind: "movie" | "episode"; movie_id?: number; series_id?: number; season?: number; episode?: number;
-  title: string; state: "queued" | "running" | "done" | "skipped" | "failed"; note?: string; at: number;
+  title: string; state: "queued" | "running" | "done" | "skipped" | "failed" | "cancelled"; note?: string; at: number;
   progress?: number; // 0-100 during an AI run
   stage?: string;    // what a running job is doing
 }
@@ -1251,6 +1251,8 @@ export const api = {
   subtitleSeriesEpisodes: (seriesID: number) =>
     req<{ items: SubFileEntry[] }>(`/api/v1/subtitles/library?media=tv&series=${seriesID}`).then((r) => r.items),
   subtitleJobs: () => req<{ jobs: SubtitleJob[] }>("/api/v1/subtitles/jobs").then((r) => r.jobs),
+  subtitleCancelJob: (id: number) => req<{ status: string }>(`/api/v1/subtitles/jobs/${id}/cancel`, { method: "POST" }),
+  subtitleClearQueue: () => req<{ cleared: number }>("/api/v1/subtitles/jobs/clear", { method: "POST" }),
   subtitleLogs: () => req<{ lines: { at: number; level: string; msg: string }[] }>("/api/v1/subtitles/logs").then((r) => r.lines),
   subtitleQueueMovie: (id: number) => req<SubtitleJob>(`/api/v1/subtitles/library/movies/${id}`, { method: "POST" }),
   subtitleQueueEpisode: (seriesID: number, season: number, episode: number) => req<SubtitleJob>(`/api/v1/subtitles/library/episodes/${seriesID}/${season}/${episode}`, { method: "POST" }),

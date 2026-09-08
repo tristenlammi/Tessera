@@ -315,6 +315,8 @@ func New(d Deps) *http.Server {
 	mux.HandleFunc("GET "+base+"/api/v1/subtitles/models", a.protected(a.handleSubtitleModels))
 	mux.HandleFunc("POST "+base+"/api/v1/subtitles/models/{name}", a.requireRole(auth.RoleManager, a.handleSubtitleDownloadModel))
 	mux.HandleFunc("GET "+base+"/api/v1/subtitles/jobs", a.protected(a.handleSubtitleJobs))
+	mux.HandleFunc("POST "+base+"/api/v1/subtitles/jobs/clear", a.requireRole(auth.RoleManager, a.handleSubtitleClearQueue))
+	mux.HandleFunc("POST "+base+"/api/v1/subtitles/jobs/{id}/cancel", a.requireRole(auth.RoleManager, a.handleSubtitleCancelJob))
 	mux.HandleFunc("GET "+base+"/api/v1/subtitles/logs", a.protected(a.handleSubtitleLogs))
 	mux.HandleFunc("POST "+base+"/api/v1/subtitles/sweep", a.requireRole(auth.RoleManager, a.handleSubtitleSweep))
 	mux.HandleFunc("POST "+base+"/api/v1/subtitles/library/movies/{id}", a.requireRole(auth.RoleManager, a.handleSubtitleQueueMovie))

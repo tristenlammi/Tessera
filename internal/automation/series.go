@@ -1053,7 +1053,8 @@ func (c *Coordinator) ImportSeriesDownloads(ctx context.Context) {
 		}
 		// A release the user picked by hand imports regardless of what it scores against
 		// the current file — see importSeriesInto.
-		imported, matched, unresolved, importFailed := c.importSeriesInto(ctx, s, it.ContentPath, c.grabWasManual(ctx, it.Hash))
+		placed, matched, unresolved, importFailed := c.importSeriesInto(ctx, s, it.ContentPath, c.grabWasManual(ctx, it.Hash))
+		imported := len(placed)
 		if importFailed > 0 {
 			// Some files resolved to wanted episodes but couldn't be placed (disk full,
 			// permissions, a file mid-move). Leave the download unrecorded so the next
@@ -1070,7 +1071,7 @@ func (c *Coordinator) ImportSeriesDownloads(ctx context.Context) {
 			if imported > 0 {
 				c.log.Info("series: imported episodes", "series", s.Title, "count", imported, "release", it.Name)
 				c.series.AddEvent(ctx, s.ID, "imported", fmt.Sprintf("Imported %d episode%s from %s", imported, plural(imported), it.Name))
-				c.seriesImported(ctx, s.ID)
+				c.seriesImported(ctx, s.ID, placed)
 				c.bus.Publish("series.imported", map[string]any{"title": s.Title, "id": s.ID, "count": imported})
 			} else if c.series.SeasonHasMissing(ctx, s.ID, parsed.Season) {
 				// Re-processed but placed nothing new while the season is still incomplete.
