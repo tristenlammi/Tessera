@@ -132,11 +132,7 @@ afterDownloads:
 		if t.translate {
 			verb = "translating → en"
 		}
-		vad := "off — music and silence get transcribed too"
-		if s.whisper.vadActive() {
-			vad = "on"
-		}
-		s.event("info", fmt.Sprintf("AI %s %s (%s)… VAD %s", verb, title, t.lang, vad))
+		s.event("info", fmt.Sprintf("AI %s %s (%s)…", verb, title, t.lang))
 		started := time.Now()
 		s.update(job, func(j *Job) { j.Stage = "AI " + verb + " (" + t.lang + ")"; j.Progress = 0 })
 		onProgress := func(pct int) { s.update(job, func(j *Job) { j.Progress = pct }) }

@@ -132,11 +132,20 @@ func TestSRTTimesRoundTrip(t *testing.T) {
 	}
 }
 
-// End to end: an ordinary whisper output comes out as valid, numbered SRT with every cue
-// within the limits, and a normal sentence is left as it was.
-func TestShapeCuesEndToEnd(t *testing.T) {
+// splitCue plus the shared passes give valid, numbered SRT with every line within the
+// limits, and leave an ordinary sentence as it was.
+func TestSplitAndLayoutEndToEnd(t *testing.T) {
 	in := "1\n00:00:01,000 --> 00:00:03,000\nA perfectly ordinary sentence.\n\n2\n" + longSeg[2:]
-	out := shapeCues(in)
+	var shaped []cue
+	for _, c := range parseSRT(in) {
+		shaped = append(shaped, splitCue(c)...)
+	}
+	shaped = mergeFragments(shaped)
+	floorDurations(shaped)
+	for i := range shaped {
+		shaped[i].text = layoutLines(shaped[i].text)
+	}
+	out := formatSRT(shaped)
 	cues := parseSRT(out)
 	if len(cues) < 3 {
 		t.Fatalf("got %d cues:\n%s", len(cues), out)
@@ -157,8 +166,7 @@ func TestShapeCuesEndToEnd(t *testing.T) {
 			t.Errorf("cue %d on screen only %v", i+1, c.end-c.start)
 		}
 	}
-	// Not SRT → untouched.
-	if shapeCues("garbage") != "garbage" {
-		t.Error("non-SRT input was rewritten")
+	if len(parseSRT("garbage")) != 0 {
+		t.Error("non-SRT input parsed as cues")
 	}
 }

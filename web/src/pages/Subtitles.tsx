@@ -835,7 +835,7 @@ function LocalAI({ flash, backend }: { flash: (m: string) => void; backend?: str
           </div>
         ))}
       </div>
-      <div className="mt-2 text-[10.5px] text-ink-faint">Get <b>turbo</b> for English, plus <b>large-v3</b> to translate foreign audio to English. <b>Silero VAD</b> is small and strongly recommended.</div>
+      <div className="mt-2 text-[10.5px] text-ink-faint">Get <b>turbo</b> for English, plus <b>large-v3</b> to translate foreign audio to English.</div>
     </div>
   );
 }

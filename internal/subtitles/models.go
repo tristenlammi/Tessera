@@ -12,13 +12,14 @@ import (
 
 // whisperAssets are the downloadable local-AI models (GGML). Fetched on demand to the models dir so
 // the image stays small — the user picks what they need (turbo for English, large-v3 to translate).
+// No VAD model: silence is handled by cutting the audio at pauses before whisper sees it
+// (chunks.go), which keeps every timestamp on the real timeline.
 var whisperAssets = []struct {
 	name, label, url string
 	sizeMB           int
 }{
 	{modelTurbo, "large-v3-turbo — fast English transcription", "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin", 1600},
 	{modelLarge, "large-v3 — required to translate foreign audio to English", "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin", 3100},
-	{vadModel, "Silero VAD — skips music and silence (fetched automatically)", "https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v6.2.0.bin", 1},
 }
 
 // ModelInfo is a whisper asset's state for the Settings UI.
@@ -76,25 +77,8 @@ func (s *Service) DownloadModel(name string) error {
 			return
 		}
 		s.event("info", "✓ Downloaded "+name+" — local AI is ready")
-		if name != vadModel {
-			s.ensureVADModel()
-		}
 	}()
 	return nil
-}
-
-// ensureVADModel fetches the VAD model (3 MB) when a transcription model is present but
-// it isn't. It was listed as "recommended" and left to the user; without it whisper
-// transcribes music and silence, and what it produces there is a repeated invented line
-// for as long as the gap lasts, at several times the cost. Not optional in practice.
-func (s *Service) ensureVADModel() {
-	w := s.whisper
-	if w == nil || w.bin == "" || !w.vadSupported || !w.available() || w.hasModel(vadModel) {
-		return
-	}
-	if err := s.DownloadModel(vadModel); err == nil {
-		s.event("info", "Fetching the VAD model so AI runs skip music and silence")
-	}
 }
 
 func (w *whisperGen) isDownloading(name string) bool {

@@ -21,14 +21,15 @@ import (
 // the binary or a model isn't present — the module then reports AI as unavailable instead of
 // failing, so everything builds/runs before the Dockerfile bundles whisper.
 type whisperGen struct {
-	bin          string // whisper-cli path ("" = not installed)
-	modelsDir    string // where the GGML model files live (data dir / whisper)
-	vadSupported bool   // whether this whisper-cli build understands --vad
-	noGPUFlag    bool   // whether this build understands --no-gpu (i.e. was built with a GPU backend)
-	noFallback   bool   // --no-fallback available
-	suppressNST  bool   // --suppress-nst available
-	dlMu         sync.Mutex
-	dl           map[string]bool // model filenames currently downloading
+	bin         string // whisper-cli path ("" = not installed)
+	modelsDir   string // where the GGML model files live (data dir / whisper)
+	noGPUFlag   bool   // whether this build understands --no-gpu (i.e. was built with a GPU backend)
+	noFallback  bool   // --no-fallback available
+	suppressNST bool   // --suppress-nst available
+	dtwFlag     bool   // --dtw (token timestamps by DTW over the attention heads) available
+	jsonFull    bool   // --output-json-full available
+	dlMu        sync.Mutex
+	dl          map[string]bool // model filenames currently downloading
 
 	// backend is what the last run actually used: "vulkan", "cpu", or "" before any run.
 	// Learned from whisper-cli's own output rather than guessed from the build, since a
@@ -77,33 +78,40 @@ func backendOf(out []byte) string {
 	return "cpu"
 }
 
-// GGML model + VAD filenames (from ggerganov/whisper.cpp on Hugging Face). turbo is fast and used
+// GGML model filenames (from ggerganov/whisper.cpp on Hugging Face). turbo is fast and used
 // for same-language transcription; large-v3 is required for translate-to-English (turbo can't
-// translate). silero is the VAD model that suppresses non-speech hallucination.
+// translate).
 const (
 	modelTurbo = "ggml-large-v3-turbo.bin"
 	modelLarge = "ggml-large-v3.bin"
-	vadModel   = "ggml-silero-v6.2.0.bin"
 )
+
+// dtwPreset names the model's alignment-head preset for --dtw, which is how whisper-cli
+// produces per-token timestamps worth having.
+func dtwPreset(model string) string {
+	switch filepath.Base(model) {
+	case modelTurbo:
+		return "large.v3.turbo"
+	case modelLarge:
+		return "large.v3"
+	}
+	return ""
+}
 
 func detectWhisper(modelsDir string) *whisperGen {
 	bin, _ := exec.LookPath("whisper-cli")
 	w := &whisperGen{bin: bin, modelsDir: modelsDir, dl: map[string]bool{}}
 	if bin != "" {
-		// Older whisper.cpp builds don't have VAD; passing --vad makes them print usage and do
-		// nothing. Probe the help text once so we only pass it when supported.
+		// Flags differ between whisper.cpp versions; an unknown one makes whisper-cli print
+		// usage and do nothing. Probe the help text once and pass only what it knows.
 		out, _ := exec.Command(bin, "--help").CombinedOutput()
-		w.vadSupported = strings.Contains(string(out), "--vad")
 		w.noGPUFlag = strings.Contains(string(out), "--no-gpu")
 		w.noFallback = strings.Contains(string(out), "--no-fallback")
 		w.suppressNST = strings.Contains(string(out), "--suppress-nst")
+		w.dtwFlag = strings.Contains(string(out), "--dtw")
+		w.jsonFull = strings.Contains(string(out), "--output-json-full")
 	}
 	return w
-}
-
-// vadActive reports whether runs are VAD-fronted: the build supports it and the model is here.
-func (w *whisperGen) vadActive() bool {
-	return w != nil && w.vadSupported && w.hasModel(vadModel)
 }
 
 func (w *whisperGen) hasModel(name string) bool {
@@ -138,24 +146,25 @@ func (w *whisperGen) modelPath(translate bool) string {
 	return ""
 }
 
-// generate produces an SRT for one language from a video's audio: extract 16 kHz mono → run
-// whisper.cpp (VAD-fronted when the VAD model is present) → the SRT sidecar, then strip stock-phrase
-// hallucinations. translate=true asks Whisper to translate the (foreign) audio to English.
+// generate produces an SRT for one language from a video's audio: extract 16 kHz mono,
+// cut it into chunks at silences (chunks.go), run whisper.cpp on each with DTW word
+// timestamps, and build the cues from the timed words (words.go). translate=true asks
+// whisper to translate the (foreign) audio to English.
 func (w *whisperGen) generate(ctx context.Context, ffmpeg, videoPath, srtPath, lang string, translate bool, progress func(pct int)) error {
 	model := w.modelPath(translate)
 	if model == "" {
 		return fmt.Errorf("no whisper model available for %s", ifElse(translate, "translation", "transcription"))
 	}
-	// Work in the temp dir under a clean (space-free) base, then move the result next to the video.
-	// Whisper writes "<outBase>.srt".
+	if !w.jsonFull {
+		return fmt.Errorf("this whisper-cli build has no --output-json-full; rebuild the image (whisper.cpp v1.9+)")
+	}
+	// Work in the temp dir under a clean (space-free) base.
 	stamp := time.Now().UnixNano()
-	wav := filepath.Join(os.TempDir(), fmt.Sprintf("whisper-%d.wav", stamp))
-	outBase := filepath.Join(os.TempDir(), fmt.Sprintf("whisper-%d", stamp))
-	outSRT := outBase + ".srt"
+	base := filepath.Join(os.TempDir(), fmt.Sprintf("whisper-%d", stamp))
+	wav := base + ".wav"
 	defer os.Remove(wav)
-	defer os.Remove(outSRT)
 
-	// 1. Extract mono 16 kHz PCM — what Whisper expects — and confirm it's real audio.
+	// 1. Extract mono 16 kHz PCM — what whisper expects — and confirm it's real audio.
 	if out, err := exec.CommandContext(ctx, ffmpeg, "-y", "-hide_banner", "-i", videoPath,
 		"-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", wav).CombinedOutput(); err != nil {
 		return fmt.Errorf("extract audio: %w: %s", err, tailStr(out, 300))
@@ -163,69 +172,116 @@ func (w *whisperGen) generate(ctx context.Context, ffmpeg, videoPath, srtPath, l
 	if fi, err := os.Stat(wav); err != nil || fi.Size() < 4096 {
 		return fmt.Errorf("extracted audio was empty (no decodable audio track?)")
 	}
+	total := wavDuration(wav)
 
-	// 2. Transcribe/translate to SRT.
-	//
-	// Plain segments, deliberately: -ml/-sow (split long segments in whisper) run on its
-	// experimental token-level timestamps, which put three words on screen for a moment
-	// each, out of step with the audio. Segment timestamps are the reliable ones; the
-	// cues are shaped afterwards in shapeCues (cues.go).
-	//
-	// -pp prints "progress = N%" lines, which runWhisper turns into the job's progress.
-	args := []string{"-m", model, "-f", wav, "-osrt", "-of", outBase, "-t", strconv.Itoa(threads()), "-pp"}
+	// 2. Cut at silences. A failed detection just means one chunk.
+	sils, err := detectSilences(ctx, ffmpeg, wav, total)
+	if err != nil && ctx.Err() != nil {
+		return err
+	}
+	chunks := planChunks(total, sils)
+
+	// 3. Transcribe each chunk. Timestamps come back relative to the chunk; the chunk's
+	// start is added when the words are read.
+	var words []word
+	noGPU := false
+	dtw := w.dtwFlag
+	for i, c := range chunks {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		cwav := fmt.Sprintf("%s-c%d.wav", base, i)
+		outB := fmt.Sprintf("%s-c%d", base, i)
+		if err := cutChunk(ctx, ffmpeg, wav, c, cwav); err != nil {
+			return err
+		}
+		args := w.args(model, cwav, outB, lang, translate, dtw)
+		if noGPU {
+			args = append(args, "--no-gpu")
+		}
+		prog := func(pct int) {
+			if progress != nil {
+				progress(overallProgress(c, pct, total))
+			}
+		}
+		out, err := runWhisper(ctx, w.bin, args, prog)
+		if err != nil && dtw && ctx.Err() == nil {
+			// DTW needs the model's alignment-head preset and the backend's cooperation;
+			// if this build refuses, the words fall back to segment timing rather than
+			// the whole file failing.
+			dtw = false
+			args = w.args(model, cwav, outB, lang, translate, dtw)
+			out, err = runWhisper(ctx, w.bin, args, prog)
+		}
+		if err != nil && !noGPU && w.noGPUFlag && ctx.Err() == nil {
+			// A GPU build that can't initialise its device (driver missing in the container,
+			// /dev/dri not passed through, an out-of-memory on a small card) fails outright
+			// rather than degrading. Retry on the CPU: slower, but it produces the subtitle.
+			noGPU = true
+			out, err = runWhisper(ctx, w.bin, append(args, "--no-gpu"), prog)
+		}
+		os.Remove(cwav)
+		if err != nil {
+			os.Remove(outB + ".json")
+			return fmt.Errorf("whisper: %w: %s", err, tailStr(out, 400))
+		}
+		if i == 0 {
+			if noGPU {
+				w.setBackend("cpu")
+			} else {
+				w.setBackend(backendOf(out))
+			}
+		}
+		data, rerr := os.ReadFile(outB + ".json")
+		os.Remove(outB + ".json")
+		if rerr != nil {
+			return fmt.Errorf("whisper produced no output for chunk %d: %s", i+1, tailStr(out, 400))
+		}
+		ws, perr := wordsFromJSON(data, c.start)
+		if perr != nil {
+			return perr
+		}
+		words = append(words, ws...)
+	}
+	if len(words) == 0 {
+		return fmt.Errorf("whisper found no speech in the audio")
+	}
+
+	// 4. Words → cues → SRT, minus stock-phrase hallucinations.
+	srt := filterStockPhrases(formatSRT(shapeWordCues(words)))
+	return os.WriteFile(srtPath, []byte(srt), 0o644)
+}
+
+// args builds the whisper-cli command line for one chunk.
+//
+//   - -ojf: full JSON with per-token timestamps (what the cues are built from).
+//   - -dtw: token timestamps aligned over the attention heads rather than whisper's
+//     experimental estimate — the difference between a word timed to the audio and
+//     one timed to where the decoder happened to be.
+//   - -nf: temperature fallback re-decodes a window up to five more times when the
+//     first decode looks poor; the windows that look poor are music and noise, where
+//     every retry invents the same line. Off.
+//   - --suppress-nst: no ♪ / [Music] tokens.
+//   - -pp: progress lines, which runWhisper turns into the job's progress.
+func (w *whisperGen) args(model, wav, outBase, lang string, translate, dtw bool) []string {
+	args := []string{"-m", model, "-f", wav, "-ojf", "-of", outBase, "-t", strconv.Itoa(threads()), "-pp"}
 	if translate {
 		args = append(args, "--translate")
 	} else if lang != "" {
 		args = append(args, "-l", lang)
 	}
-	if w.vadActive() {
-		args = append(args, "--vad", "--vad-model", filepath.Join(w.modelsDir, vadModel))
+	if dtw {
+		if p := dtwPreset(model); p != "" {
+			args = append(args, "-dtw", p)
+		}
 	}
-	// Temperature fallback re-decodes a window up to five more times when the first
-	// decode looks poor. The windows that look poor are music, silence and crowd noise,
-	// and every retry there produces the same invented line — the "I'm not saying this is
-	// how I'm going to be" once a second in the log — so it multiplies the run time for
-	// nothing. VAD is the right tool for those stretches; the fallback is switched off.
-	// Non-speech tokens (♪, [Music]) are suppressed for the same reason.
 	if w.noFallback {
 		args = append(args, "-nf")
 	}
 	if w.suppressNST {
 		args = append(args, "--suppress-nst")
 	}
-	out, err := runWhisper(ctx, w.bin, args, progress)
-	if err != nil && w.noGPUFlag && ctx.Err() == nil {
-		// A GPU build that can't initialise its device (driver missing in the container,
-		// /dev/dri not passed through, an out-of-memory on a small card) fails outright
-		// rather than degrading. Retry on the CPU: slower, but it produces the subtitle.
-		gpuErr := tailStr(out, 300)
-		out, err = runWhisper(ctx, w.bin, append(args, "--no-gpu"), progress)
-		if err == nil {
-			w.setBackend("cpu")
-			return w.finishSRT(outSRT, srtPath, out, "whisper ran on the CPU after the GPU attempt failed: "+gpuErr)
-		}
-	}
-	if err != nil {
-		return fmt.Errorf("whisper: %w: %s", err, tailStr(out, 400))
-	}
-	w.setBackend(backendOf(out))
-	return w.finishSRT(outSRT, srtPath, out, "")
-}
-
-// finishSRT checks whisper actually wrote something, strips stock-phrase hallucinations,
-// and writes the sidecar next to the video.
-func (w *whisperGen) finishSRT(outSRT, srtPath string, out []byte, note string) error {
-	_ = note // surfaced by the caller's event log via Backend(); kept for the error path
-	if fi, statErr := os.Stat(outSRT); statErr != nil || fi.Size() == 0 {
-		return fmt.Errorf("whisper produced no subtitle output: %s", tailStr(out, 400))
-	}
-
-	// 3. Filter stock-phrase hallucinations and write the sidecar next to the video.
-	b, err := os.ReadFile(outSRT)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(srtPath, []byte(shapeCues(filterStockPhrases(string(b)))), 0o644)
+	return args
 }
 
 // progressRe matches whisper-cli's -pp output: "whisper_print_progress_callback: progress =  25%".

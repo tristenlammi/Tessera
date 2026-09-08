@@ -70,7 +70,6 @@ type LogLine struct {
 // slice grows; the caller always returns immediately.
 func (s *Service) Run(ctx context.Context) {
 	s.log.Info("subtitles: worker started")
-	s.ensureVADModel()
 	s.Rescan(ctx) // first library pass, in the background; the pages read it
 	for {
 		job := s.pop()

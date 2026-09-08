@@ -10,20 +10,10 @@ import (
 	"unicode/utf8"
 )
 
-// Cue shaping for AI-generated subtitles.
-//
-// whisper's segment timestamps — where each decoded sentence starts and ends — are the
-// reliable ones. The token-level timestamps that -ml/-sow (split long segments) needed
-// are an experimental feature and, until whisper.cpp v1.9.2, weren't even mapped back
-// to the original timeline when VAD was on: that is what put three words on screen for
-// a fraction of a second, out of step with the audio. So the run now asks for plain
-// segments, and the shaping is done here, deterministically:
-//
-//   - a segment longer than two lines is split at punctuation, each piece getting a
-//     share of the segment's time proportional to its length;
-//   - a fragment (a word or two) is merged into its neighbour when they're contiguous;
-//   - every cue stays on screen for at least a second, never past the next cue;
-//   - text over one line is laid out on two, broken near the middle.
+// Cue shaping for AI-generated subtitles: the SRT model, the limits, and the passes
+// shared by the word-timed pipeline (words.go) — fragment merging, duration floors,
+// two-line layout. splitCue is the character-share fallback for a segment whose word
+// times are unusable.
 const (
 	cueMaxChars   = 84 // two lines of 42 — the usual broadcast limit
 	cueLineChars  = 42
@@ -40,25 +30,6 @@ type cue struct {
 }
 
 var srtTimeRe = regexp.MustCompile(`(\d+):(\d\d):(\d\d)[,.](\d{1,3})\s*-->\s*(\d+):(\d\d):(\d\d)[,.](\d{1,3})`)
-
-// shapeCues rewrites a whisper SRT into subtitle-sized cues. Input that isn't SRT comes
-// back unchanged.
-func shapeCues(srt string) string {
-	cues := parseSRT(srt)
-	if len(cues) == 0 {
-		return srt
-	}
-	var out []cue
-	for _, c := range cues {
-		out = append(out, splitCue(c)...)
-	}
-	out = mergeFragments(out)
-	floorDurations(out)
-	for i := range out {
-		out[i].text = layoutLines(out[i].text)
-	}
-	return formatSRT(out)
-}
 
 // parseSRT reads cues from SRT text; blocks without a timing line are skipped.
 func parseSRT(s string) []cue {
