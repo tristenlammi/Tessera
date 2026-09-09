@@ -623,6 +623,10 @@ export interface Series {
 }
 // --- Books ---
 export type BookSource = "openlibrary" | "hardcover";
+export interface BookUpgradeStatus {
+  running: boolean; total: number; done: number; upgraded: number; merged: number; unmatched: number;
+  started_at?: number; ended_at?: number; error?: string;
+}
 export interface BookLookup {
   key: string;
   title: string;
@@ -1157,7 +1161,9 @@ export const api = {
     req<void>(`/api/v1/series/${id}/seasons/${season}/episodes/${episode}/file`, { method: "DELETE" }),
 
   // Books
-  books: () => req<{ books: Book[]; metadata_available: boolean }>("/api/v1/books"),
+  books: () => req<{ books: Book[]; metadata_available: boolean; metadata_source?: BookSource; upgradable?: number }>("/api/v1/books"),
+  startBookUpgrade: () => req<{ started: boolean; status: BookUpgradeStatus }>("/api/v1/books/upgrade", { method: "POST" }),
+  bookUpgradeStatus: () => req<BookUpgradeStatus>("/api/v1/books/upgrade"),
   // source: "openlibrary" asks Open Library explicitly ("show Open Library results too");
   // the response says which catalogue the default search uses.
   lookupBooks: (q: string, source?: "openlibrary" | "hardcover") =>

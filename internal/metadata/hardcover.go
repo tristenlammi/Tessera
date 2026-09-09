@@ -34,12 +34,23 @@ type Hardcover struct {
 	// extraCovers supplies the Google Books covers the picker also offers; the Open
 	// Library provider already knows how (with an empty key it only asks Google).
 	extraCovers *OpenLibrary
+	budget      *hcBudget // daily request count + spacing (hccache.go)
+	cache       *hcCache  // TTL cache over every read
 }
 
 // NewHardcoverFunc builds a provider that reads the key lazily, so a key pasted in
 // Settings takes effect without a restart.
 func NewHardcoverFunc(key func() string, extraCovers *OpenLibrary) *Hardcover {
-	return &Hardcover{key: key, endpoint: hardcoverAPI, http: &http.Client{Timeout: 25 * time.Second}, extraCovers: extraCovers}
+	return &Hardcover{key: key, endpoint: hardcoverAPI, http: &http.Client{Timeout: 25 * time.Second}, extraCovers: extraCovers,
+		budget: newHCBudget(), cache: newHCCache()}
+}
+
+// Usage reports today's request count against the daily budget.
+func (h *Hardcover) Usage() (used, budget int) {
+	if h == nil || h.budget == nil {
+		return 0, hcDailyBudget
+	}
+	return h.budget.usage()
 }
 
 // Available is "a key is configured" — Hardcover does nothing without one.
@@ -62,8 +73,12 @@ func hcAuthorID(key string) (int, bool) {
 	return n, err == nil && n > 0
 }
 
-// query posts one GraphQL document and decodes data into out.
+// query posts one GraphQL document and decodes data into out. Every call counts
+// against the daily budget; past it the call is refused so a fallback can answer.
 func (h *Hardcover) query(ctx context.Context, q string, vars map[string]any, out any) error {
+	if h.budget != nil && !h.budget.take() {
+		return ErrHardcoverBudget
+	}
 	body, err := json.Marshal(map[string]any{"query": q, "variables": vars})
 	if err != nil {
 		return err
@@ -306,12 +321,19 @@ func (h *Hardcover) Verify(ctx context.Context) (string, error) {
 	if d.SeriesName != "" {
 		series = fmt.Sprintf(", series %q", d.SeriesName)
 	}
-	return fmt.Sprintf("%s · search returned %d results · fetched %q by %s (%d)%s", who, len(hits), d.Title, d.Author, d.Year, series), nil
+	used, budget := h.Usage()
+	return fmt.Sprintf("%s · search returned %d results · fetched %q by %s (%d)%s · %d of %d requests used today", who, len(hits), d.Title, d.Author, d.Year, series, used, budget), nil
 }
 
 // SearchBooks finds books by title/author/ISBN. Hardcover's index already folds
 // editions into their book, so one novel is one result.
 func (h *Hardcover) SearchBooks(ctx context.Context, query string) ([]BookResult, error) {
+	return cached(h.cache, "search:"+strings.ToLower(strings.TrimSpace(query)), hcTTLSearch, func() ([]BookResult, error) {
+		return h.searchBooksLive(ctx, query)
+	})
+}
+
+func (h *Hardcover) searchBooksLive(ctx context.Context, query string) ([]BookResult, error) {
 	docs, err := h.search(ctx, query, "Book", hardcoverSearchMax, "")
 	if err != nil {
 		return nil, err
@@ -333,6 +355,12 @@ func (h *Hardcover) GetBook(ctx context.Context, key string) (*BookDetails, erro
 	if !ok {
 		return nil, fmt.Errorf("hardcover: not a hardcover key: %q", key)
 	}
+	return cached(h.cache, "book:"+key, hcTTLBook, func() (*BookDetails, error) {
+		return h.getBookLive(ctx, id)
+	})
+}
+
+func (h *Hardcover) getBookLive(ctx context.Context, id int) (*BookDetails, error) {
 	b, err := h.book(ctx, id)
 	if err != nil {
 		return nil, err
@@ -450,6 +478,12 @@ func (h *Hardcover) Covers(ctx context.Context, key, title, author string) ([]st
 
 // SearchAuthors finds authors by name.
 func (h *Hardcover) SearchAuthors(ctx context.Context, query string) ([]AuthorResult, error) {
+	return cached(h.cache, "authors:"+strings.ToLower(strings.TrimSpace(query)), hcTTLSearch, func() ([]AuthorResult, error) {
+		return h.searchAuthorsLive(ctx, query)
+	})
+}
+
+func (h *Hardcover) searchAuthorsLive(ctx context.Context, query string) ([]AuthorResult, error) {
 	docs, err := h.search(ctx, query, "Author", 12, "")
 	if err != nil {
 		return nil, err
@@ -475,6 +509,12 @@ func (h *Hardcover) AuthorWorks(ctx context.Context, authorKey string, limit int
 	if limit <= 0 || limit > 200 {
 		limit = 200
 	}
+	return cached(h.cache, fmt.Sprintf("works:%d:%d", id, limit), hcTTLList, func() ([]BookResult, error) {
+		return h.authorWorksLive(ctx, id, limit)
+	})
+}
+
+func (h *Hardcover) authorWorksLive(ctx context.Context, id, limit int) ([]BookResult, error) {
 	const q = `query($id: Int!, $n: Int!) {
   books(
     where: {contributions: {author: {id: {_eq: $id}}}, canonical_id: {_is_null: true}, compilation: {_eq: false}},
@@ -499,6 +539,10 @@ func (h *Hardcover) AuthorWorks(ctx context.Context, authorKey string, limit int
 // TrendingBooks approximates "trending" as the most-shelved books released in the last
 // two years — Hardcover's own trending feed isn't part of the public schema.
 func (h *Hardcover) TrendingBooks(ctx context.Context) ([]BookResult, error) {
+	return cached(h.cache, "trending", hcTTLList, func() ([]BookResult, error) { return h.trendingLive(ctx) })
+}
+
+func (h *Hardcover) trendingLive(ctx context.Context) ([]BookResult, error) {
 	const q = `query($y: Int!) {
   books(
     where: {canonical_id: {_is_null: true}, compilation: {_eq: false}, release_year: {_gte: $y}},
@@ -526,6 +570,12 @@ func (h *Hardcover) BooksBySubject(ctx context.Context, subject string, limit in
 	if limit <= 0 {
 		limit = hardcoverSearchMax
 	}
+	return cached(h.cache, fmt.Sprintf("subject:%s:%d", strings.ToLower(subject), limit), hcTTLList, func() ([]BookResult, error) {
+		return h.subjectLive(ctx, subject, limit)
+	})
+}
+
+func (h *Hardcover) subjectLive(ctx context.Context, subject string, limit int) ([]BookResult, error) {
 	docs, err := h.search(ctx, subject, "Book", limit, "genres")
 	if err != nil {
 		docs, err = h.search(ctx, subject, "Book", limit, "")

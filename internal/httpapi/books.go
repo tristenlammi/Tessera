@@ -45,7 +45,23 @@ func (a *api) handleListBooks(w http.ResponseWriter, r *http.Request) {
 	a.writeJSON(w, http.StatusOK, map[string]any{
 		"books":              list,
 		"metadata_available": a.deps.Books.MetadataAvailable(),
+		"metadata_source":    a.deps.Books.MetadataSource(),
+		"upgradable":         a.deps.Books.Upgradable(r.Context()), // books not yet on Hardcover keys
 	})
+}
+
+// handleStartBookUpgrade re-matches every non-Hardcover book to Hardcover, in the background.
+func (a *api) handleStartBookUpgrade(w http.ResponseWriter, r *http.Request) {
+	// The job outlives the request that started it.
+	if !a.deps.Books.StartUpgrade(context.WithoutCancel(r.Context())) {
+		a.writeJSON(w, http.StatusOK, map[string]any{"started": false, "status": a.deps.Books.UpgradeStatus()})
+		return
+	}
+	a.writeJSON(w, http.StatusAccepted, map[string]any{"started": true, "status": a.deps.Books.UpgradeStatus()})
+}
+
+func (a *api) handleBookUpgradeStatus(w http.ResponseWriter, r *http.Request) {
+	a.writeJSON(w, http.StatusOK, a.deps.Books.UpgradeStatus())
 }
 
 func (a *api) handleLookupBooks(w http.ResponseWriter, r *http.Request) {

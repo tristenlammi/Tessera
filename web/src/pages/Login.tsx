@@ -77,6 +77,11 @@ export function Login() {
             <button type="submit" disabled={busy || plexBusy} className="mt-1 rounded-lg px-4 py-2.5 text-[13px] font-semibold" style={{ background: "linear-gradient(150deg, var(--accent), var(--accent-deep))", color: "var(--accent-ink)" }}>
               {busy ? "…" : setup ? "Create admin & continue" : "Sign in"}
             </button>
+            {setup && (
+              <p className="m-0 mt-1 text-[11px] leading-snug text-ink-faint">
+                Next, add your API keys under Settings: <b>TMDB</b> (required for movies and TV) and <b>Hardcover</b> (recommended for books — free; without it Books use Open Library, which needs no key).
+              </p>
+            )}
 
             {!setup && plexEnabled && (
               <>

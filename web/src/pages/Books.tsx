@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
-import { api, type BookSource, type Book, type BookLookup, type BookAuthor, type BookDiscoverCard } from "../lib/api";
+import { api, type BookSource, type BookUpgradeStatus, type Book, type BookLookup, type BookAuthor, type BookDiscoverCard } from "../lib/api";
 import { posterThumb } from "../lib/img";
 
 const FILTERS = [
@@ -56,9 +56,35 @@ export function Books() {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [profiles, setProfiles] = useState<{ key: string; name: string }[]>([]);
+  // Which catalogue Books use, and how many rows still carry Open Library keys — the
+  // "Upgrade to Hardcover" button shows while there are any.
+  const [source, setSource] = useState<BookSource>("openlibrary");
+  const [upgradable, setUpgradable] = useState(0);
+  const [upgrade, setUpgrade] = useState<BookUpgradeStatus | null>(null);
 
   const flash = (m: string) => { setToast(m); window.setTimeout(() => setToast(null), 3500); };
-  const refresh = () => api.books().then((r) => { setList(r.books); setMetaOK(r.metadata_available); setError(null); }).catch((e: Error) => setError(e.message));
+  const refresh = () => api.books().then((r) => { setList(r.books); setMetaOK(r.metadata_available); setSource(r.metadata_source ?? "openlibrary"); setUpgradable(r.upgradable ?? 0); setError(null); }).catch((e: Error) => setError(e.message));
+  // Poll the upgrade while it runs, then reload the library once it lands.
+  useEffect(() => {
+    if (!upgrade?.running) return;
+    const t = setInterval(() => {
+      api.bookUpgradeStatus().then((st) => {
+        setUpgrade(st);
+        if (!st.running) {
+          refresh();
+          flash(st.error ? `Upgrade stopped: ${st.error}` : `Upgraded ${st.upgraded}, merged ${st.merged}, no match for ${st.unmatched}.`);
+        }
+      }).catch(() => {});
+    }, 2000);
+    return () => clearInterval(t);
+  }, [upgrade?.running]); // eslint-disable-line react-hooks/exhaustive-deps
+  const startUpgrade = async () => {
+    try {
+      const r = await api.startBookUpgrade();
+      setUpgrade(r.status);
+      flash(r.started ? "Re-matching your books to Hardcover…" : "An upgrade is already running.");
+    } catch (e) { flash((e as Error).message); }
+  };
   useEffect(() => {
     refresh();
     api.qualityProfiles("book").then((r) => setProfiles(r.profiles.map((p) => ({ key: p.key, name: p.name })))).catch(() => {});
@@ -154,6 +180,11 @@ export function Books() {
                 </div>
               </>
             )}
+            {source === "hardcover" && (upgradable > 0 || upgrade?.running) && (
+              <button onClick={startUpgrade} disabled={!!upgrade?.running} title="Re-match every book still on an Open Library key to Hardcover: better covers, descriptions and series, and duplicates folded together. Files, monitoring and profiles are kept." className="rounded-lg px-3 py-2 text-[12.5px] font-semibold" style={{ border: "1px solid var(--accent-line)", background: "var(--panel-2)", color: "var(--accent)" }}>
+                {upgrade?.running ? `Upgrading… ${upgrade.done}/${upgrade.total}` : `Upgrade ${upgradable} to Hardcover`}
+              </button>
+            )}
             <button onClick={backfillSeries} disabled={backfilling} title="One-off: look up which series your books belong to. Searches indexers to read the series off, and downloads nothing." className="rounded-lg px-3 py-2 text-[12.5px] font-semibold" style={{ border: "1px solid var(--line)", background: "var(--panel-2)", color: "var(--ink)" }}>{backfilling ? "Looking up…" : "Find series"}</button>
             <button onClick={scanLibrary} disabled={scanning} title="Find books already in your library folder and catalog them" className="rounded-lg px-3 py-2 text-[12.5px] font-semibold" style={{ border: "1px solid var(--line)", background: "var(--panel-2)", color: "var(--ink)" }}>{scanning ? "Scanning…" : "Scan library"}</button>
             <button onClick={() => (multiSelect ? exitMultiSelect() : enterSelect())} className="rounded-lg px-3 py-2 text-[12.5px] font-semibold" style={{ border: `1px solid ${multiSelect ? "var(--accent)" : "var(--line)"}`, background: multiSelect ? "var(--accent-soft)" : "var(--panel-2)", color: multiSelect ? "var(--accent)" : "var(--ink)" }}>{multiSelect ? "Done" : "Select"}</button>
@@ -204,6 +235,14 @@ export function Books() {
         )}
 
         {error && <div className="mb-3 rounded-lg p-3 text-[12.5px]" style={{ border: "1px solid var(--reject)", color: "var(--reject)" }}>{error}</div>}
+        {/* Open Library works with no key; Hardcover is the better catalogue. Say so once,
+            where the books are, rather than hoping the Settings page gets read. */}
+        {source === "openlibrary" && metaOK && (
+          <div className="mb-4 rounded-lg px-3.5 py-2.5 text-[12px]" style={{ border: "1px solid var(--line)", background: "var(--panel-2)", color: "var(--ink-dim)" }}>
+            Books are using <b>Open Library</b>, which needs no key. For the preferred catalogue — one entry per book, series and author pages, cleaner covers — add a free <b>Hardcover</b> API key in{" "}
+            <Link to="/settings" style={{ color: "var(--accent)" }}>Settings → API keys</Link>. Everything already here keeps working either way.
+          </div>
+        )}
 
         {list.length === 0 ? (
           <div className="rounded-xl p-12 text-center text-[12.5px] text-ink-dim" style={{ border: "1px solid var(--line)" }}>

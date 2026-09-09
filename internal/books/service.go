@@ -16,6 +16,8 @@ type Service struct {
 	repo *Repo
 	meta metadata.BookProvider
 	log  *slog.Logger
+
+	upgrade upgradeState // the "upgrade library to Hardcover" job (upgrade.go)
 }
 
 // NewService wires the module.
