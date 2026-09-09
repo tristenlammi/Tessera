@@ -1,8 +1,10 @@
 package httpapi
 
 import (
+	"context"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // handleGetAPIKeys returns the state of every credential — configured or not, from where,
@@ -13,6 +15,27 @@ func (a *api) handleGetAPIKeys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.writeJSON(w, http.StatusOK, map[string]any{"keys": a.deps.APIKeys.Status(r.Context())})
+}
+
+// handleTestAPIKey makes a real request with a saved key and reports the outcome. Only
+// keys the catalogue marks testable have a check wired up.
+func (a *api) handleTestAPIKey(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	var detail string
+	var err error
+	switch r.PathValue("id") {
+	case "hardcover":
+		detail, err = a.deps.Books.VerifyHardcover(ctx)
+	default:
+		a.writeError(w, http.StatusBadRequest, "no test is available for that key")
+		return
+	}
+	if err != nil {
+		a.writeJSON(w, http.StatusOK, map[string]any{"ok": false, "detail": err.Error()})
+		return
+	}
+	a.writeJSON(w, http.StatusOK, map[string]any{"ok": true, "detail": detail})
 }
 
 // handleSetAPIKey saves (or, with an empty value, clears) one credential. An empty value

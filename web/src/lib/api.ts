@@ -182,6 +182,7 @@ export interface APIKeyStatus {
   help_url: string;
   steps: string;
   secret: boolean;
+  testable?: boolean;
   configured: boolean;
   source: "settings" | "env" | "";
   hint?: string;
@@ -931,6 +932,7 @@ export const api = {
   // External service credentials, settable in-app (settings-first, env-fallback). The
   // server never returns the secret itself — only whether it's set, from where, and a hint.
   apiKeys: () => req<{ keys: APIKeyStatus[] }>(`/api/v1/apikeys`).then((r) => r.keys),
+  testAPIKey: (id: string) => req<{ ok: boolean; detail: string }>(`/api/v1/apikeys/${id}/test`, { method: "POST" }),
   setAPIKey: (id: string, value: string) =>
     req<{ keys: APIKeyStatus[] }>(`/api/v1/apikeys/${id}`, { method: "PUT", body: JSON.stringify({ value }) }).then((r) => r.keys),
   clientSettings: (id: number) => req<ClientSettings>(`/api/v1/downloadclients/${id}/settings`),

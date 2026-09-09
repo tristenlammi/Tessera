@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"fmt"
 	"strings"
 )
 
@@ -49,6 +50,14 @@ func (s *BookSources) byKey(key string) BookProvider {
 }
 
 func (s *BookSources) Available() bool { return true }
+
+// VerifyHardcover exercises the Hardcover key end to end (settings "Test" button).
+func (s *BookSources) VerifyHardcover(ctx context.Context) (string, error) {
+	if s.hardcover == nil {
+		return "", fmt.Errorf("Hardcover is not configured")
+	}
+	return s.hardcover.Verify(ctx)
+}
 
 // SearchBooks asks the current source; when that's Hardcover and it errors or comes
 // up empty, Open Library answers instead.

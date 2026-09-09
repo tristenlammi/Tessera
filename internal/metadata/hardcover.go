@@ -272,6 +272,43 @@ func (d hcSearchDoc) bookResult() (BookResult, bool) {
 	return r, true
 }
 
+// Verify makes the three requests the module depends on — who am I, a search, a book
+// fetch — and reports what each returned, so a misconfigured key or a query the API
+// no longer accepts is visible from the settings page rather than as a quiet fallback.
+func (h *Hardcover) Verify(ctx context.Context) (string, error) {
+	if !h.Available() {
+		return "", fmt.Errorf("no Hardcover key is set")
+	}
+	var me struct {
+		Me []struct {
+			Username string `json:"username"`
+		} `json:"me"`
+	}
+	if err := h.query(ctx, `{ me { username } }`, nil, &me); err != nil {
+		return "", err
+	}
+	who := "the key is accepted"
+	if len(me.Me) > 0 && me.Me[0].Username != "" {
+		who = "signed in as " + me.Me[0].Username
+	}
+	hits, err := h.SearchBooks(ctx, "dune frank herbert")
+	if err != nil {
+		return "", fmt.Errorf("%s, but search failed: %w", who, err)
+	}
+	if len(hits) == 0 {
+		return "", fmt.Errorf("%s, but a search for Dune returned nothing", who)
+	}
+	d, err := h.GetBook(ctx, hits[0].Key)
+	if err != nil {
+		return "", fmt.Errorf("%s, search works, but fetching a book failed: %w", who, err)
+	}
+	series := ""
+	if d.SeriesName != "" {
+		series = fmt.Sprintf(", series %q", d.SeriesName)
+	}
+	return fmt.Sprintf("%s · search returned %d results · fetched %q by %s (%d)%s", who, len(hits), d.Title, d.Author, d.Year, series), nil
+}
+
 // SearchBooks finds books by title/author/ISBN. Hardcover's index already folds
 // editions into their book, so one novel is one result.
 func (h *Hardcover) SearchBooks(ctx context.Context, query string) ([]BookResult, error) {

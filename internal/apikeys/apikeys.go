@@ -25,6 +25,10 @@ type Key struct {
 	Steps   string `json:"steps"`    // brief how-to, shown under the field
 	EnvVar  string `json:"env_var"`  // install-time fallback
 	Secret  bool   `json:"secret"`   // masked in the UI (a username is not)
+	// Testable keys get a "Test" button that makes a real request with the saved key
+	// and reports what came back — the only way to tell a working key from one the
+	// app is quietly falling back around.
+	Testable bool `json:"testable"`
 }
 
 // settingKey is where a credential is persisted. Namespaced so it can't collide with an
@@ -50,7 +54,7 @@ var Catalog = []Key{
 	},
 	{
 		ID: "hardcover", Label: "Hardcover", Purpose: "Book metadata. Optional — Books use Open Library without it; with it, Hardcover's curated catalogue (one entry per book, no duplicate editions) takes over and Open Library stays a click away.",
-		HelpURL: "https://hardcover.app/account/api", EnvVar: "ARRMADA_HARDCOVER_API_KEY", Secret: true,
+		HelpURL: "https://hardcover.app/account/api", EnvVar: "ARRMADA_HARDCOVER_API_KEY", Secret: true, Testable: true,
 		Steps: "Free account, then Settings → Hardcover API → New API Key. Paste the token as given (with or without the leading \"Bearer\"). Tokens expire on the date you pick when creating them — regenerate if books stop resolving.",
 	},
 	{

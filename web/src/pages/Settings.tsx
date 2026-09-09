@@ -444,6 +444,15 @@ function APIKeysSection() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  // Result of the last "Test" per key: a live request with the saved value.
+  const [tests, setTests] = useState<Record<string, { ok: boolean; detail: string }>>({});
+  const testKey = async (id: string) => {
+    setBusy("test:" + id);
+    setTests((t) => { const n = { ...t }; delete n[id]; return n; });
+    try { const r = await api.testAPIKey(id); setTests((t) => ({ ...t, [id]: r })); }
+    catch (e) { setTests((t) => ({ ...t, [id]: { ok: false, detail: (e as Error).message } })); }
+    finally { setBusy(null); }
+  };
   // Discovery region rides along in this section: it tunes what the TMDB key returns.
   const [region, setRegion] = useState("");
   const [regionSaved, setRegionSaved] = useState<string | null>(null);
@@ -518,6 +527,17 @@ function APIKeysSection() {
               >
                 {busy === k.id ? "Saving…" : "Save"}
               </button>
+              {k.testable && k.configured && (
+                <button
+                  onClick={() => testKey(k.id)}
+                  disabled={busy !== null}
+                  className="flex-none rounded-lg px-2.5 py-1.5 text-[11.5px] font-semibold"
+                  style={{ border: "1px solid var(--line)", color: "var(--ink-dim)" }}
+                  title="Make a real request with the saved key and show what came back"
+                >
+                  {busy === "test:" + k.id ? "Testing…" : "Test"}
+                </button>
+              )}
               {k.configured && k.source === "settings" && (
                 <button
                   onClick={() => { setDrafts((d) => ({ ...d, [k.id]: "" })); saveKey(k.id); }}
@@ -530,6 +550,11 @@ function APIKeysSection() {
                 </button>
               )}
             </div>
+            {tests[k.id] && (
+              <p className="text-[11px]" style={{ color: tests[k.id].ok ? "var(--good)" : "var(--reject)" }}>
+                {tests[k.id].ok ? "✓ " : "✗ "}{tests[k.id].detail}
+              </p>
+            )}
             <p className="text-[10px] text-ink-faint">
               {k.steps} <a href={k.help_url} target="_blank" rel="noreferrer" style={{ color: "var(--accent)" }}>Get one →</a>
             </p>

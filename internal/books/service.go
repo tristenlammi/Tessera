@@ -46,6 +46,16 @@ func (s *Service) LookupFrom(ctx context.Context, query, source string) ([]metad
 	return s.Lookup(ctx, query)
 }
 
+// VerifyHardcover runs a live check of the Hardcover key, when the provider has one.
+func (s *Service) VerifyHardcover(ctx context.Context) (string, error) {
+	if v, ok := s.meta.(interface {
+		VerifyHardcover(context.Context) (string, error)
+	}); ok {
+		return v.VerifyHardcover(ctx)
+	}
+	return "", fmt.Errorf("Hardcover is not configured")
+}
+
 // MetadataSource names the catalogue searches currently go to.
 func (s *Service) MetadataSource() string {
 	if sl, ok := s.meta.(sourceLookup); ok {
