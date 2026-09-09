@@ -143,7 +143,11 @@ func main() {
 	// takes effect without a restart while existing env-based setups keep working. Seed
 	// the store with any env values so a fresh install with only compose vars still works.
 	keyStore := apikeys.NewStore(settingsSvc)
+	// Catalogue answers are kept in SQLite across restarts and served stale while a
+	// refresh runs, so Discover opens instantly even right after a deploy.
+	diskCache := metadata.NewDiskCache(st.DB())
 	tmdb := metadata.NewTMDBFunc(keyStore.Func("tmdb"))
+	tmdb.SetDiskCache(diskCache)
 	// Discovery region (Settings → API keys): localizes popular/upcoming/genre
 	// lists. Read lazily like the key, so changing it needs no restart.
 	tmdb.SetRegionFunc(func() string { return settingsSvc.Get(context.Background(), "tmdb_region", "") })
@@ -151,10 +155,9 @@ func main() {
 	// Books: Open Library (with a Google Books fallback) out of the box; Hardcover takes
 	// over the moment a key is in Settings, with Open Library still reachable on request.
 	olProvider := metadata.NewOpenLibrary()
-	openlib := metadata.NewBookSources(
-		metadata.NewHardcoverFunc(keyStore.Func("hardcover"), olProvider),
-		metadata.NewBooksWithFallback(olProvider, metadata.NewGoogleBooks()),
-	)
+	hardcover := metadata.NewHardcoverFunc(keyStore.Func("hardcover"), olProvider)
+	hardcover.SetDiskCache(diskCache)
+	openlib := metadata.NewBookSources(hardcover, metadata.NewBooksWithFallback(olProvider, metadata.NewGoogleBooks()))
 	qualitySvc := quality.NewService(st.DB())
 	notifySvc := notify.NewService(st.DB(), bus, log)
 	pushSvc := push.New(st.DB(), settingsSvc, log)
@@ -466,6 +469,29 @@ func main() {
 	// Keep the Convert library index current. Imports reindex just their own series, so
 	// this only catches changes made outside Arrmada; it ticks hourly but sweeps once a
 	// day at the admin-configured time (Settings → Convert).
+	// Warm the Discover rows (movies, TV and books) at startup and every six hours, so
+	// the page never waits on an upstream — the disk cache serves what's here while the
+	// refresh runs. Books rows go through Hardcover's one-a-second pacing, which is why
+	// this runs in the background rather than on first open.
+	sched.Register("discover-warm", 6*time.Hour, true, func(ctx context.Context) error {
+		if tmdb.Available() {
+			tmdb.WarmGenres(ctx) // genre names for the cards; loaded once, kept a day
+			_, _ = tmdb.Trending(ctx, "all")
+			for _, m := range []string{"movie", "series"} {
+				_, _ = tmdb.Popular(ctx, m)
+				_, _ = tmdb.Upcoming(ctx, m)
+				_, _ = tmdb.TopRated(ctx, m)
+				_, _ = tmdb.HiddenGems(ctx, m)
+			}
+			_, _ = tmdb.NowPlaying(ctx)
+			_, _ = tmdb.Anime(ctx)
+		}
+		for _, kind := range []string{metadata.BrowseTrending, metadata.BrowseNewReleases, metadata.BrowseTopRated, metadata.BrowsePopular} {
+			_, _ = booksSvc.Browse(ctx, kind)
+		}
+		_, _ = booksSvc.Recommended(ctx)
+		return nil
+	})
 	sched.Register("convert-index", time.Hour, false, func(ctx context.Context) error {
 		convertSvc.MaybeIndexSweep(ctx)
 		return nil

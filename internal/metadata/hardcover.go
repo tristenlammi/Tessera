@@ -45,6 +45,9 @@ func NewHardcoverFunc(key func() string, extraCovers *OpenLibrary) *Hardcover {
 		budget: newHCBudget(), cache: newHCCache()}
 }
 
+// SetDiskCache keeps answers across restarts (see DiskCache).
+func (h *Hardcover) SetDiskCache(c *DiskCache) { h.cache.disk = c }
+
 // Usage reports today's request count against the daily budget.
 func (h *Hardcover) Usage() (used, budget int) {
 	if h == nil || h.budget == nil {
@@ -392,7 +395,7 @@ func (h *Hardcover) Verify(ctx context.Context) (string, error) {
 // SearchBooks finds books by title/author/ISBN. Hardcover's index already folds
 // editions into their book, so one novel is one result.
 func (h *Hardcover) SearchBooks(ctx context.Context, query string) ([]BookResult, error) {
-	return cached(h.cache, "search:"+strings.ToLower(strings.TrimSpace(query)), hcTTLSearch, func() ([]BookResult, error) {
+	return cached(ctx, h.cache, "search:"+strings.ToLower(strings.TrimSpace(query)), hcTTLSearch, func(ctx context.Context) ([]BookResult, error) {
 		return h.searchBooksLive(ctx, query)
 	})
 }
@@ -419,7 +422,7 @@ func (h *Hardcover) GetBook(ctx context.Context, key string) (*BookDetails, erro
 	if !ok {
 		return nil, fmt.Errorf("hardcover: not a hardcover key: %q", key)
 	}
-	return cached(h.cache, "book:"+key, hcTTLBook, func() (*BookDetails, error) {
+	return cached(ctx, h.cache, "book:"+key, hcTTLBook, func(ctx context.Context) (*BookDetails, error) {
 		return h.getBookLive(ctx, id)
 	})
 }
@@ -548,7 +551,7 @@ func (h *Hardcover) Covers(ctx context.Context, key, title, author string) ([]st
 
 // SearchAuthors finds authors by name.
 func (h *Hardcover) SearchAuthors(ctx context.Context, query string) ([]AuthorResult, error) {
-	return cached(h.cache, "authors:"+strings.ToLower(strings.TrimSpace(query)), hcTTLSearch, func() ([]AuthorResult, error) {
+	return cached(ctx, h.cache, "authors:"+strings.ToLower(strings.TrimSpace(query)), hcTTLSearch, func(ctx context.Context) ([]AuthorResult, error) {
 		return h.searchAuthorsLive(ctx, query)
 	})
 }
@@ -579,7 +582,7 @@ func (h *Hardcover) AuthorWorks(ctx context.Context, authorKey string, limit int
 	if limit <= 0 || limit > 200 {
 		limit = 200
 	}
-	return cached(h.cache, fmt.Sprintf("works:%d:%d", id, limit), hcTTLList, func() ([]BookResult, error) {
+	return cached(ctx, h.cache, fmt.Sprintf("works:%d:%d", id, limit), hcTTLList, func(ctx context.Context) ([]BookResult, error) {
 		return h.authorWorksLive(ctx, id, limit)
 	})
 }
@@ -609,7 +612,7 @@ func (h *Hardcover) authorWorksLive(ctx context.Context, id, limit int) ([]BookR
 // TrendingBooks approximates "trending" as the most-shelved books released in the last
 // two years — Hardcover's own trending feed isn't part of the public schema.
 func (h *Hardcover) TrendingBooks(ctx context.Context) ([]BookResult, error) {
-	return cached(h.cache, "trending", hcTTLList, func() ([]BookResult, error) { return h.trendingLive(ctx) })
+	return cached(ctx, h.cache, "trending", hcTTLList, func(ctx context.Context) ([]BookResult, error) { return h.trendingLive(ctx) })
 }
 
 func (h *Hardcover) trendingLive(ctx context.Context) ([]BookResult, error) {
@@ -640,7 +643,7 @@ func (h *Hardcover) BooksBySubject(ctx context.Context, subject string, limit in
 	if limit <= 0 {
 		limit = hardcoverSearchMax
 	}
-	return cached(h.cache, fmt.Sprintf("subject:%s:%d", strings.ToLower(subject), limit), hcTTLList, func() ([]BookResult, error) {
+	return cached(ctx, h.cache, fmt.Sprintf("subject:%s:%d", strings.ToLower(subject), limit), hcTTLList, func(ctx context.Context) ([]BookResult, error) {
 		return h.subjectLive(ctx, subject, limit)
 	})
 }

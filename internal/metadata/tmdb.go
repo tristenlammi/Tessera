@@ -32,7 +32,15 @@ type TMDB struct {
 
 	discMu    sync.Mutex
 	discCache map[string]discoverCacheEntry // browse/search list cache (TTL-only)
+	disk      *DiskCache                    // survives restarts; stale served while refreshing
+
+	genreMu  sync.Mutex
+	genreMap map[int]string // genre id → name, for the cards
+	genreAt  time.Time
 }
+
+// SetDiskCache keeps browse lists across restarts (see DiskCache).
+func (t *TMDB) SetDiskCache(c *DiskCache) { t.disk = c }
 
 // NewTMDB builds a TMDB provider from a static key (env/config). Empty means unconfigured.
 func NewTMDB(apiKey string) *TMDB { return NewTMDBFunc(func() string { return apiKey }) }

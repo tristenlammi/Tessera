@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
@@ -95,10 +96,13 @@ func (b *hcBudget) usage() (used, budget int) {
 	return b.used, hcDailyBudget
 }
 
-// hcCache is a small TTL cache keyed by query kind + argument.
+// hcCache is a small TTL cache keyed by query kind + argument, in front of the disk
+// cache (when one is set) so an answer survives a restart and a stale one is served
+// while it refreshes.
 type hcCache struct {
 	mu      sync.Mutex
 	entries map[string]hcCacheEntry
+	disk    *DiskCache
 }
 
 type hcCacheEntry struct {
@@ -131,14 +135,15 @@ func (c *hcCache) put(key string, v any, ttl time.Duration) {
 	c.entries[key] = hcCacheEntry{expires: time.Now().Add(ttl), value: v}
 }
 
-// cached runs fetch unless a fresh answer for key is held. Errors are not cached.
-func cached[T any](c *hcCache, key string, ttl time.Duration, fetch func() (T, error)) (T, error) {
+// cached runs fetch unless a fresh answer for key is held in memory or on disk (a
+// stale disk answer is returned while fetch runs behind it). Errors are not cached.
+func cached[T any](ctx context.Context, c *hcCache, key string, ttl time.Duration, fetch func(ctx context.Context) (T, error)) (T, error) {
 	if v, ok := c.get(key); ok {
 		if t, ok := v.(T); ok {
 			return t, nil
 		}
 	}
-	t, err := fetch()
+	t, err := swr(ctx, c.disk, "hc:"+key, ttl, fetch)
 	if err != nil {
 		return t, err
 	}

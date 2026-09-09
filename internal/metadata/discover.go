@@ -13,15 +13,16 @@ import (
 // DiscoverItem is a unified movie/series card for the Discover experience. MediaType
 // is normalized to the app's convention ("movie" | "series"), not TMDB's "tv".
 type DiscoverItem struct {
-	MediaType   string  `json:"media_type"`
-	TMDBID      int     `json:"tmdb_id"`
-	Title       string  `json:"title"`
-	Year        int     `json:"year"`
-	Overview    string  `json:"overview,omitempty"`
-	PosterURL   string  `json:"poster_url,omitempty"`
-	BackdropURL string  `json:"backdrop_url,omitempty"`
-	VoteAverage float64 `json:"vote_average"`
-	ReleaseDate string  `json:"release_date,omitempty"`
+	MediaType   string   `json:"media_type"`
+	TMDBID      int      `json:"tmdb_id"`
+	Title       string   `json:"title"`
+	Year        int      `json:"year"`
+	Overview    string   `json:"overview,omitempty"`
+	PosterURL   string   `json:"poster_url,omitempty"`
+	BackdropURL string   `json:"backdrop_url,omitempty"`
+	VoteAverage float64  `json:"vote_average"`
+	ReleaseDate string   `json:"release_date,omitempty"`
+	Genres      []string `json:"genres,omitempty"` // up to three, for the card
 }
 
 // Genre is a TMDB genre (for the genre explorer).
@@ -414,7 +415,21 @@ type discoverCacheEntry struct {
 // cachedDiscoverList serves a discover list from the TTL cache, fetching (and caching)
 // on miss. Errors are returned uncached so a transient TMDB failure doesn't stick.
 func (t *TMDB) cachedDiscoverList(ctx context.Context, path string, q url.Values, defaultMedia string, ttl time.Duration, minVotes int, dropNoise bool) ([]DiscoverItem, error) {
+	return t.cachedDiscoverListN(ctx, path, q, defaultMedia, ttl, minVotes, dropNoise, 1)
+}
+
+// cachedDiscoverListN is cachedDiscoverList over the first `pages` pages of the list
+// (the browse rows dedupe against each other on the page, so one page of 20 leaves a
+// short strip). Memory first, then the disk cache — which also answers with a stale
+// list while a fresh one is fetched — then TMDB.
+func (t *TMDB) cachedDiscoverListN(ctx context.Context, path string, q url.Values, defaultMedia string, ttl time.Duration, minVotes int, dropNoise bool, pages int) ([]DiscoverItem, error) {
+	if pages < 1 {
+		pages = 1
+	}
 	key := path + "?" + q.Encode()
+	if pages > 1 {
+		key += "&pages=" + strconv.Itoa(pages)
+	}
 	now := time.Now()
 
 	t.discMu.Lock()
@@ -425,7 +440,9 @@ func (t *TMDB) cachedDiscoverList(ctx context.Context, path string, q url.Values
 	}
 	t.discMu.Unlock()
 
-	items, err := t.discoverList(ctx, path, q, defaultMedia, minVotes, dropNoise)
+	items, err := swr(ctx, t.disk, "tmdb:"+key, ttl, func(ctx context.Context) ([]DiscoverItem, error) {
+		return t.discoverListPages(ctx, path, q, defaultMedia, minVotes, dropNoise, pages)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -455,20 +472,51 @@ func (t *TMDB) cachedDiscoverList(ctx context.Context, path string, q url.Values
 }
 
 func (t *TMDB) discoverList(ctx context.Context, path string, q url.Values, defaultMedia string, minVotes int, dropNoise bool) ([]DiscoverItem, error) {
-	body, err := t.get(ctx, path, q)
-	if err != nil {
-		return nil, err
-	}
-	var payload struct {
-		Results []tmdbDiscoverItem `json:"results"`
-	}
-	if err := json.Unmarshal(body, &payload); err != nil {
-		return nil, err
-	}
-	out := make([]DiscoverItem, 0, len(payload.Results))
-	for _, r := range payload.Results {
-		if di, ok := r.toItem(defaultMedia, minVotes, dropNoise); ok {
+	return t.discoverListPages(ctx, path, q, defaultMedia, minVotes, dropNoise, 1)
+}
+
+// discoverListPages fetches pages 1..pages of a list and joins them (deduped by id),
+// attaching genre names to each card.
+func (t *TMDB) discoverListPages(ctx context.Context, path string, q url.Values, defaultMedia string, minVotes int, dropNoise bool, pages int) ([]DiscoverItem, error) {
+	names := t.genreNames(ctx)
+	seen := map[string]bool{}
+	var out []DiscoverItem
+	for page := 1; page <= pages; page++ {
+		pq := url.Values{}
+		for k, v := range q {
+			pq[k] = v
+		}
+		if page > 1 {
+			pq.Set("page", strconv.Itoa(page))
+		}
+		body, err := t.get(ctx, path, pq)
+		if err != nil {
+			if page > 1 && len(out) > 0 {
+				break // the first page is the row; a failed second page just makes it shorter
+			}
+			return nil, err
+		}
+		var payload struct {
+			Results []tmdbDiscoverItem `json:"results"`
+		}
+		if err := json.Unmarshal(body, &payload); err != nil {
+			return nil, err
+		}
+		for _, r := range payload.Results {
+			di, ok := r.toItem(defaultMedia, minVotes, dropNoise)
+			if !ok {
+				continue
+			}
+			k := di.MediaType + ":" + strconv.Itoa(di.TMDBID)
+			if seen[k] {
+				continue
+			}
+			seen[k] = true
+			di.Genres = genreLabels(r.GenreIDs, names)
 			out = append(out, di)
+		}
+		if len(payload.Results) < 20 {
+			break // last page
 		}
 	}
 	return out, nil
@@ -486,19 +534,19 @@ func (t *TMDB) Trending(ctx context.Context, media string) ([]DiscoverItem, erro
 	case tvish(media):
 		seg = "tv"
 	}
-	return t.cachedDiscoverList(ctx, "/trending/"+seg+"/week", url.Values{}, "", discoverListTTL, browseMinVotes, true)
+	return t.cachedDiscoverListN(ctx, "/trending/"+seg+"/week", url.Values{}, "", discoverListTTL, browseMinVotes, true, 2)
 }
 
 // Popular returns popular movies or series.
 func (t *TMDB) Popular(ctx context.Context, media string) ([]DiscoverItem, error) {
 	if tvish(media) {
-		return t.cachedDiscoverList(ctx, "/tv/popular", url.Values{}, "tv", discoverListTTL, browseMinVotes, true)
+		return t.cachedDiscoverListN(ctx, "/tv/popular", url.Values{}, "tv", discoverListTTL, browseMinVotes, true, 2)
 	}
 	q := url.Values{}
 	if r := t.regionCode(); r != "" {
 		q.Set("region", r)
 	}
-	return t.cachedDiscoverList(ctx, "/movie/popular", q, "movie", discoverListTTL, browseMinVotes, true)
+	return t.cachedDiscoverListN(ctx, "/movie/popular", q, "movie", discoverListTTL, browseMinVotes, true, 2)
 }
 
 // Upcoming returns titles airing/releasing soon (for requesting future titles). For

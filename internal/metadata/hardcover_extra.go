@@ -42,7 +42,7 @@ func (h *Hardcover) SeriesBooks(ctx context.Context, seriesKey string) (*SeriesI
 	if !ok {
 		return nil, ErrNotSupported
 	}
-	return cached(h.cache, "series:"+seriesKey, hcTTLList, func() (*SeriesInfo, error) {
+	return cached(ctx, h.cache, "series:"+seriesKey, hcTTLList, func(ctx context.Context) (*SeriesInfo, error) {
 		info, err := h.seriesLive(ctx, id, true)
 		if err != nil && ctx.Err() == nil && !errors.Is(err, ErrHardcoverBudget) {
 			// The compilation filter sits on the join row per the docs; if this build
@@ -108,7 +108,7 @@ func (h *Hardcover) AuthorDetail(ctx context.Context, key string) (*AuthorResult
 	if !ok || !strings.HasPrefix(key, hcAuthorPrefix) {
 		return nil, ErrNotSupported
 	}
-	return cached(h.cache, "author:"+key, hcTTLAuthor, func() (*AuthorResult, error) {
+	return cached(ctx, h.cache, "author:"+key, hcTTLAuthor, func(ctx context.Context) (*AuthorResult, error) {
 		const q = `query($id: Int!) {
   authors(where: {id: {_eq: $id}}, limit: 1) { id name bio books_count born_year death_year image { url } }
 }`
@@ -150,7 +150,7 @@ func (h *Hardcover) SimilarBooks(ctx context.Context, key string) ([]BookResult,
 	if !ok {
 		return nil, ErrNotSupported
 	}
-	return cached(h.cache, "similar:"+key, hcTTLSimilar, func() ([]BookResult, error) {
+	return cached(ctx, h.cache, "similar:"+key, hcTTLSimilar, func(ctx context.Context) ([]BookResult, error) {
 		var data struct {
 			Books []struct {
 				IDs json.RawMessage `json:"cached_similar_book_ids"`
@@ -214,7 +214,7 @@ func (h *Hardcover) BookByISBN(ctx context.Context, isbn string) (*BookResult, e
 	if isbn == "" {
 		return nil, fmt.Errorf("not an ISBN")
 	}
-	return cached(h.cache, "isbn:"+isbn, hcTTLBook, func() (*BookResult, error) {
+	return cached(ctx, h.cache, "isbn:"+isbn, hcTTLBook, func(ctx context.Context) (*BookResult, error) {
 		const q = `query($i: String!) {
   editions(where: {_or: [{isbn_13: {_eq: $i}}, {isbn_10: {_eq: $i}}]}, limit: 1) { book { ` + hcBookFields + ` } }
 }`

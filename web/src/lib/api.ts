@@ -477,11 +477,14 @@ export interface DiscoverCard {
   backdrop_url?: string;
   vote_average: number;
   release_date?: string;
+  genres?: string[]; // up to three
   in_library: boolean;
   has_file: boolean;
   request_status?: "pending" | "approved" | "declined";
   download_progress?: number; // 0..1 while downloading
 }
+export interface WatchProvider { id: number; name: string; logo_url?: string }
+export interface DiscoverRow { title: string; seed: string; items: DiscoverCard[] }
 
 export interface Genre {
   id: number;
@@ -1144,6 +1147,14 @@ export const api = {
     req<{ items: DiscoverCard[] }>(`/api/v1/discover/upcoming${media ? `?media=${media}` : ""}`).then((r) => r.items),
   discoverRecommended: () =>
     req<{ items: DiscoverCard[] }>(`/api/v1/discover/recommended`).then((r) => r.items),
+  discoverRow: (kind: "now_playing" | "top_rated" | "anime" | "hidden_gems" | "region", media?: string) =>
+    req<{ items: DiscoverCard[] }>(`/api/v1/discover/rows/${kind}${media ? `?media=${media}` : ""}`).then((r) => r.items),
+  discoverProviders: (media: string) =>
+    req<{ providers: WatchProvider[] }>(`/api/v1/discover/providers?media=${media}`).then((r) => r.providers),
+  discoverProviderNew: (media: string, id: number) =>
+    req<{ items: DiscoverCard[] }>(`/api/v1/discover/provider?media=${media}&id=${id}`).then((r) => r.items),
+  discoverBecause: () => req<{ rows: DiscoverRow[] }>(`/api/v1/discover/because`).then((r) => r.rows),
+  discoverCollections: () => req<{ items: DiscoverCard[] }>(`/api/v1/discover/collections`).then((r) => r.items),
   discoverByGenre: (media: string, genre: number) =>
     req<{ items: DiscoverCard[] }>(`/api/v1/discover?media=${media}&genre=${genre}`).then((r) => r.items),
   discoverGenres: (media: string) =>

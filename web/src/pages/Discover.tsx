@@ -4,7 +4,7 @@ import { PageHeader } from "../components/PageHeader";
 import { NotificationBell } from "../components/NotificationBell";
 import { BooksDiscover } from "./BooksDiscover";
 import { useMe, isStaff } from "../lib/me";
-import { api, type DiscoverCard, type Genre, type MediaDetail, type MediaRequest } from "../lib/api";
+import { api, type DiscoverRow, type WatchProvider, type DiscoverCard, type Genre, type MediaDetail, type MediaRequest } from "../lib/api";
 import { posterThumb } from "../lib/img";
 
 type Tab = "discover" | "movies" | "series" | "books";
@@ -395,11 +395,16 @@ function DiscoverTab({ ctx }: { ctx: RowCtx }) {
             no skeleton) when the backend returns nothing to recommend, or on error. At
             order 0 it claims the top slot so the rows below dedupe against it. */}
         <PosterRow order={0} hideUntilLoaded hideOnError title="Recommended for you" load={() => api.discoverRecommended()} ctx={ctx} />
+        <BecauseRows ctx={ctx} firstOrder={1} />
         <MyRequestsRow flash={ctx.flash} />
-        <PosterRow order={1} title="Trending this week" load={() => api.discoverTrending("all")} ctx={ctx} />
-        <PosterRow order={2} title="Popular movies" load={() => api.discoverPopular("movie")} ctx={ctx} />
-        <PosterRow order={3} title="Popular series" load={() => api.discoverPopular("series")} ctx={ctx} />
-        <PosterRow order={4} excludeOwned title="Upcoming — request ahead" load={() => api.discoverUpcoming()} ctx={ctx} />
+        <PosterRow order={3} title="Trending this week" load={() => api.discoverTrending("all")} ctx={ctx} />
+        <PosterRow order={4} title="Popular movies" load={() => api.discoverPopular("movie")} ctx={ctx} />
+        <PosterRow order={5} title="Popular series" load={() => api.discoverPopular("series")} ctx={ctx} />
+        <PosterRow order={6} hideOnError title="In cinemas now" load={() => api.discoverRow("now_playing")} ctx={ctx} />
+        <StreamingRow media="movie" switchable ctx={ctx} />
+        <PosterRow order={7} hideUntilLoaded hideOnError excludeOwned title="Finish your collections" load={() => api.discoverCollections()} ctx={ctx} />
+        <PosterRow order={8} hideOnError title="Hidden gems" load={() => api.discoverRow("hidden_gems", "movie")} ctx={ctx} />
+        <PosterRow order={9} excludeOwned title="Upcoming — request ahead" load={() => api.discoverUpcoming()} ctx={ctx} />
         <GenreExplorer media="movie" switchable ctx={ctx} />
       </div>
     </RowRegistryCtx.Provider>
@@ -629,6 +634,77 @@ function RequestPoster({ rq, staff, own, onChanged, flash }: { rq: MediaRequest;
   );
 }
 
+// BecauseRows are the per-title strips ("Because you watched Silo"): the viewer's two
+// most recent titles, each with its own recommendations. Nothing renders until the
+// rows arrive, and none when there's no history to build them from.
+function BecauseRows({ ctx, firstOrder }: { ctx: RowCtx; firstOrder: number }) {
+  const [rows, setRows] = useState<DiscoverRow[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api.discoverBecause().then((r) => { if (alive) setRows(r); }).catch(() => { if (alive) setRows([]); });
+    return () => { alive = false; };
+  }, []);
+  if (!rows || rows.length === 0) return null;
+  return (
+    <>
+      {rows.map((r, i) => (
+        <PosterRow key={r.seed} order={firstOrder + i} title={r.title} load={() => Promise.resolve(r.items)} ctx={ctx} />
+      ))}
+    </>
+  );
+}
+
+// StreamingRow: "New on <service>", one strip with a chip per streaming service in the
+// region (from TMDB's provider list). One request per chip, cached like every row.
+function StreamingRow({ media, switchable, ctx }: { media: "movie" | "series"; switchable?: boolean; ctx: RowCtx }) {
+  const [m, setM] = useState<"movie" | "series">(media);
+  const [providers, setProviders] = useState<WatchProvider[] | null>(null);
+  const [active, setActive] = useState<WatchProvider | null>(null);
+  useEffect(() => { setM(media); }, [media]);
+  useEffect(() => {
+    let alive = true;
+    setProviders(null); setActive(null);
+    api.discoverProviders(m).then((p) => { if (alive) { setProviders(p); setActive(p[0] ?? null); } }).catch(() => { if (alive) setProviders([]); });
+    return () => { alive = false; };
+  }, [m]);
+  if (providers && providers.length === 0) return null;
+  return (
+    <div>
+      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="m-0 text-[15px] font-bold">New on streaming</h2>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {switchable && (
+            <div className="mr-2 flex gap-1">
+              {(["movie", "series"] as const).map((k) => {
+                const on = m === k;
+                return (
+                  <button key={k} onClick={() => setM(k)} className="rounded-full px-3 py-1 text-[12px] font-semibold" style={{ border: `1px solid ${on ? "var(--accent)" : "var(--line)"}`, background: on ? "var(--accent-soft)" : "var(--panel)", color: on ? "var(--accent)" : "var(--ink-faint)" }}>
+                    {k === "movie" ? "Movies" : "Series"}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {(providers ?? []).map((p) => {
+            const on = active?.id === p.id;
+            return (
+              <button key={p.id} onClick={() => setActive(p)} title={p.name} className="flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2.5 text-[12px] font-semibold" style={{ border: `1px solid ${on ? "var(--accent)" : "var(--line)"}`, background: on ? "var(--accent-soft)" : "var(--panel)", color: on ? "var(--accent)" : "var(--ink-faint)" }}>
+                {p.logo_url ? <img src={p.logo_url} alt="" className="h-5 w-5 rounded-md" /> : null}
+                <span>{p.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      {active ? (
+        <PosterRow key={`${m}:${active.id}`} hideOnError title="" load={() => api.discoverProviderNew(m, active.id)} ctx={ctx} />
+      ) : (
+        <div className="flex gap-3 overflow-hidden pb-2">{Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}</div>
+      )}
+    </div>
+  );
+}
+
 function BrowseTab({ media, ctx }: { media: "movie" | "series"; ctx: RowCtx }) {
   // Keyed on media so Movies and Series each dedupe against their own rows only.
   const registry = useMemo(createRowRegistry, [media]);
@@ -637,12 +713,21 @@ function BrowseTab({ media, ctx }: { media: "movie" | "series"; ctx: RowCtx }) {
       <div key={media} className="flex flex-col gap-7">
         <PosterRow order={0} title={`Trending ${media === "movie" ? "movies" : "series"}`} load={() => api.discoverTrending(media)} ctx={ctx} />
         <PosterRow order={1} title={`Popular ${media === "movie" ? "movies" : "series"}`} load={() => api.discoverPopular(media)} ctx={ctx} />
+        <PosterRow order={2} hideOnError title={`Top rated ${media === "movie" ? "movies" : "series"}`} load={() => api.discoverRow("top_rated", media)} ctx={ctx} />
         {media === "movie" ? (
-          <PosterRow order={2} excludeOwned title="Upcoming — request ahead" load={() => api.discoverUpcoming()} ctx={ctx} />
+          <PosterRow order={3} hideOnError title="In cinemas now" load={() => api.discoverRow("now_playing")} ctx={ctx} />
+        ) : (
+          <PosterRow order={3} hideOnError title="Anime" load={() => api.discoverRow("anime")} ctx={ctx} />
+        )}
+        <StreamingRow media={media} ctx={ctx} />
+        <PosterRow order={4} hideOnError title="Hidden gems" load={() => api.discoverRow("hidden_gems", media)} ctx={ctx} />
+        <PosterRow order={5} hideUntilLoaded hideOnError title="From your region" load={() => api.discoverRow("region", media)} ctx={ctx} />
+        {media === "movie" ? (
+          <PosterRow order={6} excludeOwned title="Upcoming — request ahead" load={() => api.discoverUpcoming()} ctx={ctx} />
         ) : (
           // Series upcoming ships behind a backend change; if it isn't live the row
           // hides itself rather than showing an error on an otherwise healthy tab.
-          <PosterRow order={2} excludeOwned hideOnError title="Airing soon" load={() => api.discoverUpcoming("series")} ctx={ctx} />
+          <PosterRow order={6} excludeOwned hideOnError title="Airing soon" load={() => api.discoverUpcoming("series")} ctx={ctx} />
         )}
         <GenreExplorer media={media} ctx={ctx} />
       </div>
@@ -775,7 +860,7 @@ function PosterRow({ title, load, ctx, order, excludeOwned, hideOnError, hideUnt
   return (
     <div>
       <div className="mb-2.5 flex items-center justify-between">
-        <h2 className="m-0 text-[15px] font-bold">{title}</h2>
+        {title ? <h2 className="m-0 text-[15px] font-bold">{title}</h2> : <span />}
         {items && items.length > 0 && (
           <div className="flex gap-1">
             <ArrowBtn dir={-1} onClick={() => scroll(-1)} />
@@ -970,6 +1055,9 @@ function MediaCard({ c, ctx, full }: { c: DiscoverCard; ctx: RowCtx; full?: bool
           <span>{c.year || "—"}</span>
           {c.vote_average > 0 && <><span>·</span><span style={{ color: "var(--accent)" }}>★ {c.vote_average.toFixed(1)}</span></>}
         </div>
+        {c.genres && c.genres.length > 0 && (
+          <div className="mt-0.5 truncate text-[10px]" style={{ color: "var(--ink-faint)" }} title={c.genres.join(" · ")}>{c.genres.slice(0, 2).join(" · ")}</div>
+        )}
       </div>
       {open && <RequestDetailModal card={c} ctx={ctx} onClose={() => setOpen(false)} />}
     </div>
