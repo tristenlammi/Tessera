@@ -106,6 +106,8 @@ if [ ! -f .env ]; then
     say "# Movie/TV metadata (required for Movies & TV). Free: https://www.themoviedb.org/settings/api"
     say "ARRMADA_TMDB_API_KEY=$KEY"
     say "ARRMADA_OMDB_API_KEY="
+    say "# Books: optional Hardcover key (hardcover.app → Settings → Hardcover API). Without it Open Library is used."
+    say "ARRMADA_HARDCOVER_API_KEY="
     say ""
     say "# Host ports (auto-picked free at install so nothing clashes with your other apps)."
     say "ARRMADA_PORT=$WEBPORT"

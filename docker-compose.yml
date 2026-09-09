@@ -60,6 +60,7 @@ services:
       # Movie/TV metadata. Get a free v3 API key from https://www.themoviedb.org/settings/api
       ARRMADA_TMDB_API_KEY: "${ARRMADA_TMDB_API_KEY:-}"
       ARRMADA_OMDB_API_KEY: "${ARRMADA_OMDB_API_KEY:-}"
+      ARRMADA_HARDCOVER_API_KEY: "${ARRMADA_HARDCOVER_API_KEY:-}"
       # Incoming BitTorrent port — Arrmada applies this inside qBittorrent so it
       # matches the published port above. Same source (.env) as the ports block.
       ARRMADA_QBIT_PORT: "${ARRMADA_QBIT_PORT:-6881}"

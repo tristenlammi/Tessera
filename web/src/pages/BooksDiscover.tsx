@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, type BookAuthor, type BookDiscoverCard, type BookMeta } from "../lib/api";
+import { api, type BookSource, type BookAuthor, type BookDiscoverCard, type BookMeta } from "../lib/api";
 
 // BooksDiscover is the Books area of Discover — deliberately separate from the movie/TV
 // experience: its own search (titles + authors), Open Library browse rows, author
@@ -127,14 +127,26 @@ function SearchView({ query, ctx, onPickAuthor }: { query: string; ctx: BookCtx;
   const [authors, setAuthors] = useState<BookAuthor[] | null>(null);
   const [books, setBooks] = useState<BookDiscoverCard[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Which catalogue answered, and the optional second opinion from Open Library when
+  // Hardcover is primary (it hasn't got everything, and you may know the title is there).
+  const [source, setSource] = useState<BookSource>("openlibrary");
+  const [olBooks, setOlBooks] = useState<BookDiscoverCard[] | null | "loading">(null);
   useEffect(() => {
     let alive = true;
-    setAuthors(null); setBooks(null); setError(null);
+    setAuthors(null); setBooks(null); setError(null); setOlBooks(null);
     api.bookDiscoverSearch(query)
-      .then((r) => { if (alive) { setAuthors(r.authors); setBooks(r.books); } })
+      .then((r) => { if (alive) { setAuthors(r.authors); setBooks(r.books); setSource(r.source); } })
       .catch((e) => { if (alive) { setAuthors([]); setBooks([]); setError((e as Error).message); } });
     return () => { alive = false; };
   }, [query]);
+  const showOpenLibrary = async () => {
+    setOlBooks("loading");
+    try {
+      const r = await api.bookDiscoverSearch(query, "openlibrary");
+      const seen = new Set((books ?? []).map((b) => b.key));
+      setOlBooks(r.books.filter((b) => !seen.has(b.key)));
+    } catch { setOlBooks([]); }
+  };
 
   return (
     <div className="flex flex-col gap-7">
@@ -147,10 +159,25 @@ function SearchView({ query, ctx, onPickAuthor }: { query: string; ctx: BookCtx;
         </div>
       )}
       <div>
-        <h2 className="m-0 mb-3 text-[15px] font-bold">Books {books && !error && <span className="font-normal text-ink-faint">· {books.length}</span>}</h2>
+        <div className="mb-3 flex items-center gap-3">
+          <h2 className="m-0 text-[15px] font-bold">Books {books && !error && <span className="font-normal text-ink-faint">· {books.length}</span>}</h2>
+          <div className="flex-1" />
+          {source === "hardcover" && books && olBooks === null && (
+            <button type="button" onClick={showOpenLibrary} className="text-[11.5px] font-semibold underline-offset-2 hover:underline" style={{ color: "var(--ink-dim)" }}>
+              Show Open Library results too
+            </button>
+          )}
+          {source === "hardcover" && books && <span className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">via Hardcover</span>}
+        </div>
         {/* A failed search is an error, not "no books match". */}
         <BookGrid books={books} ctx={ctx} error={error} emptyLabel={`No books match “${query}”.`} />
       </div>
+      {olBooks !== null && (
+        <div>
+          <h2 className="m-0 mb-3 text-[15px] font-bold">Open Library {Array.isArray(olBooks) && <span className="font-normal text-ink-faint">· {olBooks.length}</span>}</h2>
+          <BookGrid books={olBooks === "loading" ? null : olBooks} ctx={ctx} error={null} emptyLabel="Open Library has nothing more for this search." />
+        </div>
+      )}
     </div>
   );
 }

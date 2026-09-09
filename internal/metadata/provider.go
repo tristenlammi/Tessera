@@ -222,6 +222,10 @@ type BookDetails struct {
 	Description string   `json:"description,omitempty"`
 	Subjects    []string `json:"subjects,omitempty"`
 	Pages       int      `json:"pages,omitempty"`
+	// Series membership, when the catalogue knows it (Hardcover does; Open Library
+	// doesn't). Position 0 = in the series, number unknown.
+	SeriesName     string  `json:"series_name,omitempty"`
+	SeriesPosition float64 `json:"series_position,omitempty"`
 }
 
 // AuthorResult is a lightweight author search hit (Open Library author).

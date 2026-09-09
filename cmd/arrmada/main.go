@@ -148,8 +148,13 @@ func main() {
 	// lists. Read lazily like the key, so changing it needs no restart.
 	tmdb.SetRegionFunc(func() string { return settingsSvc.Get(context.Background(), "tmdb_region", "") })
 	omdb := metadata.NewOMDbFunc(keyStore.Func("omdb"))
-	// Open Library primary, Google Books fallback — a book/author OL can't resolve still gets found.
-	openlib := metadata.NewBooksWithFallback(metadata.NewOpenLibrary(), metadata.NewGoogleBooks())
+	// Books: Open Library (with a Google Books fallback) out of the box; Hardcover takes
+	// over the moment a key is in Settings, with Open Library still reachable on request.
+	olProvider := metadata.NewOpenLibrary()
+	openlib := metadata.NewBookSources(
+		metadata.NewHardcoverFunc(keyStore.Func("hardcover"), olProvider),
+		metadata.NewBooksWithFallback(olProvider, metadata.NewGoogleBooks()),
+	)
 	qualitySvc := quality.NewService(st.DB())
 	notifySvc := notify.NewService(st.DB(), bus, log)
 	pushSvc := push.New(st.DB(), settingsSvc, log)
@@ -168,6 +173,16 @@ func main() {
 	seriesSvc := series.NewService(st.DB(), tvSeries, cfg.TVDir, log)
 	seriesSvc.SetSceneMapper(xem.New(cfg.FlaresolverrURL, log)) // TheXEM scene mapping (via FlareSolverr past Cloudflare)
 	booksSvc := books.NewService(st.DB(), openlib, log)
+	// Fold any duplicate book rows (the same title under several catalogue keys) into
+	// one, once at startup. Cheap on a home library, and it's what makes the new
+	// title-and-author check meaningful for what's already there.
+	go func() {
+		if n, err := booksSvc.MergeDuplicates(context.Background()); err != nil {
+			log.Warn("books: duplicate merge failed", "err", err)
+		} else if n > 0 {
+			log.Info("books: merged duplicate entries", "removed", n)
+		}
+	}()
 	// MusicBrainz needs no key, the way Open Library needs none for books.
 	musicSvc := music.NewService(st.DB(), metadata.NewMusicBrainz(), log)
 	// Recycle bin: default to <library>/.recycle so deletes are undoable; "off" hard-deletes.

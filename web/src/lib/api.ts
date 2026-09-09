@@ -621,6 +621,7 @@ export interface Series {
   stats?: SeriesStats;
 }
 // --- Books ---
+export type BookSource = "openlibrary" | "hardcover";
 export interface BookLookup {
   key: string;
   title: string;
@@ -1155,8 +1156,11 @@ export const api = {
 
   // Books
   books: () => req<{ books: Book[]; metadata_available: boolean }>("/api/v1/books"),
-  lookupBooks: (q: string) =>
-    req<{ results: BookLookup[] }>(`/api/v1/books/lookup?q=${encodeURIComponent(q)}`).then((r) => r.results),
+  // source: "openlibrary" asks Open Library explicitly ("show Open Library results too");
+  // the response says which catalogue the default search uses.
+  lookupBooks: (q: string, source?: "openlibrary" | "hardcover") =>
+    req<{ results: BookLookup[]; source: BookSource }>(`/api/v1/books/lookup?q=${encodeURIComponent(q)}${source ? `&source=${source}` : ""}`),
+  mergeBookDuplicates: () => req<{ merged: number }>("/api/v1/books/dedupe", { method: "POST" }),
   addBook: (body: { ol_key: string; quality_profile?: string; monitored?: boolean; search_on_add?: boolean; title?: string; author?: string; year?: number; cover_url?: string }) =>
     req<Book>("/api/v1/books", { method: "POST", body: JSON.stringify(body) }),
   bookDetail: (id: number) => req<Book>(`/api/v1/books/${id}`),
@@ -1184,8 +1188,8 @@ export const api = {
   // Books Discover
   bookDiscoverTrending: () =>
     req<{ books: BookDiscoverCard[] }>("/api/v1/books/discover/trending").then((r) => r.books),
-  bookDiscoverSearch: (q: string) =>
-    req<{ authors: BookAuthor[]; books: BookDiscoverCard[] }>(`/api/v1/books/discover/search?q=${encodeURIComponent(q)}`),
+  bookDiscoverSearch: (q: string, source?: "openlibrary" | "hardcover") =>
+    req<{ authors: BookAuthor[]; books: BookDiscoverCard[]; source: BookSource }>(`/api/v1/books/discover/search?q=${encodeURIComponent(q)}${source ? `&source=${source}` : ""}`),
   searchBookAuthors: (q: string) =>
     req<{ authors: BookAuthor[] }>(`/api/v1/books/discover/authors?q=${encodeURIComponent(q)}`).then((r) => r.authors),
   addAuthor: (body: { author_key: string; quality_profile?: string; monitored?: boolean; search_on_add?: boolean }) =>

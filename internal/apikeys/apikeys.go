@@ -49,6 +49,11 @@ var Catalog = []Key{
 		Steps: "Request a free key; it arrives by email and needs one click to activate.",
 	},
 	{
+		ID: "hardcover", Label: "Hardcover", Purpose: "Book metadata. Optional — Books use Open Library without it; with it, Hardcover's curated catalogue (one entry per book, no duplicate editions) takes over and Open Library stays a click away.",
+		HelpURL: "https://hardcover.app/account/api", EnvVar: "ARRMADA_HARDCOVER_API_KEY", Secret: true,
+		Steps: "Free account, then Settings → Hardcover API → New API Key. Paste the token as given (with or without the leading \"Bearer\"). Tokens expire on the date you pick when creating them — regenerate if books stop resolving.",
+	},
+	{
 		ID: "opensubtitles_api", Label: "OpenSubtitles API key", Purpose: "Subtitle search. Optional.",
 		HelpURL: "https://www.opensubtitles.com/en/consumers", EnvVar: "ARRMADA_OPENSUBTITLES_API_KEY", Secret: true,
 		Steps: "Register a consumer under your account to get an API key. Downloading also needs the username and password below.",

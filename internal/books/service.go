@@ -26,9 +26,32 @@ func NewService(db *sql.DB, meta metadata.BookProvider, log *slog.Logger) *Servi
 // MetadataAvailable reports whether the book provider is usable (Open Library always is).
 func (s *Service) MetadataAvailable() bool { return s.meta.Available() }
 
-// Lookup searches Open Library for books to add.
+// Lookup searches the current catalogue for books to add.
 func (s *Service) Lookup(ctx context.Context, query string) ([]metadata.BookResult, error) {
 	return s.meta.SearchBooks(ctx, query)
+}
+
+// sourceLookup is what a provider that can be asked for a specific catalogue offers.
+type sourceLookup interface {
+	SearchBooksFrom(ctx context.Context, source, query string) ([]metadata.BookResult, error)
+	Source() string
+}
+
+// LookupFrom searches a named catalogue ("openlibrary" / "hardcover") when the provider
+// can, else the usual one — the "show Open Library results too" button.
+func (s *Service) LookupFrom(ctx context.Context, query, source string) ([]metadata.BookResult, error) {
+	if sl, ok := s.meta.(sourceLookup); ok && source != "" {
+		return sl.SearchBooksFrom(ctx, source, query)
+	}
+	return s.Lookup(ctx, query)
+}
+
+// MetadataSource names the catalogue searches currently go to.
+func (s *Service) MetadataSource() string {
+	if sl, ok := s.meta.(sourceLookup); ok {
+		return sl.Source()
+	}
+	return metadata.SourceOpenLibrary
 }
 
 // SearchAuthors finds authors by name (Discover).
@@ -79,9 +102,25 @@ func (s *Service) Add(ctx context.Context, olKey, qualityProfile string, monitor
 	if b.Year == 0 {
 		b.Year = fallback.Year
 	}
+	// The same book under another catalogue's key is the same book. Hand back the
+	// existing row with ErrExists so callers that just want "the library's copy" (the
+	// disk scan, a request) can use it.
+	if existing, ok := s.findDuplicate(ctx, b.Title, b.Author); ok {
+		return existing, ErrExists
+	}
 	created, err := s.repo.Create(ctx, b)
+	if errors.Is(err, ErrExists) {
+		if existing, ok := s.findByKey(ctx, b.OLKey); ok {
+			return existing, ErrExists
+		}
+		return Book{}, err
+	}
 	if err != nil {
 		return Book{}, err
+	}
+	if d.SeriesName != "" {
+		_ = s.repo.SetSeries(ctx, created.ID, d.SeriesName, d.SeriesPosition)
+		created.SeriesName, created.SeriesPosition = d.SeriesName, d.SeriesPosition
 	}
 	s.log.Info("book added", "title", created.Title, "author", created.Author)
 	s.repo.AddEvent(ctx, created.ID, "added", "Added to library")
@@ -120,8 +159,21 @@ func (s *Service) OverrideMetadata(ctx context.Context, id int64, title, author 
 func (s *Service) AddWorks(ctx context.Context, works []metadata.BookResult, profile string, monitored bool) ([]Book, int) {
 	var added []Book
 	skipped := 0
+	// One pass over the library for the title-and-author check, then each incoming
+	// work is checked against the library AND the works already taken from this list:
+	// an author's catalogue routinely lists the same novel several times.
+	have := map[string]bool{}
+	if list, err := s.repo.List(ctx); err == nil {
+		for _, b := range list {
+			have[DedupeKey(b.Title, b.Author)] = true
+		}
+	}
 	for _, wk := range works {
 		if wk.Key == "" || wk.Title == "" {
+			continue
+		}
+		if k := DedupeKey(wk.Title, wk.Author); k != "" && have[k] {
+			skipped++
 			continue
 		}
 		created, err := s.repo.Create(ctx, Book{
@@ -136,6 +188,7 @@ func (s *Service) AddWorks(ctx context.Context, works []metadata.BookResult, pro
 			s.log.Warn("add author: create failed", "title", wk.Title, "err", err)
 			continue
 		}
+		have[DedupeKey(created.Title, created.Author)] = true
 		s.repo.AddEvent(ctx, created.ID, "added", "Added from the author's catalogue")
 		added = append(added, created)
 	}

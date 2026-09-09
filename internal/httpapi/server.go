@@ -334,6 +334,7 @@ func New(d Deps) *http.Server {
 	// Books (Readarr replacement — Open Library metadata + ebook acquisition).
 	mux.HandleFunc("GET "+base+"/api/v1/books", a.protected(a.handleListBooks))
 	mux.HandleFunc("GET "+base+"/api/v1/books/lookup", a.protected(a.handleLookupBooks))
+	mux.HandleFunc("POST "+base+"/api/v1/books/dedupe", a.requireRole(auth.RoleManager, a.handleMergeBookDuplicates))
 	mux.HandleFunc("POST "+base+"/api/v1/books/scan", a.requireRole(auth.RoleManager, a.handleScanBookLibrary))
 	mux.HandleFunc("POST "+base+"/api/v1/books/author", a.requireRole(auth.RoleManager, a.handleAddAuthor))
 	mux.HandleFunc("POST "+base+"/api/v1/books", a.requireRole(auth.RoleManager, a.handleAddBook))

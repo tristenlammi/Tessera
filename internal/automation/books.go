@@ -2,6 +2,7 @@ package automation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -1218,6 +1219,18 @@ func (c *Coordinator) ScanBookLibrary(ctx context.Context, ebookRoot, audiobookR
 		}
 		profile := c.bookProfileFor(ctx, hasE, hasA)
 		added, err := c.books.Add(ctx, p.match.Key, profile, false, p.match)
+		if errors.Is(err, books.ErrExists) && added.ID > 0 {
+			// Same book, different catalogue key: file the editions under the existing row.
+			if hasE && added.Ebook == nil {
+				c.recordEdition(ctx, added.ID, books.KindEbook, p.ebooks)
+			}
+			if hasA && added.Audiobook == nil {
+				c.recordEdition(ctx, added.ID, books.KindAudiobook, p.audio)
+			}
+			res.Imported++
+			c.log.Info("book scan: matched an existing book under another catalogue key", "title", added.Title, "key", p.match.Key)
+			continue
+		}
 		if err != nil {
 			res.Unmatched = append(res.Unmatched, p.match.Title)
 			continue

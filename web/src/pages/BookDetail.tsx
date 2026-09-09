@@ -4,7 +4,7 @@ import { PageHeader } from "../components/PageHeader";
 import { BookReleaseModal } from "../components/BookReleaseModal";
 import { UploadTorrentModal } from "../components/UploadTorrentModal";
 import { FileDetailsModal } from "../components/FileDetailsModal";
-import { api, type Book, type BookFile, type BookFileEntry, type BookImportCandidate, type BookLookup, type BookSeries, type MovieEvent } from "../lib/api";
+import { api, type BookSource, type Book, type BookFile, type BookFileEntry, type BookImportCandidate, type BookLookup, type BookSeries, type MovieEvent } from "../lib/api";
 
 function fmtSize(bytes?: number): string {
   if (!bytes || bytes <= 0) return "";
@@ -560,14 +560,23 @@ function RematchModal({ book, onClose, onMatched }: { book: Book; onClose: () =>
   const [error, setError] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
+  const [source, setSource] = useState<BookSource>("openlibrary");
+  const [olResults, setOlResults] = useState<BookLookup[] | null>(null);
 
   const search = useCallback(async (q: string) => {
     if (!q.trim()) return;
-    setSearching(true); setError(null);
-    try { setResults(await api.lookupBooks(q.trim())); }
+    setSearching(true); setError(null); setOlResults(null);
+    try { const r = await api.lookupBooks(q.trim()); setResults(r.results); setSource(r.source); }
     catch (e) { setError((e as Error).message); setResults([]); }
     finally { setSearching(false); }
   }, []);
+  const searchOpenLibrary = async () => {
+    try {
+      const r = await api.lookupBooks(query.trim(), "openlibrary");
+      const seen = new Set((results ?? []).map((x) => x.key));
+      setOlResults(r.results.filter((x) => !seen.has(x.key)));
+    } catch (e) { setError((e as Error).message); }
+  };
 
   // Seed with the book's current title so the right work is usually one click away.
   useEffect(() => { void search(`${book.title} ${book.author}`.trim()); }, [book.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -588,10 +597,10 @@ function RematchModal({ book, onClose, onMatched }: { book: Book; onClose: () =>
           <h2 className="m-0 text-[15px] font-bold">Change match — {book.title}</h2>
           <button onClick={onClose} className="text-ink-faint hover:text-[var(--ink)]">✕</button>
         </div>
-        <p className="mb-3 text-[12px] text-ink-dim">Pick the correct Open Library work. Your files, monitoring and quality profile are kept — only the metadata changes.</p>
+        <p className="mb-3 text-[12px] text-ink-dim">Pick the correct catalogue entry. Your files, monitoring and quality profile are kept — only the metadata changes.</p>
 
         <form className="mb-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); void search(query); }}>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search Open Library…" className="flex-1 rounded-lg px-3 py-2 text-[13px]" style={{ background: "var(--panel-2)", border: "1px solid var(--line)", color: "var(--ink)" }} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={source === "hardcover" ? "Search Hardcover…" : "Search Open Library…"} className="flex-1 rounded-lg px-3 py-2 text-[13px]" style={{ background: "var(--panel-2)", border: "1px solid var(--line)", color: "var(--ink)" }} />
           <button type="submit" disabled={searching} className="rounded-lg px-4 py-2 text-[12.5px] font-semibold disabled:opacity-50" style={{ background: "linear-gradient(150deg, var(--accent), var(--accent-deep))", color: "var(--accent-ink)" }}>{searching ? "Searching…" : "Search"}</button>
         </form>
 
@@ -603,7 +612,12 @@ function RematchModal({ book, onClose, onMatched }: { book: Book; onClose: () =>
           <div className="rounded-xl p-6 text-center text-[12.5px] text-ink-dim" style={{ border: "1px solid var(--line)" }}>No works found. Try a different search.</div>
         ) : (
           <div className="flex max-h-[440px] flex-col overflow-y-auto">
-            {results.map((r) => {
+            {source === "hardcover" && olResults === null && (
+              <button type="button" onClick={searchOpenLibrary} className="mb-1 self-end text-[11.5px] font-semibold underline-offset-2 hover:underline" style={{ color: "var(--ink-dim)" }}>
+                Show Open Library results too
+              </button>
+            )}
+            {[...results, ...(olResults ?? [])].map((r) => {
               const current = r.key === book.ol_key;
               return (
                 <div key={r.key} className="flex items-center gap-3 border-b py-2.5" style={{ borderColor: "var(--line)" }}>

@@ -54,12 +54,28 @@ func (a *api) handleLookupBooks(w http.ResponseWriter, r *http.Request) {
 		a.writeError(w, http.StatusBadRequest, "missing ?q= query")
 		return
 	}
-	results, err := a.deps.Books.Lookup(r.Context(), q)
+	// ?source=openlibrary asks Open Library explicitly (the "show Open Library results
+	// too" button); otherwise the current catalogue answers.
+	results, err := a.deps.Books.LookupFrom(r.Context(), q, r.URL.Query().Get("source"))
 	if err != nil {
 		a.writeError(w, http.StatusBadGateway, err.Error())
 		return
 	}
-	a.writeJSON(w, http.StatusOK, map[string]any{"results": results})
+	if results == nil {
+		results = []metadata.BookResult{}
+	}
+	a.writeJSON(w, http.StatusOK, map[string]any{"results": results, "source": a.deps.Books.MetadataSource()})
+}
+
+// handleMergeBookDuplicates folds books that are the same title and author into one row
+// each — the fix for a library that collected the same novel under several catalogue keys.
+func (a *api) handleMergeBookDuplicates(w http.ResponseWriter, r *http.Request) {
+	n, err := a.deps.Books.MergeDuplicates(r.Context())
+	if err != nil {
+		a.writeError(w, http.StatusInternalServerError, "could not merge duplicates")
+		return
+	}
+	a.writeJSON(w, http.StatusOK, map[string]any{"merged": n})
 }
 
 func (a *api) handleAddBook(w http.ResponseWriter, r *http.Request) {
@@ -501,12 +517,19 @@ type bookCard struct {
 
 // enrichBookCards annotates search/browse results with library + request status.
 func (a *api) enrichBookCards(ctx context.Context, results []metadata.BookResult) []bookCard {
+	// By catalogue key AND by what the book is (title + author): a library built on
+	// Open Library must show its books as owned when the results come from Hardcover,
+	// and a second Open Library "work" for the same novel must not look like a new book.
 	inLib := map[string]bool{}
 	hasFile := map[string]bool{}
 	if list, err := a.deps.Books.List(ctx); err == nil {
 		for _, b := range list {
 			inLib[b.OLKey] = true
 			hasFile[b.OLKey] = b.HasFile
+			if k := books.DedupeKey(b.Title, b.Author); k != "" {
+				inLib["d:"+k] = true
+				hasFile["d:"+k] = hasFile["d:"+k] || b.HasFile
+			}
 		}
 	}
 	// Requests.List returns newest first; iterating in order and overwriting means the
@@ -526,10 +549,11 @@ func (a *api) enrichBookCards(ctx context.Context, results []metadata.BookResult
 	cards := make([]bookCard, 0, len(results))
 	for _, br := range results {
 		st := reqStatus[br.Key]
+		dk := "d:" + books.DedupeKey(br.Title, br.Author)
 		cards = append(cards, bookCard{
 			BookResult:    br,
-			InLibrary:     inLib[br.Key],
-			HasFile:       hasFile[br.Key],
+			InLibrary:     inLib[br.Key] || inLib[dk],
+			HasFile:       hasFile[br.Key] || hasFile[dk],
 			Requested:     st == "pending",
 			RequestStatus: st,
 		})
@@ -558,18 +582,23 @@ func (a *api) handleBookDiscoverSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
-	bookRes, err := a.deps.Books.Lookup(ctx, q)
+	source := r.URL.Query().Get("source")
+	bookRes, err := a.deps.Books.LookupFrom(ctx, q, source)
 	if err != nil {
 		a.writeError(w, http.StatusBadGateway, err.Error())
 		return
 	}
-	authors, _ := a.deps.Books.SearchAuthors(ctx, q) // best-effort; books are the main result
-	if authors == nil {
-		authors = []metadata.AuthorResult{}
+	authors := []metadata.AuthorResult{}
+	if source == "" {
+		// Authors only for the primary search; the Open Library add-on is books only.
+		if got, _ := a.deps.Books.SearchAuthors(ctx, q); got != nil { // best-effort; books are the main result
+			authors = got
+		}
 	}
 	a.writeJSON(w, http.StatusOK, map[string]any{
 		"authors": authors,
 		"books":   a.enrichBookCards(ctx, bookRes),
+		"source":  a.deps.Books.MetadataSource(),
 	})
 }
 

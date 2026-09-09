@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
-import { api, type Book, type BookLookup, type BookAuthor, type BookDiscoverCard } from "../lib/api";
+import { api, type BookSource, type Book, type BookLookup, type BookAuthor, type BookDiscoverCard } from "../lib/api";
 import { posterThumb } from "../lib/img";
 
 const FILTERS = [
@@ -389,6 +389,10 @@ function AddBookModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
   const [profile, setProfile] = useState("");
   const [profiles, setProfiles] = useState<{ key: string; name: string }[]>([]);
   const [addingKey, setAddingKey] = useState<string | null>(null);
+  // Which catalogue answered; when it's Hardcover, Open Library is one click away.
+  const [source, setSource] = useState<BookSource>("openlibrary");
+  const [olResults, setOlResults] = useState<BookLookup[] | null>(null);
+  const [olLoading, setOlLoading] = useState(false);
 
   useEffect(() => {
     api.qualityProfiles("book").then((r) => {
@@ -401,9 +405,30 @@ function AddBookModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
   const search = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!q.trim()) return;
-    setLoading(true); setError(null);
-    try { setResults(await api.lookupBooks(q.trim())); } catch (e) { setError((e as Error).message); } finally { setLoading(false); }
+    setLoading(true); setError(null); setOlResults(null);
+    try { const r = await api.lookupBooks(q.trim()); setResults(r.results); setSource(r.source); }
+    catch (e) { setError((e as Error).message); } finally { setLoading(false); }
   };
+  const searchOpenLibrary = async () => {
+    setOlLoading(true);
+    try {
+      const r = await api.lookupBooks(q.trim(), "openlibrary");
+      const seen = new Set(results.map((x) => x.key));
+      setOlResults(r.results.filter((x) => !seen.has(x.key)));
+    } catch (e) { setError((e as Error).message); } finally { setOlLoading(false); }
+  };
+  const row = (r: BookLookup) => (
+    <button key={r.key} onClick={() => add(r)} disabled={addingKey !== null} className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-[var(--panel-2)]">
+      <div className="h-[66px] w-[44px] flex-none overflow-hidden rounded" style={{ background: "var(--panel-2)" }}>
+        {r.cover_url && <img src={r.cover_url} alt="" className="h-full w-full object-cover" loading="lazy" />}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13px] font-semibold">{r.title} <span className="font-normal text-ink-faint">{r.year ? `(${r.year})` : ""}</span></div>
+        <div className="truncate text-[11.5px] text-ink-dim">{r.author || "Unknown author"}</div>
+      </div>
+      <span className="flex-none rounded-lg px-3 py-1.5 text-[11.5px] font-semibold" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>{addingKey === r.key ? "Adding…" : "Add"}</span>
+    </button>
+  );
 
   const add = async (r: BookLookup) => {
     setAddingKey(r.key); setError(null);
@@ -429,18 +454,18 @@ function AddBookModal({ onClose, onAdded }: { onClose: () => void; onAdded: () =
         </form>
         {error && <div className="mb-3 text-[12px]" style={{ color: "var(--reject)" }}>{error}</div>}
         <div className="thin-scroll max-h-[56vh] overflow-y-auto">
-          {results.map((r) => (
-            <button key={r.key} onClick={() => add(r)} disabled={addingKey !== null} className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-[var(--panel-2)]">
-              <div className="h-[66px] w-[44px] flex-none overflow-hidden rounded" style={{ background: "var(--panel-2)" }}>
-                {r.cover_url && <img src={r.cover_url} alt="" className="h-full w-full object-cover" loading="lazy" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-semibold">{r.title} <span className="font-normal text-ink-faint">{r.year ? `(${r.year})` : ""}</span></div>
-                <div className="truncate text-[11.5px] text-ink-dim">{r.author || "Unknown author"}</div>
-              </div>
-              <span className="flex-none rounded-lg px-3 py-1.5 text-[11.5px] font-semibold" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>{addingKey === r.key ? "Adding…" : "Add"}</span>
+          {results.map(row)}
+          {source === "hardcover" && results.length > 0 && olResults === null && (
+            <button type="button" onClick={searchOpenLibrary} disabled={olLoading} className="mt-1 w-full rounded-lg p-2 text-center text-[11.5px] font-semibold hover:bg-[var(--panel-2)]" style={{ color: "var(--ink-dim)" }}>
+              {olLoading ? "Searching Open Library…" : "Not there? Show Open Library results too"}
             </button>
-          ))}
+          )}
+          {olResults !== null && (
+            <>
+              <div className="mt-2 px-2 font-mono text-[9.5px] font-bold uppercase tracking-wide text-ink-faint">Open Library</div>
+              {olResults.length === 0 ? <div className="p-2 text-[12px] text-ink-dim">Open Library has nothing more for this search.</div> : olResults.map(row)}
+            </>
+          )}
         </div>
       </div>
     </div>

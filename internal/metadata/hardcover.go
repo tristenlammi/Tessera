@@ -1,0 +1,506 @@
+package metadata
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// Hardcover is the Books module's preferred metadata source once the user has pasted an
+// API key in Settings. Its catalogue is curated around one canonical book with editions
+// underneath it — the shape Open Library lacks, where the same novel turns up as three
+// "works" and each one looked like a new book to add. Free for personal use (5,000
+// requests a day), key from hardcover.app → Settings → Hardcover API.
+//
+// Keys are "hc:<book id>" and authors "hc:a:<author id>", so the switch (bookswitch.go)
+// can route a stored key back to the catalogue that issued it.
+const (
+	hardcoverAPI       = "https://api.hardcover.app/v1/graphql"
+	hcKeyPrefix        = "hc:"
+	hcAuthorPrefix     = "hc:a:"
+	hardcoverSearchMax = 24
+)
+
+type Hardcover struct {
+	key      func() string
+	endpoint string
+	http     *http.Client
+	// extraCovers supplies the Google Books covers the picker also offers; the Open
+	// Library provider already knows how (with an empty key it only asks Google).
+	extraCovers *OpenLibrary
+}
+
+// NewHardcoverFunc builds a provider that reads the key lazily, so a key pasted in
+// Settings takes effect without a restart.
+func NewHardcoverFunc(key func() string, extraCovers *OpenLibrary) *Hardcover {
+	return &Hardcover{key: key, endpoint: hardcoverAPI, http: &http.Client{Timeout: 25 * time.Second}, extraCovers: extraCovers}
+}
+
+// Available is "a key is configured" — Hardcover does nothing without one.
+func (h *Hardcover) Available() bool { return h != nil && strings.TrimSpace(h.key()) != "" }
+
+// IsHardcoverKey reports whether a stored book key came from Hardcover.
+func IsHardcoverKey(key string) bool { return strings.HasPrefix(key, hcKeyPrefix) }
+
+// hcBookID parses "hc:123" → 123.
+func hcBookID(key string) (int, bool) {
+	if strings.HasPrefix(key, hcAuthorPrefix) {
+		return 0, false
+	}
+	n, err := strconv.Atoi(strings.TrimPrefix(key, hcKeyPrefix))
+	return n, err == nil && n > 0
+}
+
+func hcAuthorID(key string) (int, bool) {
+	n, err := strconv.Atoi(strings.TrimPrefix(key, hcAuthorPrefix))
+	return n, err == nil && n > 0
+}
+
+// query posts one GraphQL document and decodes data into out.
+func (h *Hardcover) query(ctx context.Context, q string, vars map[string]any, out any) error {
+	body, err := json.Marshal(map[string]any{"query": q, "variables": vars})
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, h.endpoint, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	// Hardcover's settings page hands out the token already prefixed with "Bearer ";
+	// accept it either way.
+	token := strings.TrimSpace(h.key())
+	if !strings.HasPrefix(strings.ToLower(token), "bearer ") {
+		token = "Bearer " + token
+	}
+	req.Header.Set("Authorization", token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "Arrmada (self-hosted media manager)")
+	resp, err := h.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("hardcover: %w", err)
+	}
+	defer resp.Body.Close()
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return fmt.Errorf("hardcover: the API key was rejected (HTTP %d) — it may have expired", resp.StatusCode)
+	}
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return fmt.Errorf("hardcover: rate limited — try again in a minute")
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("hardcover: HTTP %d", resp.StatusCode)
+	}
+	var env struct {
+		Data   json.RawMessage `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.Unmarshal(raw, &env); err != nil {
+		return fmt.Errorf("hardcover: parse: %w", err)
+	}
+	if len(env.Errors) > 0 {
+		return fmt.Errorf("hardcover: %s", env.Errors[0].Message)
+	}
+	if out != nil && len(env.Data) > 0 {
+		if err := json.Unmarshal(env.Data, out); err != nil {
+			return fmt.Errorf("hardcover: parse data: %w", err)
+		}
+	}
+	return nil
+}
+
+// --- the book shape shared by list queries ---
+
+const hcBookFields = `id title release_year canonical_id image { url } contributions { author { id name } }`
+
+type hcBook struct {
+	ID            int       `json:"id"`
+	Title         string    `json:"title"`
+	Subtitle      string    `json:"subtitle"`
+	Description   string    `json:"description"`
+	ReleaseYear   *int      `json:"release_year"`
+	CanonicalID   *int      `json:"canonical_id"`
+	Image         *hcImage  `json:"image"`
+	Images        []hcImage `json:"images"`
+	Contributions []struct {
+		Author struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"author"`
+	} `json:"contributions"`
+	CachedTags json.RawMessage `json:"cached_tags"`
+	BookSeries []struct {
+		Position *float64 `json:"position"`
+		Series   struct {
+			Name string `json:"name"`
+		} `json:"series"`
+	} `json:"book_series"`
+	Editions []struct {
+		Image *hcImage `json:"image"`
+	} `json:"editions"`
+}
+
+type hcImage struct {
+	URL string `json:"url"`
+}
+
+func (b hcBook) result() BookResult {
+	r := BookResult{Key: hcKeyPrefix + strconv.Itoa(b.ID), Title: strings.TrimSpace(b.Title)}
+	if b.ReleaseYear != nil {
+		r.Year = *b.ReleaseYear
+	}
+	if b.Image != nil {
+		r.CoverURL = b.Image.URL
+	}
+	if len(b.Contributions) > 0 {
+		r.Author = strings.TrimSpace(b.Contributions[0].Author.Name)
+	}
+	return r
+}
+
+// --- search (Typesense-backed) ---
+
+// hcSearchDoc is one hit's document as the search index stores it. Field types vary
+// (ids as strings, images as objects or strings), so the fragile ones are raw.
+type hcSearchDoc struct {
+	ID          json.RawMessage `json:"id"`
+	Title       string          `json:"title"`
+	Name        string          `json:"name"` // authors
+	AuthorNames []string        `json:"author_names"`
+	ReleaseYear json.RawMessage `json:"release_year"`
+	Image       json.RawMessage `json:"image"`
+	BooksCount  json.RawMessage `json:"books_count"`
+}
+
+func rawInt(r json.RawMessage) int {
+	s := strings.Trim(strings.TrimSpace(string(r)), `"`)
+	if s == "" || s == "null" {
+		return 0
+	}
+	if n, err := strconv.Atoi(s); err == nil {
+		return n
+	}
+	if f, err := strconv.ParseFloat(s, 64); err == nil {
+		return int(f)
+	}
+	return 0
+}
+
+func rawImageURL(r json.RawMessage) string {
+	s := strings.TrimSpace(string(r))
+	if s == "" || s == "null" {
+		return ""
+	}
+	if strings.HasPrefix(s, `"`) {
+		var u string
+		_ = json.Unmarshal(r, &u)
+		return u
+	}
+	var img hcImage
+	_ = json.Unmarshal(r, &img)
+	return img.URL
+}
+
+// search runs Hardcover's search for one type and returns the hit documents.
+func (h *Hardcover) search(ctx context.Context, query, kind string, perPage int, fields string) ([]hcSearchDoc, error) {
+	const q = `query($q: String!, $t: String!, $n: Int!, $f: String) {
+  search(query: $q, query_type: $t, per_page: $n, page: 1, fields: $f) { results }
+}`
+	vars := map[string]any{"q": query, "t": kind, "n": perPage}
+	if fields != "" {
+		vars["f"] = fields
+	}
+	var data struct {
+		Search struct {
+			Results json.RawMessage `json:"results"`
+		} `json:"search"`
+	}
+	if err := h.query(ctx, q, vars, &data); err != nil {
+		return nil, err
+	}
+	return decodeHits(data.Search.Results)
+}
+
+// decodeHits reads Typesense's {"hits":[{"document":{...}}]} (results may arrive as a
+// JSON string containing that object, or as the object itself).
+func decodeHits(results json.RawMessage) ([]hcSearchDoc, error) {
+	raw := bytes.TrimSpace(results)
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	if raw[0] == '"' {
+		var s string
+		if err := json.Unmarshal(raw, &s); err != nil {
+			return nil, err
+		}
+		raw = []byte(s)
+	}
+	var payload struct {
+		Hits []struct {
+			Document hcSearchDoc `json:"document"`
+		} `json:"hits"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return nil, fmt.Errorf("hardcover: parse search results: %w", err)
+	}
+	out := make([]hcSearchDoc, 0, len(payload.Hits))
+	for _, hit := range payload.Hits {
+		out = append(out, hit.Document)
+	}
+	return out, nil
+}
+
+func (d hcSearchDoc) bookResult() (BookResult, bool) {
+	id := rawInt(d.ID)
+	if id <= 0 || strings.TrimSpace(d.Title) == "" {
+		return BookResult{}, false
+	}
+	r := BookResult{Key: hcKeyPrefix + strconv.Itoa(id), Title: strings.TrimSpace(d.Title), Year: rawInt(d.ReleaseYear), CoverURL: rawImageURL(d.Image)}
+	if len(d.AuthorNames) > 0 {
+		r.Author = strings.TrimSpace(d.AuthorNames[0])
+	}
+	return r, true
+}
+
+// SearchBooks finds books by title/author/ISBN. Hardcover's index already folds
+// editions into their book, so one novel is one result.
+func (h *Hardcover) SearchBooks(ctx context.Context, query string) ([]BookResult, error) {
+	docs, err := h.search(ctx, query, "Book", hardcoverSearchMax, "")
+	if err != nil {
+		return nil, err
+	}
+	out := make([]BookResult, 0, len(docs))
+	for _, d := range docs {
+		if r, ok := d.bookResult(); ok {
+			out = append(out, r)
+		}
+	}
+	return filterBundles(out), nil
+}
+
+// GetBook returns full details for one book. A book Hardcover has merged into another
+// is answered with the canonical one, under the canonical key, so a duplicate can't be
+// added under the stale id.
+func (h *Hardcover) GetBook(ctx context.Context, key string) (*BookDetails, error) {
+	id, ok := hcBookID(key)
+	if !ok {
+		return nil, fmt.Errorf("hardcover: not a hardcover key: %q", key)
+	}
+	b, err := h.book(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if b.CanonicalID != nil && *b.CanonicalID > 0 && *b.CanonicalID != id {
+		if c, err := h.book(ctx, *b.CanonicalID); err == nil {
+			b = c
+		}
+	}
+	d := &BookDetails{BookResult: b.result(), Description: strings.TrimSpace(b.Description)}
+	d.Subjects = hcGenres(b.CachedTags)
+	// The lowest-numbered series membership is the one people mean ("Dune #1", not
+	// "Frank Herbert Collection #7").
+	for _, bs := range b.BookSeries {
+		if bs.Series.Name == "" {
+			continue
+		}
+		pos := 0.0
+		if bs.Position != nil {
+			pos = *bs.Position
+		}
+		if d.SeriesName == "" || (pos > 0 && (d.SeriesPosition == 0 || pos < d.SeriesPosition)) {
+			d.SeriesName, d.SeriesPosition = bs.Series.Name, pos
+		}
+	}
+	return d, nil
+}
+
+func (h *Hardcover) book(ctx context.Context, id int) (*hcBook, error) {
+	const q = `query($id: Int!) {
+  books(where: {id: {_eq: $id}}, limit: 1) {
+    ` + hcBookFields + `
+    subtitle description cached_tags
+    book_series { position series { name } }
+  }
+}`
+	var data struct {
+		Books []hcBook `json:"books"`
+	}
+	if err := h.query(ctx, q, map[string]any{"id": id}, &data); err != nil {
+		return nil, err
+	}
+	if len(data.Books) == 0 {
+		return nil, fmt.Errorf("hardcover: book %d not found", id)
+	}
+	return &data.Books[0], nil
+}
+
+// hcGenres pulls the Genre tags out of cached_tags ({"Genre":[{"tag":"Fantasy",...}]}).
+func hcGenres(raw json.RawMessage) []string {
+	if len(raw) == 0 {
+		return nil
+	}
+	var tags map[string][]struct {
+		Tag string `json:"tag"`
+	}
+	if json.Unmarshal(raw, &tags) != nil {
+		return nil
+	}
+	var out []string
+	for _, key := range []string{"Genre", "genre"} {
+		for _, t := range tags[key] {
+			if t.Tag != "" {
+				out = append(out, t.Tag)
+			}
+		}
+	}
+	return trimSubjects(out)
+}
+
+// Covers offers the book's own cover images plus every edition's, then the Google
+// Books hits the Open Library provider knows how to fetch.
+func (h *Hardcover) Covers(ctx context.Context, key, title, author string) ([]string, error) {
+	seen := map[string]bool{}
+	var out []string
+	add := func(u string) {
+		if u != "" && !seen[u] {
+			seen[u] = true
+			out = append(out, u)
+		}
+	}
+	if id, ok := hcBookID(key); ok {
+		const q = `query($id: Int!) {
+  books(where: {id: {_eq: $id}}, limit: 1) {
+    id image { url } images { url } editions(limit: 60) { image { url } }
+  }
+}`
+		var data struct {
+			Books []hcBook `json:"books"`
+		}
+		if err := h.query(ctx, q, map[string]any{"id": id}, &data); err == nil && len(data.Books) > 0 {
+			b := data.Books[0]
+			if b.Image != nil {
+				add(b.Image.URL)
+			}
+			for _, im := range b.Images {
+				add(im.URL)
+			}
+			for _, e := range b.Editions {
+				if e.Image != nil {
+					add(e.Image.URL)
+				}
+			}
+		}
+	}
+	if h.extraCovers != nil {
+		if more, err := h.extraCovers.Covers(ctx, "", title, author); err == nil {
+			for _, u := range more {
+				add(u)
+			}
+		}
+	}
+	return out, nil
+}
+
+// SearchAuthors finds authors by name.
+func (h *Hardcover) SearchAuthors(ctx context.Context, query string) ([]AuthorResult, error) {
+	docs, err := h.search(ctx, query, "Author", 12, "")
+	if err != nil {
+		return nil, err
+	}
+	out := make([]AuthorResult, 0, len(docs))
+	for _, d := range docs {
+		id := rawInt(d.ID)
+		if id <= 0 || strings.TrimSpace(d.Name) == "" {
+			continue
+		}
+		out = append(out, AuthorResult{Key: hcAuthorPrefix + strconv.Itoa(id), Name: strings.TrimSpace(d.Name), WorkCount: rawInt(d.BooksCount)})
+	}
+	return out, nil
+}
+
+// AuthorWorks lists an author's books, most-shelved first, leaving out entries
+// Hardcover has merged into others and compilations.
+func (h *Hardcover) AuthorWorks(ctx context.Context, authorKey string, limit int) ([]BookResult, error) {
+	id, ok := hcAuthorID(authorKey)
+	if !ok {
+		return nil, fmt.Errorf("hardcover: not a hardcover author key: %q", authorKey)
+	}
+	if limit <= 0 || limit > 200 {
+		limit = 200
+	}
+	const q = `query($id: Int!, $n: Int!) {
+  books(
+    where: {contributions: {author: {id: {_eq: $id}}}, canonical_id: {_is_null: true}, compilation: {_eq: false}},
+    order_by: {users_count: desc}, limit: $n
+  ) { ` + hcBookFields + ` }
+}`
+	var data struct {
+		Books []hcBook `json:"books"`
+	}
+	if err := h.query(ctx, q, map[string]any{"id": id, "n": limit}, &data); err != nil {
+		return nil, err
+	}
+	out := make([]BookResult, 0, len(data.Books))
+	for _, b := range data.Books {
+		if r := b.result(); r.Title != "" {
+			out = append(out, r)
+		}
+	}
+	return filterBundles(out), nil
+}
+
+// TrendingBooks approximates "trending" as the most-shelved books released in the last
+// two years — Hardcover's own trending feed isn't part of the public schema.
+func (h *Hardcover) TrendingBooks(ctx context.Context) ([]BookResult, error) {
+	const q = `query($y: Int!) {
+  books(
+    where: {canonical_id: {_is_null: true}, compilation: {_eq: false}, release_year: {_gte: $y}},
+    order_by: {users_count: desc}, limit: 24
+  ) { ` + hcBookFields + ` }
+}`
+	var data struct {
+		Books []hcBook `json:"books"`
+	}
+	if err := h.query(ctx, q, map[string]any{"y": time.Now().Year() - 2}, &data); err != nil {
+		return nil, err
+	}
+	out := make([]BookResult, 0, len(data.Books))
+	for _, b := range data.Books {
+		if r := b.result(); r.Title != "" {
+			out = append(out, r)
+		}
+	}
+	return filterBundles(out), nil
+}
+
+// BooksBySubject searches the genre field; if the index refuses the field selector, a
+// plain search for the subject word is close enough.
+func (h *Hardcover) BooksBySubject(ctx context.Context, subject string, limit int) ([]BookResult, error) {
+	if limit <= 0 {
+		limit = hardcoverSearchMax
+	}
+	docs, err := h.search(ctx, subject, "Book", limit, "genres")
+	if err != nil {
+		docs, err = h.search(ctx, subject, "Book", limit, "")
+		if err != nil {
+			return nil, err
+		}
+	}
+	out := make([]BookResult, 0, len(docs))
+	for _, d := range docs {
+		if r, ok := d.bookResult(); ok {
+			out = append(out, r)
+		}
+	}
+	return filterBundles(out), nil
+}
