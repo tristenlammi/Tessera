@@ -390,13 +390,15 @@ function DiscoverTab({ ctx }: { ctx: RowCtx }) {
   return (
     <RowRegistryCtx.Provider value={registry}>
       <div className="flex flex-col gap-7">
+        {/* Admins get the request queue first, above everything — it's the thing they
+            came to act on. Non-admins never see this row. */}
+        <MyRequestsRow flash={ctx.flash} />
         <Hero ctx={ctx} />
         {/* Personalized to the viewer's watch history/requests. Hidden entirely (no header,
             no skeleton) when the backend returns nothing to recommend, or on error. At
             order 0 it claims the top slot so the rows below dedupe against it. */}
         <PosterRow order={0} hideUntilLoaded hideOnError title="Recommended for you" load={() => api.discoverRecommended()} ctx={ctx} />
         <BecauseRows ctx={ctx} firstOrder={1} />
-        <MyRequestsRow flash={ctx.flash} />
         <PosterRow order={3} title="Trending this week" load={() => api.discoverTrending("all")} ctx={ctx} />
         <PosterRow order={4} title="Popular movies" load={() => api.discoverPopular("movie")} ctx={ctx} />
         <PosterRow order={5} title="Popular series" load={() => api.discoverPopular("series")} ctx={ctx} />
@@ -525,12 +527,14 @@ function Hero({ ctx }: { ctx: RowCtx }) {
   );
 }
 
-// MyRequestsRow is the horizontal strip of requests at the top of Discover. A
-// requester sees their own requests (status + download progress); staff see every
-// request and can approve/decline pending ones inline (no dedicated page needed).
+// MyRequestsRow is the strip of every request, first thing on Discover — for admins
+// only, who approve and decline from it inline. Everyone else's Discover starts with
+// the hero; their own request status reaches them through the inbox and the badges
+// on the cards.
 function MyRequestsRow({ flash }: { flash: (m: string) => void }) {
   const { user } = useMe();
   const staff = isStaff(user);
+  const admin = !!user && user.role === "admin";
   const [items, setItems] = useState<MediaRequest[] | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -541,12 +545,12 @@ function MyRequestsRow({ flash }: { flash: (m: string) => void }) {
     return () => clearInterval(t);
   }, [load]);
 
-  if (!items || items.length === 0) return null;
+  if (!admin || !items || items.length === 0) return null;
   const scroll = (dir: -1 | 1) => scroller.current?.scrollBy({ left: dir * Math.max(600, scroller.current.clientWidth * 0.8), behavior: "smooth" });
   return (
     <div>
       <div className="mb-2.5 flex items-center justify-between">
-        <h2 className="m-0 text-[15px] font-bold">{staff ? "Requests" : "Your requests"}</h2>
+        <h2 className="m-0 text-[15px] font-bold">Requests</h2>
         <div className="flex gap-1"><ArrowBtn dir={-1} onClick={() => scroll(-1)} /><ArrowBtn dir={1} onClick={() => scroll(1)} /></div>
       </div>
       <div ref={scroller} className="thin-scroll flex gap-3 overflow-x-auto pb-2" style={{ scrollSnapType: "x proximity" }}>
