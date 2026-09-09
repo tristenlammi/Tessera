@@ -57,6 +57,7 @@ type Book struct {
 	// Position 0 means the series is known but the number isn't.
 	SeriesName     string  `json:"series_name,omitempty"`
 	SeriesPosition float64 `json:"series_position,omitempty"`
+	SeriesKey      string  `json:"series_key,omitempty"` // catalogue's series id, when it gave one
 }
 
 // SearchState returns when the missing-books sweep last searched for this book and how
@@ -124,7 +125,7 @@ type Repo struct{ db *sql.DB }
 func NewRepo(db *sql.DB) *Repo { return &Repo{db: db} }
 
 const cols = `id, ol_key, title, author, year, cover_url, description, subjects_json,
-	monitored, quality_profile, added_at, series_name, series_position,
+	monitored, quality_profile, added_at, series_name, series_position, series_key,
 	ebook_path, ebook_format, ebook_size, ebook_files,
 	audiobook_path, audiobook_format, audiobook_size, audiobook_files`
 
@@ -141,7 +142,7 @@ func scan(row interface{ Scan(...any) error }) (Book, error) {
 		abFiles       int
 	)
 	err := row.Scan(&b.ID, &b.OLKey, &b.Title, &b.Author, &b.Year, &b.CoverURL, &b.Description,
-		&subjectsJSON, &mon, &b.QualityProfile, &b.AddedAt, &b.SeriesName, &b.SeriesPosition,
+		&subjectsJSON, &mon, &b.QualityProfile, &b.AddedAt, &b.SeriesName, &b.SeriesPosition, &b.SeriesKey,
 		&ebPath, &ebFmt, &ebSize, &ebFiles, &abPath, &abFmt, &abSize, &abFiles)
 	if err != nil {
 		return Book{}, err

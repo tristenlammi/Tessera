@@ -690,6 +690,8 @@ export interface BookAuthor {
   work_count: number;
   top_work?: string;
   birth_date?: string;
+  image_url?: string; // Hardcover authors have photos
+  bio?: string;
 }
 export interface BookMeta {
   key: string;
@@ -806,8 +808,12 @@ export interface ConvertMediaStats {
 }
 // A book's series as the library can see it: the entries you own, in reading order, and
 // the numbered holes between them.
-export interface BookSeriesEntry { book_id?: number; title: string; position?: number; has_file: boolean; missing: boolean }
-export interface BookSeries { name: string; entries: BookSeriesEntry[]; gaps: number }
+export interface BookSeriesEntry {
+  book_id?: number; title: string; position?: number; has_file: boolean; missing: boolean;
+  // From the catalogue's listing: a missing entry carries the key it can be added under.
+  key?: string; author?: string; year?: number; cover_url?: string;
+}
+export interface BookSeries { name: string; entries: BookSeriesEntry[]; gaps: number; source?: "catalogue" | "library"; total?: number; key?: string }
 
 export interface ConvertLibraryStats { movies: ConvertMediaStats; tv: ConvertMediaStats; total: ConvertMediaStats; as_of?: number }
 export interface ConvertAllResult { movies: number; episodes: number; queued: number; blocklisted: number }
@@ -1055,6 +1061,11 @@ export const api = {
   grabSeriesTorrent: (id: number, torrent: string, filename: string, title: string) =>
     req<{ status: string }>(`/api/v1/series/${id}/grabtorrent`, { method: "POST", body: JSON.stringify({ torrent, filename, title }) }),
   bookSeries: (id: number) => req<BookSeries>(`/api/v1/books/${id}/series`),
+  addMissingInSeries: (id: number, quality_profile?: string) =>
+    req<{ added: number; skipped: number }>(`/api/v1/books/${id}/series/add-missing`, { method: "POST", body: JSON.stringify({ quality_profile: quality_profile ?? "" }) }),
+  bookAuthorDetail: (key: string) => req<BookAuthor>(`/api/v1/books/discover/authors/${encodeURIComponent(key)}`),
+  bookDiscoverSimilar: (key: string) => req<{ books: BookDiscoverCard[] }>(`/api/v1/books/discover/similar?key=${encodeURIComponent(key)}`).then((r) => r.books),
+  bookAuthorImages: () => req<{ images: Record<string, string>; pending: number }>("/api/v1/books/authors/images"),
   backfillBookSeries: () =>
     req<{ status: string }>("/api/v1/books/series-backfill", { method: "POST" }),
   grabBookTorrent: (id: number, torrent: string, filename: string, title: string) =>

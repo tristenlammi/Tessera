@@ -375,9 +375,12 @@ function BookRequestModal({ b, ctx, authorName, onClose }: { b: BookDiscoverCard
   const badge = badgeFor(b, done);
   const declined = badge?.label === "Declined";
 
+  const [similar, setSimilar] = useState<BookDiscoverCard[] | null>(null);
   useEffect(() => {
     let alive = true;
     api.bookDiscoverDetail(b.key).then((d) => alive && setDetail(d)).catch(() => {});
+    // The catalogue's "readers also liked" — Hardcover only; empty elsewhere.
+    if (b.key.startsWith("hc:")) api.bookDiscoverSimilar(b.key).then((s) => alive && setSimilar(s)).catch(() => alive && setSimilar([]));
     return () => { alive = false; };
   }, [b.key]);
 
@@ -443,6 +446,14 @@ function BookRequestModal({ b, ctx, authorName, onClose }: { b: BookDiscoverCard
           {subjects.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {subjects.slice(0, 8).map((s) => <span key={s} className="rounded-full px-2 py-0.5 text-[11px]" style={{ background: "var(--panel-2)", color: "var(--ink-dim)" }}>{s}</span>)}
+            </div>
+          )}
+          {similar && similar.length > 0 && (
+            <div className="mt-4">
+              <div className="mb-2 font-mono text-[9.5px] font-bold uppercase tracking-wide text-ink-faint">Readers also liked</div>
+              <div className="thin-scroll flex gap-2.5 overflow-x-auto pb-1">
+                {similar.slice(0, 10).map((s) => <div key={s.key} className="w-[96px] flex-none"><BookCard b={s} ctx={ctx} /></div>)}
+              </div>
             </div>
           )}
         </div>

@@ -214,6 +214,9 @@ type BookResult struct {
 	Author   string `json:"author"`
 	Year     int    `json:"year"`
 	CoverURL string `json:"cover_url,omitempty"`
+	// Set on entries of a series listing (SeriesInfo); zero elsewhere.
+	SeriesName     string  `json:"series_name,omitempty"`
+	SeriesPosition float64 `json:"series_position,omitempty"`
 }
 
 // BookDetails is a full book record.
@@ -226,15 +229,18 @@ type BookDetails struct {
 	// doesn't). Position 0 = in the series, number unknown.
 	SeriesName     string  `json:"series_name,omitempty"`
 	SeriesPosition float64 `json:"series_position,omitempty"`
+	SeriesKey      string  `json:"series_key,omitempty"` // catalogue's series id ("hc:s:123"), when it has one
 }
 
-// AuthorResult is a lightweight author search hit (Open Library author).
+// AuthorResult is a lightweight author search hit.
 type AuthorResult struct {
-	Key       string `json:"key"` // Open Library author key, e.g. "OL23919A"
+	Key       string `json:"key"` // Open Library "OL23919A" or Hardcover "hc:a:123"
 	Name      string `json:"name"`
 	WorkCount int    `json:"work_count"`
 	TopWork   string `json:"top_work,omitempty"`
 	BirthDate string `json:"birth_date,omitempty"`
+	ImageURL  string `json:"image_url,omitempty"` // Hardcover has photos; Open Library doesn't
+	Bio       string `json:"bio,omitempty"`
 }
 
 // BookProvider looks up book metadata (Open Library — no API key required).

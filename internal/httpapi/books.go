@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -727,6 +728,84 @@ func (a *api) handleBookDiscoverSubject(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	a.writeJSON(w, http.StatusOK, map[string]any{"subject": name, "books": a.enrichBookCards(ctx, res)})
+}
+
+// handleAddMissingInSeries adds every entry of a book's series the library lacks.
+func (a *api) handleAddMissingInSeries(w http.ResponseWriter, r *http.Request) {
+	id, ok := a.pathID(w, r)
+	if !ok {
+		return
+	}
+	var req struct {
+		QualityProfile string `json:"quality_profile"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&req) // body is optional
+	if req.QualityProfile == "" {
+		req.QualityProfile = a.deps.Quality.DefaultProfile(r.Context(), "book")
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+	defer cancel()
+	added, skipped, err := a.deps.Books.AddMissingInSeries(ctx, id, req.QualityProfile, true)
+	if errors.Is(err, metadata.ErrNotSupported) {
+		a.writeError(w, http.StatusBadRequest, "this book's series isn't known to the catalogue")
+		return
+	}
+	if err != nil {
+		a.writeError(w, http.StatusBadGateway, "could not load the series")
+		return
+	}
+	a.writeJSON(w, http.StatusOK, map[string]any{"added": added, "skipped": skipped})
+}
+
+// handleBookAuthorDetail returns an author's photo and biography when the catalogue has them.
+func (a *api) handleBookAuthorDetail(w http.ResponseWriter, r *http.Request) {
+	key := r.PathValue("key")
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+	d, err := a.deps.Books.AuthorDetail(ctx, key)
+	if errors.Is(err, metadata.ErrNotSupported) {
+		a.writeError(w, http.StatusNotFound, "no author details from this catalogue")
+		return
+	}
+	if err != nil {
+		a.writeError(w, http.StatusBadGateway, "could not load the author")
+		return
+	}
+	a.writeJSON(w, http.StatusOK, d)
+}
+
+// handleBookDiscoverSimilar returns the catalogue's similar-books list for a key.
+func (a *api) handleBookDiscoverSimilar(w http.ResponseWriter, r *http.Request) {
+	key := r.URL.Query().Get("key")
+	if key == "" {
+		a.writeError(w, http.StatusBadRequest, "missing ?key=")
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+	res, err := a.deps.Books.SimilarBooks(ctx, key)
+	if err != nil {
+		// Not an error for the page: the catalogue simply has none.
+		a.writeJSON(w, http.StatusOK, map[string]any{"books": []bookCard{}})
+		return
+	}
+	a.writeJSON(w, http.StatusOK, map[string]any{"books": a.enrichBookCards(ctx, res)})
+}
+
+// handleBookAuthorImages returns a photo per library author, resolving a few unknown
+// ones per call; pending says how many are still to look up.
+func (a *api) handleBookAuthorImages(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	images, pending, err := a.deps.Books.AuthorImages(ctx)
+	if err != nil {
+		a.writeError(w, http.StatusInternalServerError, "could not load author images")
+		return
+	}
+	if images == nil {
+		images = map[string]string{}
+	}
+	a.writeJSON(w, http.StatusOK, map[string]any{"images": images, "pending": pending})
 }
 
 // handleBookDiscoverDetail returns full metadata (description, subjects) for a work — the

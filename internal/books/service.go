@@ -131,8 +131,8 @@ func (s *Service) Add(ctx context.Context, olKey, qualityProfile string, monitor
 		return Book{}, err
 	}
 	if d.SeriesName != "" {
-		_ = s.repo.SetSeries(ctx, created.ID, d.SeriesName, d.SeriesPosition)
-		created.SeriesName, created.SeriesPosition = d.SeriesName, d.SeriesPosition
+		_ = s.repo.SetSeriesRef(ctx, created.ID, d.SeriesName, d.SeriesPosition, d.SeriesKey)
+		created.SeriesName, created.SeriesPosition, created.SeriesKey = d.SeriesName, d.SeriesPosition, d.SeriesKey
 	}
 	s.log.Info("book added", "title", created.Title, "author", created.Author)
 	s.repo.AddEvent(ctx, created.ID, "added", "Added to library")
@@ -256,6 +256,11 @@ func (s *Service) Refresh(ctx context.Context, id int64) (Book, error) {
 			b.Subjects = d.Subjects
 		}
 		_ = s.repo.UpdateMeta(ctx, b.ID, b.Description, b.CoverURL, b.Subjects)
+		// A series the catalogue knows outranks one guessed from a release name, and
+		// books added before series keys existed pick theirs up here.
+		if d.SeriesName != "" && (b.SeriesKey == "" || d.SeriesKey != "") {
+			_ = s.repo.SetSeriesRef(ctx, b.ID, d.SeriesName, d.SeriesPosition, d.SeriesKey)
+		}
 	}
 	return s.repo.Get(ctx, id)
 }

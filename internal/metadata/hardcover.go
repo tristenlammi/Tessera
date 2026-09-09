@@ -157,6 +157,7 @@ type hcBook struct {
 	BookSeries []struct {
 		Position *float64 `json:"position"`
 		Series   struct {
+			ID   int    `json:"id"`
 			Name string `json:"name"`
 		} `json:"series"`
 	} `json:"book_series"`
@@ -384,6 +385,9 @@ func (h *Hardcover) getBookLive(ctx context.Context, id int) (*BookDetails, erro
 		}
 		if d.SeriesName == "" || (pos > 0 && (d.SeriesPosition == 0 || pos < d.SeriesPosition)) {
 			d.SeriesName, d.SeriesPosition = bs.Series.Name, pos
+			if bs.Series.ID > 0 {
+				d.SeriesKey = hcSeriesPrefix + strconv.Itoa(bs.Series.ID)
+			}
 		}
 	}
 	return d, nil
@@ -394,7 +398,7 @@ func (h *Hardcover) book(ctx context.Context, id int) (*hcBook, error) {
   books(where: {id: {_eq: $id}}, limit: 1) {
     ` + hcBookFields + `
     subtitle description cached_tags
-    book_series { position series { name } }
+    book_series { position series { id name } }
   }
 }`
 	var data struct {
@@ -494,7 +498,7 @@ func (h *Hardcover) searchAuthorsLive(ctx context.Context, query string) ([]Auth
 		if id <= 0 || strings.TrimSpace(d.Name) == "" {
 			continue
 		}
-		out = append(out, AuthorResult{Key: hcAuthorPrefix + strconv.Itoa(id), Name: strings.TrimSpace(d.Name), WorkCount: rawInt(d.BooksCount)})
+		out = append(out, AuthorResult{Key: hcAuthorPrefix + strconv.Itoa(id), Name: strings.TrimSpace(d.Name), WorkCount: rawInt(d.BooksCount), ImageURL: rawImageURL(d.Image)})
 	}
 	return out, nil
 }

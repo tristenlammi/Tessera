@@ -61,6 +61,20 @@ export function Books() {
   const [source, setSource] = useState<BookSource>("openlibrary");
   const [upgradable, setUpgradable] = useState(0);
   const [upgrade, setUpgrade] = useState<BookUpgradeStatus | null>(null);
+  // Author photos from the catalogue. The server resolves a few unknown authors per
+  // call, so keep asking (spaced out) until none are pending.
+  const [authorImages, setAuthorImages] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let alive = true;
+    let timer: number | undefined;
+    const tick = () => api.bookAuthorImages().then((r) => {
+      if (!alive) return;
+      setAuthorImages(r.images);
+      if (r.pending > 0) timer = window.setTimeout(tick, 4000);
+    }).catch(() => {});
+    tick();
+    return () => { alive = false; window.clearTimeout(timer); };
+  }, [list.length]);
 
   const flash = (m: string) => { setToast(m); window.setTimeout(() => setToast(null), 3500); };
   const refresh = () => api.books().then((r) => { setList(r.books); setMetaOK(r.metadata_available); setSource(r.metadata_source ?? "openlibrary"); setUpgradable(r.upgradable ?? 0); setError(null); }).catch((e: Error) => setError(e.message));
@@ -253,7 +267,7 @@ export function Books() {
         ) : mode === "author" ? (
           view === "table" ? <AuthorTable authors={authors} /> : (
             <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))" }}>
-              {authors.map((a) => <AuthorCard key={a.name} name={a.name} books={a.books} />)}
+              {authors.map((a) => <AuthorCard key={a.name} name={a.name} books={a.books} image={authorImages[a.name]} />)}
             </div>
           )
         ) : view === "table" ? (
@@ -520,11 +534,13 @@ function authorStats(books: Book[]): { downloaded: number; wanted: number; cover
   return { downloaded, wanted, cover: books.find((b) => b.cover_url)?.cover_url };
 }
 
-function AuthorCard({ name, books }: { name: string; books: Book[] }) {
+function AuthorCard({ name, books, image }: { name: string; books: Book[]; image?: string }) {
   const { downloaded, wanted, cover } = authorStats(books);
   return (
     <Link to={`/books/author/${encodeURIComponent(name)}`} className="group relative block overflow-hidden rounded-xl" style={{ aspectRatio: "2/3", border: "1px solid var(--line)", background: "var(--panel-2)" }}>
-      {cover ? (
+      {image ? (
+        <img src={image} alt={name} className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]" loading="lazy" decoding="async" />
+      ) : cover ? (
         <img src={posterThumb(cover)} alt={name} className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]" loading="lazy" decoding="async" />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-[34px] font-bold text-white" style={{ background: "linear-gradient(150deg, hsl(28 30% 26%), hsl(24 28% 16%))" }}>{name.charAt(0).toUpperCase()}</div>

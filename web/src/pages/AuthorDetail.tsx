@@ -12,6 +12,7 @@ export function AuthorDetail() {
 
   const [library, setLibrary] = useState<Book[] | null>(null);
   const [author, setAuthor] = useState<BookAuthor | null>(null);
+  const [detail, setDetail] = useState<BookAuthor | null>(null); // photo + bio, when the catalogue has them
   const [works, setWorks] = useState<BookDiscoverCard[] | null>(null);
   const [profiles, setProfiles] = useState<{ key: string; name: string }[]>([]);
   const [profile, setProfile] = useState("");
@@ -31,6 +32,7 @@ export function AuthorDetail() {
       if (!best) { setAuthor(null); setWorks([]); return; }
       setAuthor(best);
       api.bookAuthorWorks(best.key).then(setWorks).catch(() => setWorks([]));
+      if (best.key.startsWith("hc:a:")) api.bookAuthorDetail(best.key).then(setDetail).catch(() => setDetail(null));
     }).catch(() => { setAuthor(null); setWorks([]); });
   }, [name]);
 
@@ -76,10 +78,16 @@ export function AuthorDetail() {
         </Link>
 
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="m-0 text-[22px] font-bold">{name}</h1>
-            <div className="mt-1 text-[12px] text-ink-faint">
-              {owned.length} in library{author && author.work_count > 0 ? ` · ${author.work_count.toLocaleString()} works on Open Library` : ""}{author?.birth_date ? ` · b. ${author.birth_date}` : ""}
+          <div className="flex min-w-0 items-center gap-4">
+            {(detail?.image_url || author?.image_url) && (
+              <img src={detail?.image_url || author?.image_url} alt={name} className="h-[88px] w-[88px] flex-none rounded-full object-cover" style={{ border: "1px solid var(--line)" }} />
+            )}
+            <div className="min-w-0">
+              <h1 className="m-0 text-[22px] font-bold">{name}</h1>
+              <div className="mt-1 text-[12px] text-ink-faint">
+                {owned.length} in library{author && author.work_count > 0 ? ` · ${author.work_count.toLocaleString()} works in the catalogue` : ""}{(detail?.birth_date || author?.birth_date) ? ` · ${detail?.birth_date || author?.birth_date}` : ""}
+              </div>
+              {detail?.bio && <p className="m-0 mt-2 max-w-[70ch] text-[12.5px] leading-relaxed text-ink-dim" style={{ display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{detail.bio}</p>}
             </div>
           </div>
           <div className="flex items-center gap-2.5">

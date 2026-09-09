@@ -4,7 +4,7 @@ import { PageHeader } from "../components/PageHeader";
 import { BookReleaseModal } from "../components/BookReleaseModal";
 import { UploadTorrentModal } from "../components/UploadTorrentModal";
 import { FileDetailsModal } from "../components/FileDetailsModal";
-import { api, type BookSource, type Book, type BookFile, type BookFileEntry, type BookImportCandidate, type BookLookup, type BookSeries, type MovieEvent } from "../lib/api";
+import { api, type BookSeriesEntry, type BookSource, type Book, type BookFile, type BookFileEntry, type BookImportCandidate, type BookLookup, type BookSeries, type MovieEvent } from "../lib/api";
 
 function fmtSize(bytes?: number): string {
   if (!bytes || bytes <= 0) return "";
@@ -653,7 +653,10 @@ function RematchModal({ book, onClose, onMatched }: { book: Book; onClose: () =>
 // highest entry would be a guess.
 function SeriesPanel({ bookID }: { bookID: number }) {
   const [series, setSeries] = useState<BookSeries | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
 
+  const load = useCallback(() => api.bookSeries(bookID).then(setSeries).catch(() => {}), [bookID]);
   useEffect(() => {
     let live = true;
     api.bookSeries(bookID).then((s) => { if (live) setSeries(s); }).catch(() => {});
@@ -661,22 +664,52 @@ function SeriesPanel({ bookID }: { bookID: number }) {
   }, [bookID]);
 
   if (!series?.name || series.entries.length === 0) return null;
+  const catalogue = series.source === "catalogue";
+
+  // With the catalogue's listing, a missing entry is a real book with a key — add it,
+  // or add all of them.
+  const addOne = async (e: BookSeriesEntry) => {
+    if (!e.key) return;
+    setBusy(e.key); setNote(null);
+    try { await api.addBook({ ol_key: e.key, monitored: true, title: e.title, author: e.author, year: e.year, cover_url: e.cover_url }); await load(); }
+    catch (err) { setNote((err as Error).message); } finally { setBusy(null); }
+  };
+  const addAll = async () => {
+    setBusy("all"); setNote(null);
+    try { const r = await api.addMissingInSeries(bookID); setNote(`Added ${r.added}${r.skipped ? `, ${r.skipped} already in library` : ""}.`); await load(); }
+    catch (err) { setNote((err as Error).message); } finally { setBusy(null); }
+  };
 
   return (
     <section className="mt-4 rounded-xl p-4" style={{ background: "var(--panel)", border: "1px solid var(--line)" }}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="m-0 text-[15px] font-bold">{series.name}</h2>
-        <span className="font-mono text-[10.5px] text-ink-faint">
-          {series.gaps > 0 ? `${series.gaps} missing from your library` : "no gaps"}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[10.5px] text-ink-faint">
+            {catalogue && series.total ? `${series.total} books · ` : ""}{series.gaps > 0 ? `${series.gaps} missing from your library` : "complete"}
+          </span>
+          {catalogue && series.gaps > 0 && (
+            <button onClick={addAll} disabled={busy !== null} className="rounded-lg px-2.5 py-1 text-[11.5px] font-semibold disabled:opacity-50" style={{ border: "1px solid var(--accent-line)", color: "var(--accent)" }}>
+              {busy === "all" ? "Adding…" : `Add all ${series.gaps} missing`}
+            </button>
+          )}
+        </div>
       </div>
+      {note && <div className="mt-2 text-[11.5px] text-ink-dim">{note}</div>}
       <ol className="mt-3 flex list-none flex-col gap-1 p-0">
         {series.entries.map((e, i) => (
           <li key={e.book_id ?? `gap-${e.position}-${i}`} className="flex items-center gap-2.5 text-[12.5px]">
             <span className="w-8 flex-none text-right font-mono text-[11px] text-ink-faint">
               {e.position ? `#${e.position}` : "—"}
             </span>
-            {e.missing ? (
+            {e.missing && e.key ? (
+              <>
+                <span className="min-w-0 truncate" style={{ color: "var(--ink-dim)" }}>{e.title}{e.year ? <span className="font-mono text-[10px] text-ink-faint"> {e.year}</span> : null}</span>
+                <button onClick={() => addOne(e)} disabled={busy !== null} className="ml-auto flex-none rounded-md px-2 py-0.5 text-[10.5px] font-semibold disabled:opacity-50" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
+                  {busy === e.key ? "Adding…" : "Add"}
+                </button>
+              </>
+            ) : e.missing ? (
               <span style={{ color: "var(--avoid)" }}>Not in your library</span>
             ) : (
               <>

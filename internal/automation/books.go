@@ -351,6 +351,11 @@ type BookSeriesEntry struct {
 	Position float64 `json:"position,omitempty"`
 	HasFile  bool    `json:"has_file"`
 	Missing  bool    `json:"missing"` // a numbered entry with no book in the library
+	// From the catalogue's series listing (Hardcover): a missing entry can be added.
+	Key      string `json:"key,omitempty"`
+	Author   string `json:"author,omitempty"`
+	Year     int    `json:"year,omitempty"`
+	CoverURL string `json:"cover_url,omitempty"`
 }
 
 // BookSeries is a book's series as the library can see it.
@@ -358,6 +363,11 @@ type BookSeries struct {
 	Name    string            `json:"name"`
 	Entries []BookSeriesEntry `json:"entries"`
 	Gaps    int               `json:"gaps"`
+	// Source is "catalogue" when the whole series came from Hardcover (every entry,
+	// Total known) and "library" when it's inferred from owned books alone.
+	Source string `json:"source"`
+	Total  int    `json:"total,omitempty"`
+	Key    string `json:"key,omitempty"`
 }
 
 // BookSeriesFor returns the series a book belongs to, its siblings in reading order, and
@@ -375,6 +385,18 @@ func (c *Coordinator) BookSeriesFor(ctx context.Context, bookID int64) (BookSeri
 	if err != nil {
 		return BookSeries{}, err
 	}
+	// The catalogue's own listing, when the book carries its series key: every entry,
+	// missing ones included by title, not just the holes between owned books.
+	if v, ok := c.books.CatalogueSeries(ctx, bookID); ok {
+		out := BookSeries{Name: v.Name, Gaps: v.Gaps, Source: "catalogue", Total: v.Total, Key: v.Key}
+		for _, e := range v.Entries {
+			out.Entries = append(out.Entries, BookSeriesEntry{
+				BookID: e.BookID, Title: e.Title, Position: e.Position, HasFile: e.HasFile, Missing: e.Missing,
+				Key: e.Key, Author: e.Author, Year: e.Year, CoverURL: e.CoverURL,
+			})
+		}
+		return out, nil
+	}
 	if b.SeriesName == "" {
 		return BookSeries{}, nil
 	}
@@ -382,7 +404,7 @@ func (c *Coordinator) BookSeriesFor(ctx context.Context, bookID int64) (BookSeri
 	if err != nil {
 		return BookSeries{}, err
 	}
-	out := BookSeries{Name: b.SeriesName}
+	out := BookSeries{Name: b.SeriesName, Source: "library"}
 	owned := map[int]books.Book{}
 	maxPos := 0
 	for _, sb := range siblings {
@@ -1159,17 +1181,31 @@ func (c *Coordinator) ScanBookLibrary(ctx context.Context, ebookRoot, audiobookR
 		if bf.Title == "" || (len(bf.Ebooks) == 0 && len(bf.Audiobooks) == 0) {
 			continue
 		}
+		// An ISBN in the folder or file names is an exact answer; try it before
+		// guessing from the title.
+		var match metadata.BookResult
+		matched := false
+		if isbn := scanISBN(bf); isbn != "" {
+			if r, err := c.books.LookupISBN(ctx, isbn); err == nil && r != nil {
+				match, matched = *r, true
+				c.log.Info("book scan: matched by ISBN", "folder_title", bf.Title, "isbn", isbn, "book", r.Title)
+			}
+		}
 		query := bf.Title
 		if bf.Author != "" {
 			query = bf.Author + " " + bf.Title
 		}
-		results, err := c.books.Lookup(ctx, query)
-		if err != nil || len(results) == 0 {
-			res.Unmatched = append(res.Unmatched, bf.Title)
-			continue
+		var results []metadata.BookResult
+		if !matched {
+			var err error
+			results, err = c.books.Lookup(ctx, query)
+			if err != nil || len(results) == 0 {
+				res.Unmatched = append(res.Unmatched, bf.Title)
+				continue
+			}
+			match, matched = pickScanMatch(bf.Title, results)
 		}
-		match, ok := pickScanMatch(bf.Title, results)
-		if !ok {
+		if !matched {
 			// Better to leave a folder uncatalogued and say so than to file it under the
 			// wrong book. Taking results[0] on faith meant a lookup for "Golden Son" that
 			// answered with its more famous series-mate silently folded that folder's
