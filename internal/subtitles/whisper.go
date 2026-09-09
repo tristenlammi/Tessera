@@ -28,6 +28,7 @@ type whisperGen struct {
 	suppressNST bool   // --suppress-nst available
 	dtwFlag     bool   // --dtw (token timestamps by DTW over the attention heads) available
 	jsonFull    bool   // --output-json-full available
+	flashAttn   bool   // --flash-attn available (a real speedup on GPU backends)
 	dlMu        sync.Mutex
 	dl          map[string]bool // model filenames currently downloading
 
@@ -36,6 +37,28 @@ type whisperGen struct {
 	// Vulkan build on a host with no visible device silently runs on the CPU.
 	backendMu sync.Mutex
 	backend   string
+	device    string // the GPU line whisper printed ("Intel(R) Arc(tm) A380 ... matrix cores: none")
+}
+
+// Device is the GPU whisper reported, with its capability flags — "matrix cores:
+// none" on that line is the single biggest reason a Vulkan run is slow.
+func (w *whisperGen) Device() string {
+	if w == nil {
+		return ""
+	}
+	w.backendMu.Lock()
+	defer w.backendMu.Unlock()
+	return w.device
+}
+
+// deviceOf pulls the "Vulkan0: <device> | ..." line out of whisper's output.
+func deviceOf(out []byte) string {
+	for _, line := range bytes.Split(out, []byte("\n")) {
+		if i := bytes.Index(line, []byte("Vulkan0:")); i >= 0 {
+			return strings.TrimSpace(string(line[i+len("Vulkan0:"):]))
+		}
+	}
+	return ""
 }
 
 // Backend reports which compute backend the AI last ran on, for the status panel.
@@ -51,6 +74,12 @@ func (w *whisperGen) Backend() string {
 func (w *whisperGen) setBackend(b string) {
 	w.backendMu.Lock()
 	w.backend = b
+	w.backendMu.Unlock()
+}
+
+func (w *whisperGen) setDevice(d string) {
+	w.backendMu.Lock()
+	w.device = d
 	w.backendMu.Unlock()
 }
 
@@ -108,6 +137,7 @@ func detectWhisper(modelsDir string) *whisperGen {
 		w.noGPUFlag = strings.Contains(string(out), "--no-gpu")
 		w.noFallback = strings.Contains(string(out), "--no-fallback")
 		w.suppressNST = strings.Contains(string(out), "--suppress-nst")
+		w.flashAttn = strings.Contains(string(out), "--flash-attn")
 		w.dtwFlag = strings.Contains(string(out), "--dtw")
 		w.jsonFull = strings.Contains(string(out), "--output-json-full")
 	}
@@ -228,8 +258,10 @@ func (w *whisperGen) generate(ctx context.Context, ffmpeg, videoPath, srtPath, l
 		if i == 0 {
 			if noGPU {
 				w.setBackend("cpu")
+				w.setDevice("")
 			} else {
 				w.setBackend(backendOf(out))
+				w.setDevice(deviceOf(out))
 			}
 		}
 		data, rerr := os.ReadFile(outB + ".json")
@@ -280,6 +312,11 @@ func (w *whisperGen) args(model, wav, outBase, lang string, translate, dtw bool)
 	}
 	if w.suppressNST {
 		args = append(args, "--suppress-nst")
+	}
+	// Flash attention fuses the attention kernels; on the GPU backends it is a
+	// straightforward speedup with the same output.
+	if w.flashAttn {
+		args = append(args, "-fa")
 	}
 	return args
 }

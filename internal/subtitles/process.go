@@ -145,6 +145,9 @@ afterDownloads:
 			generated++
 			took := time.Since(started)
 			msg := fmt.Sprintf("%s: AI subtitle written (%s) in %s on %s", title, t.lang, took.Round(time.Second), s.whisper.Backend())
+			if dev := s.whisper.Device(); dev != "" {
+				msg += " [" + dev + "]"
+			}
 			if mi != nil && mi.DurationSec > 0 && took > 0 {
 				// The number that says whether the GPU is pulling its weight.
 				dur := float64(mi.DurationSec)
