@@ -15,8 +15,14 @@ import (
 // fall back to Open Library rather than fail.
 const (
 	hcDailyBudget  = 4500 // leave headroom under the 5,000 cap
-	hcMinInterval  = 200 * time.Millisecond
 	hcCacheEntries = 4000 // total entries before the cache is cleared wholesale
+
+	// Hardcover's per-minute limiter is a token bucket: 60 a minute with a burst of
+	// 10. Ours is the same shape, a touch under it, so a page that fires eight
+	// requests at once goes straight through and a long job trickles at one a second.
+	hcBurst      = 10.0
+	hcPerSecond  = 55.0 / 60.0
+	hcRetryAfter = 20 * time.Second // when a 429 arrives without a Retry-After
 
 	hcTTLSearch  = time.Hour
 	hcTTLBook    = 24 * time.Hour
@@ -29,22 +35,27 @@ const (
 // another source fall back to it, the rest report it.
 var ErrHardcoverBudget = errors.New("hardcover: today's request budget is used up — Open Library is answering until tomorrow")
 
-// hcBudget counts requests per UTC day and spaces them out.
+// hcBudget counts requests per UTC day and paces them with a token bucket.
 type hcBudget struct {
-	mu    sync.Mutex
-	day   string
-	used  int
-	last  time.Time
-	sleep func(time.Duration) // swappable in tests
+	mu     sync.Mutex
+	day    string
+	used   int
+	tokens float64
+	refill time.Time           // when tokens was last brought up to date
+	now    func() time.Time    // swappable in tests
+	sleep  func(time.Duration) // swappable in tests
 }
 
-func newHCBudget() *hcBudget { return &hcBudget{sleep: time.Sleep} }
+func newHCBudget() *hcBudget {
+	return &hcBudget{tokens: hcBurst, refill: time.Now(), now: time.Now, sleep: time.Sleep}
+}
 
-// take reserves one request, waiting out the minimum spacing; false when the day's
-// budget is gone.
+// take reserves one request, waiting for a token when the burst is spent; false when
+// the day's budget is gone.
 func (b *hcBudget) take() bool {
 	b.mu.Lock()
-	today := time.Now().UTC().Format("2006-01-02")
+	now := b.now()
+	today := now.UTC().Format("2006-01-02")
 	if b.day != today {
 		b.day, b.used = today, 0
 	}
@@ -53,10 +64,19 @@ func (b *hcBudget) take() bool {
 		return false
 	}
 	b.used++
-	wait := hcMinInterval - time.Since(b.last)
-	b.last = time.Now()
-	if wait > 0 {
-		b.last = b.last.Add(wait)
+	b.tokens += now.Sub(b.refill).Seconds() * hcPerSecond
+	if b.tokens > hcBurst {
+		b.tokens = hcBurst
+	}
+	b.refill = now
+	var wait time.Duration
+	if b.tokens >= 1 {
+		b.tokens--
+	} else {
+		// Owe a token: the wait is how long the refill takes to cover it. Taking it
+		// now (going negative) keeps concurrent callers queued behind each other.
+		wait = time.Duration((1 - b.tokens) / hcPerSecond * float64(time.Second))
+		b.tokens--
 	}
 	b.mu.Unlock()
 	if wait > 0 {

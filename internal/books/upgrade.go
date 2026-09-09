@@ -119,6 +119,15 @@ func (s *Service) runUpgrade(ctx context.Context) {
 			return
 		}
 		outcome, reason, err := s.upgradeOne(ctx, b)
+		if err != nil && strings.Contains(err.Error(), "rate limited") {
+			// The provider already waited and retried; a limit still in force means
+			// something else is hammering it. Pause a minute and try this book again.
+			select {
+			case <-ctx.Done():
+			case <-time.After(time.Minute):
+				outcome, reason, err = s.upgradeOne(ctx, b)
+			}
+		}
 		if err != nil {
 			// A budget or schema error would fail every remaining book the same way:
 			// stop and say so, rather than report a hundred "unmatched".

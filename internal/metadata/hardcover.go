@@ -74,18 +74,39 @@ func hcAuthorID(key string) (int, bool) {
 }
 
 // query posts one GraphQL document and decodes data into out. Every call counts
-// against the daily budget; past it the call is refused so a fallback can answer.
+// against the daily budget; past it the call is refused so a fallback can answer. A
+// 429 is waited out (Retry-After, else a fixed pause) and retried twice before it's
+// an error — the pacing should make it rare, but a burst from elsewhere can still
+// trip the shared limiter.
 func (h *Hardcover) query(ctx context.Context, q string, vars map[string]any, out any) error {
+	var err error
+	for attempt := 0; attempt < 3; attempt++ {
+		var wait time.Duration
+		wait, err = h.queryOnce(ctx, q, vars, out)
+		if wait == 0 {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(wait):
+		}
+	}
+	return err
+}
+
+// queryOnce makes one request. A non-zero wait means "rate limited; try again after".
+func (h *Hardcover) queryOnce(ctx context.Context, q string, vars map[string]any, out any) (time.Duration, error) {
 	if h.budget != nil && !h.budget.take() {
-		return ErrHardcoverBudget
+		return 0, ErrHardcoverBudget
 	}
 	body, err := json.Marshal(map[string]any{"query": q, "variables": vars})
 	if err != nil {
-		return err
+		return 0, err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, h.endpoint, bytes.NewReader(body))
 	if err != nil {
-		return err
+		return 0, err
 	}
 	// Hardcover's settings page hands out the token already prefixed with "Bearer ";
 	// accept it either way.
@@ -98,21 +119,27 @@ func (h *Hardcover) query(ctx context.Context, q string, vars map[string]any, ou
 	req.Header.Set("User-Agent", "Arrmada (self-hosted media manager)")
 	resp, err := h.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("hardcover: %w", err)
+		return 0, fmt.Errorf("hardcover: %w", err)
 	}
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return fmt.Errorf("hardcover: the API key was rejected (HTTP %d) — it may have expired", resp.StatusCode)
+		return 0, fmt.Errorf("hardcover: the API key was rejected (HTTP %d) — it may have expired", resp.StatusCode)
 	}
 	if resp.StatusCode == http.StatusTooManyRequests {
-		return fmt.Errorf("hardcover: rate limited — try again in a minute")
+		wait := hcRetryAfter
+		if ra := resp.Header.Get("Retry-After"); ra != "" {
+			if secs, err := strconv.Atoi(strings.TrimSpace(ra)); err == nil && secs > 0 && secs <= 120 {
+				wait = time.Duration(secs) * time.Second
+			}
+		}
+		return wait, fmt.Errorf("hardcover: rate limited — try again in a minute")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("hardcover: HTTP %d", resp.StatusCode)
+		return 0, fmt.Errorf("hardcover: HTTP %d", resp.StatusCode)
 	}
 	var env struct {
 		Data   json.RawMessage `json:"data"`
@@ -121,17 +148,17 @@ func (h *Hardcover) query(ctx context.Context, q string, vars map[string]any, ou
 		} `json:"errors"`
 	}
 	if err := json.Unmarshal(raw, &env); err != nil {
-		return fmt.Errorf("hardcover: parse: %w", err)
+		return 0, fmt.Errorf("hardcover: parse: %w", err)
 	}
 	if len(env.Errors) > 0 {
-		return fmt.Errorf("hardcover: %s", env.Errors[0].Message)
+		return 0, fmt.Errorf("hardcover: %s", env.Errors[0].Message)
 	}
 	if out != nil && len(env.Data) > 0 {
 		if err := json.Unmarshal(env.Data, out); err != nil {
-			return fmt.Errorf("hardcover: parse data: %w", err)
+			return 0, fmt.Errorf("hardcover: parse data: %w", err)
 		}
 	}
-	return nil
+	return 0, nil
 }
 
 // --- the book shape shared by list queries ---
