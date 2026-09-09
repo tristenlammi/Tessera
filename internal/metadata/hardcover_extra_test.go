@@ -11,14 +11,14 @@ import (
 
 func TestNormalizeAndFindISBN(t *testing.T) {
 	for in, want := range map[string]string{
-		"978-0-441-17271-9":                 "9780441172719",
-		"0441172717":                        "0441172717",
-		"0-8044-2957-X":                     "080442957X",
-		"9780441172710":                     "", // bad checksum
-		"1234567890":                        "", // bad checksum
-		"Dune [9780441172719]":              "9780441172719",
-		"dune_0441172717.epub":              "0441172717",
-		"Dune (1965) 1080p":                 "",
+		"978-0-441-17271-9":    "9780441172719",
+		"0441172717":           "0441172717",
+		"0-8044-2957-X":        "080442957X",
+		"9780441172710":        "", // bad checksum
+		"1234567890":           "", // bad checksum
+		"Dune [9780441172719]": "9780441172719",
+		"dune_0441172717.epub": "0441172717",
+		"Dune (1965) 1080p":    "",
 		"Frank Herbert - Dune - 9780441172719 - retail": "9780441172719",
 	} {
 		if got := FindISBN(in); got != want {
@@ -99,7 +99,7 @@ func TestHardcoverSimilarBooksKeepsOrder(t *testing.T) {
 
 func TestHardcoverAuthorDetailAndISBN(t *testing.T) {
 	h, _ := hcServer(t, map[string]string{
-		"authors(": `{"data":{"authors":[{"id":7,"name":"Frank Herbert","bio":"Wrote Dune.","books_count":40,"born_year":1920,"death_year":1986,"image":{"url":"https://img/fh.jpg"}}]}}`,
+		"authors(":  `{"data":{"authors":[{"id":7,"name":"Frank Herbert","bio":"Wrote Dune.","books_count":40,"born_year":1920,"death_year":1986,"image":{"url":"https://img/fh.jpg"}}]}}`,
 		"editions(": `{"data":{"editions":[{"book":{"id":1,"title":"Dune","release_year":1965,"contributions":[{"author":{"id":7,"name":"Frank Herbert"}}]}}]}}`,
 	})
 	a, err := h.AuthorDetail(context.Background(), "hc:a:7")

@@ -369,6 +369,8 @@ func New(d Deps) *http.Server {
 
 	// Books Discover (Open Library browse/search + author catalogues).
 	mux.HandleFunc("GET "+base+"/api/v1/books/discover/trending", a.protected(a.handleBookDiscoverTrending))
+	mux.HandleFunc("GET "+base+"/api/v1/books/discover/browse/{kind}", a.protected(a.handleBookDiscoverBrowse))
+	mux.HandleFunc("GET "+base+"/api/v1/books/discover/recommended", a.protected(a.handleBookDiscoverRecommended))
 	mux.HandleFunc("GET "+base+"/api/v1/books/discover/search", a.protected(a.handleBookDiscoverSearch))
 	mux.HandleFunc("GET "+base+"/api/v1/books/discover/authors", a.protected(a.handleBookAuthorSearch))
 	mux.HandleFunc("GET "+base+"/api/v1/books/discover/authors/{key}/works", a.protected(a.handleBookAuthorWorks))

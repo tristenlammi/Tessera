@@ -578,6 +578,45 @@ func (a *api) enrichBookCards(ctx context.Context, results []metadata.BookResult
 	return cards
 }
 
+// handleBookDiscoverBrowse returns one browse row: trending, new_releases, top_rated,
+// popular. A row the catalogue can't produce is a 404 so the page hides it.
+func (a *api) handleBookDiscoverBrowse(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+	res, err := a.deps.Books.Browse(ctx, r.PathValue("kind"))
+	if errors.Is(err, metadata.ErrNotSupported) {
+		a.writeError(w, http.StatusNotFound, "not available from this catalogue")
+		return
+	}
+	if err != nil {
+		a.writeError(w, http.StatusBadGateway, "could not load books")
+		return
+	}
+	a.writeJSON(w, http.StatusOK, map[string]any{"books": a.enrichBookCards(ctx, res)})
+}
+
+// handleBookDiscoverRecommended returns the "Because you own …" rows.
+func (a *api) handleBookDiscoverRecommended(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	rows, err := a.deps.Books.Recommended(ctx)
+	if err != nil && !errors.Is(err, metadata.ErrNotSupported) {
+		a.writeError(w, http.StatusBadGateway, "could not build recommendations")
+		return
+	}
+	type row struct {
+		Title  string     `json:"title"`
+		Seed   string     `json:"seed"`
+		SeedID int64      `json:"seed_id"`
+		Books  []bookCard `json:"books"`
+	}
+	out := make([]row, 0, len(rows))
+	for _, rw := range rows {
+		out = append(out, row{Title: rw.Title, Seed: rw.Seed, SeedID: rw.SeedID, Books: a.enrichBookCards(ctx, rw.Books)})
+	}
+	a.writeJSON(w, http.StatusOK, map[string]any{"rows": out})
+}
+
 // handleBookDiscoverTrending returns books trending this week.
 func (a *api) handleBookDiscoverTrending(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)

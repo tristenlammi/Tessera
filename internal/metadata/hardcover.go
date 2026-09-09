@@ -136,7 +136,7 @@ func (h *Hardcover) query(ctx context.Context, q string, vars map[string]any, ou
 
 // --- the book shape shared by list queries ---
 
-const hcBookFields = `id title release_year canonical_id image { url } contributions { author { id name } }`
+const hcBookFields = `id title release_year canonical_id image { url } contributions { author { id name } } rating ratings_count users_count cached_tags`
 
 type hcBook struct {
 	ID            int       `json:"id"`
@@ -153,8 +153,12 @@ type hcBook struct {
 			Name string `json:"name"`
 		} `json:"author"`
 	} `json:"contributions"`
-	CachedTags json.RawMessage `json:"cached_tags"`
-	BookSeries []struct {
+	CachedTags   json.RawMessage `json:"cached_tags"`
+	Rating       *float64        `json:"rating"`
+	RatingsCount int             `json:"ratings_count"`
+	UsersCount   int             `json:"users_count"`
+	Pages        *int            `json:"pages"`
+	BookSeries   []struct {
 		Position *float64 `json:"position"`
 		Series   struct {
 			ID   int    `json:"id"`
@@ -181,6 +185,16 @@ func (b hcBook) result() BookResult {
 	if len(b.Contributions) > 0 {
 		r.Author = strings.TrimSpace(b.Contributions[0].Author.Name)
 	}
+	if b.Rating != nil && *b.Rating > 0 {
+		r.Rating = *b.Rating
+	}
+	r.Ratings, r.Readers = b.RatingsCount, b.UsersCount
+	if g := hcGenres(b.CachedTags); len(g) > 0 {
+		if len(g) > 3 {
+			g = g[:3]
+		}
+		r.Genres = g
+	}
 	return r
 }
 
@@ -196,6 +210,22 @@ type hcSearchDoc struct {
 	ReleaseYear json.RawMessage `json:"release_year"`
 	Image       json.RawMessage `json:"image"`
 	BooksCount  json.RawMessage `json:"books_count"`
+	Rating      json.RawMessage `json:"rating"`
+	RatingsCnt  json.RawMessage `json:"ratings_count"`
+	UsersCount  json.RawMessage `json:"users_count"`
+	Genres      []string        `json:"genres"`
+}
+
+func rawFloat(r json.RawMessage) float64 {
+	s := strings.Trim(strings.TrimSpace(string(r)), `"`)
+	if s == "" || s == "null" {
+		return 0
+	}
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0
+	}
+	return f
 }
 
 func rawInt(r json.RawMessage) int {
@@ -281,9 +311,15 @@ func (d hcSearchDoc) bookResult() (BookResult, bool) {
 	if id <= 0 || strings.TrimSpace(d.Title) == "" {
 		return BookResult{}, false
 	}
-	r := BookResult{Key: hcKeyPrefix + strconv.Itoa(id), Title: strings.TrimSpace(d.Title), Year: rawInt(d.ReleaseYear), CoverURL: rawImageURL(d.Image)}
+	r := BookResult{Key: hcKeyPrefix + strconv.Itoa(id), Title: strings.TrimSpace(d.Title), Year: rawInt(d.ReleaseYear), CoverURL: rawImageURL(d.Image),
+		Rating: rawFloat(d.Rating), Ratings: rawInt(d.RatingsCnt), Readers: rawInt(d.UsersCount)}
 	if len(d.AuthorNames) > 0 {
 		r.Author = strings.TrimSpace(d.AuthorNames[0])
+	}
+	if len(d.Genres) > 3 {
+		r.Genres = d.Genres[:3]
+	} else if len(d.Genres) > 0 {
+		r.Genres = d.Genres
 	}
 	return r, true
 }
@@ -373,6 +409,9 @@ func (h *Hardcover) getBookLive(ctx context.Context, id int) (*BookDetails, erro
 	}
 	d := &BookDetails{BookResult: b.result(), Description: strings.TrimSpace(b.Description)}
 	d.Subjects = hcGenres(b.CachedTags)
+	if b.Pages != nil {
+		d.Pages = *b.Pages
+	}
 	// The lowest-numbered series membership is the one people mean ("Dune #1", not
 	// "Frank Herbert Collection #7").
 	for _, bs := range b.BookSeries {
@@ -397,7 +436,7 @@ func (h *Hardcover) book(ctx context.Context, id int) (*hcBook, error) {
 	const q = `query($id: Int!) {
   books(where: {id: {_eq: $id}}, limit: 1) {
     ` + hcBookFields + `
-    subtitle description cached_tags
+    subtitle description pages
     book_series { position series { id name } }
   }
 }`

@@ -217,6 +217,12 @@ type BookResult struct {
 	// Set on entries of a series listing (SeriesInfo); zero elsewhere.
 	SeriesName     string  `json:"series_name,omitempty"`
 	SeriesPosition float64 `json:"series_position,omitempty"`
+	// Catalogue signals (Hardcover): average rating out of 5, how many rated it, how
+	// many have it shelved, and its top genres. Zero/empty from Open Library.
+	Rating  float64  `json:"rating,omitempty"`
+	Ratings int      `json:"ratings,omitempty"`
+	Readers int      `json:"readers,omitempty"`
+	Genres  []string `json:"genres,omitempty"`
 }
 
 // BookDetails is a full book record.

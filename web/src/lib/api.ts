@@ -679,6 +679,13 @@ export interface BookDiscoverCard {
   author: string;
   year: number;
   cover_url?: string;
+  // Catalogue signals (Hardcover only): rating out of 5, how many rated, how many shelved, top genres.
+  rating?: number;
+  ratings?: number;
+  readers?: number;
+  genres?: string[];
+  series_name?: string;
+  series_position?: number;
   in_library: boolean;
   has_file: boolean;
   requested: boolean;
@@ -701,7 +708,15 @@ export interface BookMeta {
   cover_url?: string;
   description?: string;
   subjects?: string[];
+  pages?: number;
+  rating?: number;
+  ratings?: number;
+  readers?: number;
+  genres?: string[];
+  series_name?: string;
+  series_position?: number;
 }
+export interface BookRecommendedRow { title: string; seed: string; seed_id: number; books: BookDiscoverCard[] }
 
 export interface SeriesImportCandidate {
   path: string;
@@ -1207,6 +1222,10 @@ export const api = {
   // Books Discover
   bookDiscoverTrending: () =>
     req<{ books: BookDiscoverCard[] }>("/api/v1/books/discover/trending").then((r) => r.books),
+  bookDiscoverBrowse: (kind: "trending" | "new_releases" | "top_rated" | "popular") =>
+    req<{ books: BookDiscoverCard[] }>(`/api/v1/books/discover/browse/${kind}`).then((r) => r.books),
+  bookDiscoverRecommended: () =>
+    req<{ rows: BookRecommendedRow[] }>("/api/v1/books/discover/recommended").then((r) => r.rows),
   bookDiscoverSearch: (q: string, source?: "openlibrary" | "hardcover") =>
     req<{ authors: BookAuthor[]; books: BookDiscoverCard[]; source: BookSource }>(`/api/v1/books/discover/search?q=${encodeURIComponent(q)}${source ? `&source=${source}` : ""}`),
   searchBookAuthors: (q: string) =>

@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, type BookSource, type BookAuthor, type BookDiscoverCard, type BookMeta } from "../lib/api";
+import { api, type BookSource, type BookAuthor, type BookDiscoverCard, type BookMeta, type BookRecommendedRow } from "../lib/api";
 
 // BooksDiscover is the Books area of Discover — deliberately separate from the movie/TV
 // experience: its own search (titles + authors), Open Library browse rows, author
 // catalogue pages, and a book request modal. Books run on Open Library and go through the
 // same request → approve pipeline as movies/series (auto-approved for auto-approve users).
-const SUBJECTS = ["Fantasy", "Science Fiction", "Mystery", "Thriller", "Romance", "History"];
+// Genres for the explorer. Hardcover tags books with these names; on Open Library they
+// go through its subject search, which knows most of them too.
+const GENRES = ["Fantasy", "Science Fiction", "Mystery", "Thriller", "Romance", "Horror", "Historical Fiction", "Literary Fiction", "Young Adult", "Nonfiction", "Biography", "History", "Science", "Self Help", "Business", "Classics", "Humor", "Graphic Novels", "Poetry", "Children's"];
+
+// fmtCount renders 12345 as "12.3k".
+function fmtCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}m`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
+  return String(n);
+}
 
 // Shared with the movie/TV tab's design system. Duplicated (not imported) because
 // Discover.tsx imports this file — importing back would be a circular import.
@@ -115,10 +124,159 @@ interface BookCtx {
 function BrowseView({ ctx }: { ctx: BookCtx }) {
   return (
     <div className="flex flex-col gap-7">
-      <BookRow title="Trending this week" load={() => api.bookDiscoverTrending()} ctx={ctx} />
-      {SUBJECTS.map((s) => (
-        <BookRow key={s} title={s} load={() => api.bookDiscoverSubject(s)} ctx={ctx} />
+      <BookHero ctx={ctx} />
+      <RecommendedRows ctx={ctx} />
+      <BookRow title="Trending this week" load={() => api.bookDiscoverBrowse("trending")} ctx={ctx} />
+      <BookRow title="New releases" load={() => api.bookDiscoverBrowse("new_releases")} ctx={ctx} hideOnError />
+      <BookRow title="Top rated" load={() => api.bookDiscoverBrowse("top_rated")} ctx={ctx} hideOnError />
+      <BookRow title="Popular all time" load={() => api.bookDiscoverBrowse("popular")} ctx={ctx} hideOnError />
+      <GenreExplorer ctx={ctx} />
+    </div>
+  );
+}
+
+// BookHero is the page's opener: the trending books, one at a time, cover art and all.
+// Books have no backdrops, so the cover itself — blurred — is the backdrop, with the real
+// cover standing in front of it. Details (description, genres) load per slide and are
+// cached server-side, so the strip costs a handful of requests a day.
+function BookHero({ ctx }: { ctx: BookCtx }) {
+  const [items, setItems] = useState<BookDiscoverCard[] | null>(null);
+  const [idx, setIdx] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [details, setDetails] = useState<Record<string, BookMeta>>({});
+  const [open, setOpen] = useState(false);
+  const [quickBusy, setQuickBusy] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    api.bookDiscoverBrowse("trending")
+      .then((r) => { if (alive) setItems(r.filter((b) => !!b.cover_url).slice(0, 6)); })
+      .catch(() => { if (alive) setItems([]); });
+    return () => { alive = false; };
+  }, []);
+  const count = items?.length ?? 0;
+  useEffect(() => {
+    if (paused || count <= 1 || open) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % count), 8000);
+    return () => clearInterval(t);
+  }, [paused, count, open]);
+  useEffect(() => { if (count > 0 && idx >= count) setIdx(0); }, [idx, count]);
+  const cur = items && count > 0 ? items[Math.min(idx, count - 1)] : null;
+  useEffect(() => {
+    if (!cur || details[cur.key]) return;
+    let alive = true;
+    api.bookDiscoverDetail(cur.key).then((d) => { if (alive) setDetails((m) => ({ ...m, [cur.key]: d })); }).catch(() => {});
+    return () => { alive = false; };
+  }, [cur?.key]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (items === null) return <div className="w-full animate-pulse rounded-2xl" style={{ height: "clamp(300px, 40vh, 460px)", background: "var(--panel-2)", border: "1px solid var(--line)" }} />;
+  if (!cur) return null;
+  const d = details[cur.key];
+  const requested = ctx.isRequested(cur.key);
+  const badge = badgeFor(cur, requested);
+  const genres = (cur.genres && cur.genres.length > 0 ? cur.genres : d?.subjects ?? []).slice(0, 3);
+  const quick = async () => {
+    if (quickBusy) return;
+    setQuickBusy(true);
+    try { await ctx.request(d ?? cur); } catch { /* toast shown */ } finally { setQuickBusy(false); }
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl" style={{ height: "clamp(300px, 40vh, 460px)", border: "1px solid var(--line)", background: "var(--panel-2)" }}
+      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      {items.map((it, i) => (
+        <img key={it.key} src={it.cover_url} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover blur-2xl transition-opacity duration-700" style={{ opacity: i === idx ? 0.55 : 0, transform: "scale(1.15)" }} loading={i === 0 ? "eager" : "lazy"} decoding="async" />
       ))}
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,.86) 0%, rgba(0,0,0,.6) 45%, rgba(0,0,0,.25) 100%)" }} />
+      <div className="absolute inset-x-0 bottom-0 h-1/2" style={{ background: "linear-gradient(to top, var(--bg) 2%, transparent)" }} />
+
+      <div className="relative z-10 flex h-full items-end gap-5 p-5 sm:items-center sm:gap-8 sm:p-8">
+        <button onClick={() => setOpen(true)} aria-label={`View details for ${cur.title}`} className="hidden flex-none overflow-hidden rounded-xl transition-transform hover:scale-[1.02] sm:block" style={{ width: 168, aspectRatio: "2/3", border: "1px solid rgba(255,255,255,.2)", boxShadow: "0 18px 40px rgba(0,0,0,.55)" }}>
+          <img src={cur.cover_url} alt={cur.title} className="h-full w-full object-cover" decoding="async" />
+        </button>
+        <div className="flex min-w-0 max-w-[640px] flex-col gap-2.5">
+          {badge && <span className="w-fit rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide" style={{ background: BADGE_BG, color: badge.tone, border: `1px solid ${badge.tone}` }}>{badge.label}</span>}
+          <h2 className="m-0 line-clamp-2 text-[24px] font-extrabold leading-[1.08] sm:text-[34px]" style={{ color: "#fff", textShadow: "0 2px 18px rgba(0,0,0,.55)" }}>{cur.title}</h2>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] font-medium" style={{ color: "rgba(255,255,255,.85)" }}>
+            {cur.author && <span>{cur.author}</span>}
+            {cur.year ? <span>{cur.year}</span> : null}
+            {!!cur.rating && <span style={{ color: "var(--accent)" }}>★ {cur.rating.toFixed(1)}{cur.ratings ? <span style={{ color: "rgba(255,255,255,.6)" }}> · {fmtCount(cur.ratings)} ratings</span> : null}</span>}
+            {d?.series_name && <span className="rounded px-1.5 py-px text-[10px] uppercase" style={{ background: "rgba(255,255,255,.14)" }}>{d.series_name}{d.series_position ? ` #${d.series_position}` : ""}</span>}
+          </div>
+          {genres.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {genres.map((g) => <span key={g} className="rounded-full px-2 py-0.5 text-[10.5px] font-semibold" style={{ background: "rgba(255,255,255,.14)", color: "rgba(255,255,255,.9)" }}>{g}</span>)}
+            </div>
+          )}
+          {d?.description && <p className="m-0 line-clamp-2 text-[13px] leading-relaxed sm:line-clamp-3" style={{ color: "rgba(255,255,255,.78)" }}>{d.description}</p>}
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <button onClick={() => setOpen(true)} className="rounded-lg px-4 py-2 text-[12.5px] font-semibold backdrop-blur-sm" style={{ background: "rgba(255,255,255,.16)", border: "1px solid rgba(255,255,255,.28)", color: "#fff" }}>View details</button>
+            {ctx.canRequest && !badge && (
+              <button onClick={quick} disabled={quickBusy} className="rounded-lg px-4 py-2 text-[12.5px] font-semibold" style={{ background: "linear-gradient(150deg, var(--accent), var(--accent-deep))", color: "var(--accent-ink)", opacity: quickBusy ? 0.65 : 1 }}>
+                {quickBusy ? "Requesting…" : "＋ Request"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      {count > 1 && (
+        <div className="absolute bottom-4 right-5 z-10 flex gap-1.5">
+          {items.map((it, i) => (
+            <button key={it.key} onClick={() => setIdx(i)} aria-label={`Show slide ${i + 1}`} className="h-1.5 rounded-full transition-all" style={{ width: i === idx ? 20 : 6, background: i === idx ? "#fff" : "rgba(255,255,255,.45)" }} />
+          ))}
+        </div>
+      )}
+      {open && <BookRequestModal b={cur} ctx={ctx} onClose={() => setOpen(false)} />}
+    </div>
+  );
+}
+
+// RecommendedRows are the "Because you own …" strips: the catalogue's similar-books
+// lists seeded from the library, rotating daily. Nothing shows until there's a library
+// on Hardcover to seed from.
+function RecommendedRows({ ctx }: { ctx: BookCtx }) {
+  const [rows, setRows] = useState<BookRecommendedRow[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api.bookDiscoverRecommended().then((r) => { if (alive) setRows(r); }).catch(() => { if (alive) setRows([]); });
+    return () => { alive = false; };
+  }, []);
+  if (!rows || rows.length === 0) return null;
+  return (
+    <>
+      {rows.map((r) => <BookRow key={r.seed_id} title={r.title} load={() => Promise.resolve(r.books)} ctx={ctx} />)}
+    </>
+  );
+}
+
+// GenreExplorer: pick a genre, see a grid. One request per pick (cached six hours),
+// where six always-on genre rows cost six on every visit.
+function GenreExplorer({ ctx }: { ctx: BookCtx }) {
+  const [active, setActive] = useState<string | null>(null);
+  const [items, setItems] = useState<BookDiscoverCard[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const seq = useRef(0);
+  const pick = (g: string) => {
+    const my = ++seq.current;
+    setActive(g); setItems(null); setError(null);
+    api.bookDiscoverSubject(g)
+      .then((r) => { if (seq.current === my) setItems(r); })
+      .catch((e) => { if (seq.current === my) { setItems([]); setError((e as Error).message); } });
+  };
+  return (
+    <div>
+      <h2 className="m-0 mb-2.5 text-[15px] font-bold">Browse by genre</h2>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {GENRES.map((g) => {
+          const on = active === g;
+          return (
+            <button key={g} onClick={() => pick(g)} className="rounded-full px-3 py-1 text-[12px] font-semibold" style={{ border: `1px solid ${on ? "var(--accent)" : "var(--line)"}`, background: on ? "var(--accent-soft)" : "var(--panel)", color: on ? "var(--accent)" : "var(--ink-faint)" }}>
+              {g}
+            </button>
+          );
+        })}
+      </div>
+      {active && <BookGrid books={items} ctx={ctx} error={error} emptyLabel={`Nothing found for ${active}.`} />}
     </div>
   );
 }
@@ -211,7 +369,7 @@ function AuthorView({ author, ctx, onBack }: { author: BookAuthor; ctx: BookCtx;
   );
 }
 
-function BookRow({ title, load, ctx }: { title: string; load: () => Promise<BookDiscoverCard[]>; ctx: BookCtx }) {
+function BookRow({ title, load, ctx, hideOnError }: { title: string; load: () => Promise<BookDiscoverCard[]>; ctx: BookCtx; hideOnError?: boolean }) {
   const [items, setItems] = useState<BookDiscoverCard[] | null>(null);
   // A failed row stays visible with an inline error — silently vanishing (or
   // skeleton-ing forever) hides real Open Library outages from the viewer.
@@ -227,8 +385,10 @@ function BookRow({ title, load, ctx }: { title: string; load: () => Promise<Book
   }, []);
   const scroll = (dir: -1 | 1) => scroller.current?.scrollBy({ left: dir * Math.max(600, scroller.current.clientWidth * 0.8), behavior: "smooth" });
 
-  // Genuinely empty (but successful) rows still collapse; errored ones do not.
+  // Genuinely empty (but successful) rows still collapse; errored ones do not —
+  // unless the row is one the catalogue may simply not offer (hideOnError).
   if (items && items.length === 0 && !error) return null;
+  if (error && hideOnError) return null;
   return (
     <div>
       <div className="mb-2.5 flex items-center justify-between">
@@ -344,8 +504,12 @@ function BookCard({ b, ctx, authorName, full }: { b: BookDiscoverCard; ctx: Book
         <div className="truncate text-[12px] font-semibold" style={{ color: "var(--ink)" }} title={b.title}>{b.title}</div>
         <div className="mt-0.5 flex items-center gap-1.5 text-[11px]" style={{ color: "var(--ink-faint)" }}>
           <span className="flex-none">{b.year || "—"}</span>
+          {!!b.rating && <><span className="flex-none">·</span><span className="flex-none" style={{ color: "var(--accent)" }} title={b.ratings ? `${b.ratings.toLocaleString()} ratings` : undefined}>★ {b.rating.toFixed(1)}</span></>}
           {byline && <><span className="flex-none">·</span><span className="truncate" title={byline}>{byline}</span></>}
         </div>
+        {b.genres && b.genres.length > 0 && (
+          <div className="mt-1 truncate text-[10px]" style={{ color: "var(--ink-faint)" }} title={b.genres.join(" · ")}>{b.genres.slice(0, 2).join(" · ")}</div>
+        )}
       </div>
       {open && <BookRequestModal b={b} ctx={ctx} authorName={authorName} onClose={() => setOpen(false)} />}
     </div>
@@ -416,7 +580,18 @@ function BookRequestModal({ b, ctx, authorName, onClose }: { b: BookDiscoverCard
             <div className="min-w-0 flex-1">
               <h2 className="m-0 text-[17px] font-bold leading-tight">{b.title}</h2>
               <div className="mt-1 text-[13px] font-semibold text-ink-dim">{author}</div>
-              {b.year > 0 && <div className="mt-0.5 font-mono text-[11px] text-ink-faint">{b.year}</div>}
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[11px] text-ink-faint">
+                {b.year > 0 && <span>{b.year}</span>}
+                {(detail?.series_name || b.series_name) && <span>· {detail?.series_name || b.series_name}{(detail?.series_position || b.series_position) ? ` #${detail?.series_position || b.series_position}` : ""}</span>}
+                {!!detail?.pages && <span>· {detail.pages} pages</span>}
+              </div>
+              {(!!(detail?.rating ?? b.rating)) && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
+                  <span className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11.5px] font-bold" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>★ {(detail?.rating ?? b.rating ?? 0).toFixed(2)}</span>
+                  {!!(detail?.ratings ?? b.ratings) && <span className="text-ink-faint">{fmtCount(detail?.ratings ?? b.ratings ?? 0)} ratings</span>}
+                  {!!(detail?.readers ?? b.readers) && <span className="text-ink-faint">· {fmtCount(detail?.readers ?? b.readers ?? 0)} readers</span>}
+                </div>
+              )}
               <div className="mt-3">
                 {done && subscribed ? (
                   <span className="inline-block rounded-lg px-3.5 py-2 text-[12.5px] font-semibold" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>You’re on the list — we’ll notify you when it’s ready</span>
