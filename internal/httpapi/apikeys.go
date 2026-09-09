@@ -60,6 +60,10 @@ func (a *api) handleSetAPIKey(w http.ResponseWriter, r *http.Request) {
 		a.writeError(w, http.StatusInternalServerError, "could not save the key")
 		return
 	}
+	// A Hardcover key makes Hardcover the books catalogue; bring the library across now.
+	if id == "hardcover" && strings.TrimSpace(req.Value) != "" && a.deps.Books != nil {
+		a.deps.Books.MaybeStartUpgrade(context.WithoutCancel(r.Context()))
+	}
 	// Return the fresh status so the UI reflects the new state (masked) without a reload.
 	a.writeJSON(w, http.StatusOK, map[string]any{"keys": a.deps.APIKeys.Status(r.Context())})
 }

@@ -3,6 +3,7 @@ package books
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -18,24 +19,30 @@ import (
 // rewrites the row to the Hardcover entry (key, description, cover, subjects, series)
 // and, when two old rows land on the same Hardcover book, folds them into one.
 // Files, monitoring and the quality profile are never touched.
+//
+// It runs by itself: at startup and when the key is saved, whenever books are left on
+// other keys. The button on the Books page is the retry for whatever didn't match.
 
 // UpgradeStatus is the background job's progress, for the Books page.
 type UpgradeStatus struct {
-	Running   bool   `json:"running"`
-	Total     int    `json:"total"`
-	Done      int    `json:"done"`
-	Upgraded  int    `json:"upgraded"`
-	Merged    int    `json:"merged"`
-	Unmatched int    `json:"unmatched"`
-	StartedAt int64  `json:"started_at,omitempty"`
-	EndedAt   int64  `json:"ended_at,omitempty"`
-	Error     string `json:"error,omitempty"`
+	Running   bool     `json:"running"`
+	Total     int      `json:"total"`
+	Done      int      `json:"done"`
+	Upgraded  int      `json:"upgraded"`
+	Merged    int      `json:"merged"`
+	Unmatched int      `json:"unmatched"`
+	StartedAt int64    `json:"started_at,omitempty"`
+	EndedAt   int64    `json:"ended_at,omitempty"`
+	Error     string   `json:"error,omitempty"`
+	Notes     []string `json:"notes,omitempty"` // why the first few books didn't match
 }
 
 type upgradeState struct {
 	mu     sync.Mutex
 	status UpgradeStatus
 }
+
+const upgradeNoteLimit = 8
 
 // Upgradable counts the books not yet on Hardcover keys.
 func (s *Service) Upgradable(ctx context.Context) int {
@@ -76,6 +83,15 @@ func (s *Service) StartUpgrade(ctx context.Context) bool {
 	return true
 }
 
+// MaybeStartUpgrade runs the upgrade when Hardcover is the source and books are still
+// on other keys — called at startup and when the key is saved.
+func (s *Service) MaybeStartUpgrade(ctx context.Context) bool {
+	if s.MetadataSource() != metadata.SourceHardcover || s.Upgradable(ctx) == 0 {
+		return false
+	}
+	return s.StartUpgrade(ctx)
+}
+
 func (s *Service) setUpgrade(fn func(*UpgradeStatus)) {
 	s.upgrade.mu.Lock()
 	fn(&s.upgrade.status)
@@ -96,13 +112,17 @@ func (s *Service) runUpgrade(ctx context.Context) {
 		}
 	}
 	s.setUpgrade(func(st *UpgradeStatus) { st.Total = len(todo) })
+	s.log.Info("books: upgrade to Hardcover started", "books", len(todo))
 	for _, b := range todo {
 		if ctx.Err() != nil {
 			s.setUpgrade(func(st *UpgradeStatus) { st.Error = "stopped" })
 			return
 		}
-		outcome, err := s.upgradeOne(ctx, b)
-		if errors.Is(err, metadata.ErrHardcoverBudget) {
+		outcome, reason, err := s.upgradeOne(ctx, b)
+		if err != nil {
+			// A budget or schema error would fail every remaining book the same way:
+			// stop and say so, rather than report a hundred "unmatched".
+			s.log.Warn("books: upgrade stopped", "title", b.Title, "err", err)
 			s.setUpgrade(func(st *UpgradeStatus) { st.Error = err.Error() })
 			return
 		}
@@ -115,47 +135,66 @@ func (s *Service) runUpgrade(ctx context.Context) {
 				st.Merged++
 			default:
 				st.Unmatched++
+				if len(st.Notes) < upgradeNoteLimit {
+					st.Notes = append(st.Notes, fmt.Sprintf("%s — %s: %s", b.Title, orStr(b.Author, "no author"), reason))
+				}
 			}
 		})
+		if outcome == "unmatched" {
+			s.log.Info("books: upgrade left a book as is", "title", b.Title, "author", b.Author, "reason", reason)
+		}
 	}
-	s.log.Info("books: upgrade to Hardcover finished", "total", len(todo))
+	st := s.UpgradeStatus()
+	s.log.Info("books: upgrade to Hardcover finished", "total", len(todo), "upgraded", st.Upgraded, "merged", st.Merged, "unmatched", st.Unmatched)
 }
 
-// upgradeOne re-matches a single book. Outcomes: "upgraded", "merged", "unmatched".
-func (s *Service) upgradeOne(ctx context.Context, b Book) (string, error) {
+// upgradeOne re-matches a single book. Outcomes: "upgraded", "merged", "unmatched"
+// (with a reason). A returned error is one that would stop every book.
+func (s *Service) upgradeOne(ctx context.Context, b Book) (outcome, reason string, err error) {
 	sl, ok := s.meta.(sourceLookup)
 	if !ok {
-		return "unmatched", nil
+		return "unmatched", "the catalogue can't be searched", nil
 	}
-	q := strings.TrimSpace(b.Title + " " + b.Author)
-	results, err := sl.SearchBooksFrom(ctx, metadata.SourceHardcover, q)
+	search := func(q string) ([]metadata.BookResult, error) {
+		r, err := sl.SearchBooksFrom(ctx, metadata.SourceHardcover, q)
+		if err != nil {
+			if errors.Is(err, metadata.ErrHardcoverBudget) || strings.Contains(err.Error(), "rejected") {
+				return nil, err
+			}
+			return nil, fmt.Errorf("search failed: %w", err)
+		}
+		return r, nil
+	}
+	results, err := search(strings.TrimSpace(b.Title + " " + b.Author))
 	if err != nil {
-		if errors.Is(err, metadata.ErrHardcoverBudget) {
-			return "", err
-		}
-		s.log.Debug("books: upgrade search failed", "title", b.Title, "err", err)
-		return "unmatched", nil
+		return "", "", err
 	}
-	want := DedupeKey(b.Title, b.Author)
-	var match *metadata.BookResult
-	for i := range results {
-		if DedupeKey(results[i].Title, results[i].Author) == want {
-			match = &results[i]
-			break
+	match := matchUpgrade(b, results)
+	if match == nil && b.Author != "" {
+		// The combined query can miss when the catalogue spells the author
+		// differently; the title alone plus a check on the author usually lands it.
+		more, err := search(b.Title)
+		if err != nil {
+			return "", "", err
 		}
-	}
-	if match == nil && b.Author == "" && len(results) > 0 && titleKey(results[0].Title) == titleKey(b.Title) {
-		match = &results[0] // no author to check against: the top hit with the same title
+		match = matchUpgrade(b, more)
+		if match == nil && len(more) > 0 {
+			results = more
+		}
 	}
 	if match == nil {
-		return "unmatched", nil
+		if len(results) == 0 {
+			return "unmatched", "Hardcover returned no results", nil
+		}
+		top := results[0]
+		return "unmatched", fmt.Sprintf("no result matched (closest: %q by %s)", top.Title, orStr(top.Author, "unknown")), nil
 	}
 	d, err := s.meta.GetBook(ctx, match.Key)
 	if err != nil {
 		if errors.Is(err, metadata.ErrHardcoverBudget) {
-			return "", err
+			return "", "", err
 		}
-		return "unmatched", nil
+		return "unmatched", "matched " + match.Key + " but fetching it failed: " + err.Error(), nil
 	}
 	// Another row already sits on this Hardcover book: this one is its duplicate.
 	if other, ok := s.findByKey(ctx, d.Key); ok && other.ID != b.ID {
@@ -164,19 +203,68 @@ func (s *Service) upgradeOne(ctx context.Context, b Book) (string, error) {
 			keeper, dup = b, other
 			// Point the keeper at the Hardcover entry before folding the other in.
 			if err := s.applyUpgrade(ctx, keeper, d); err != nil {
-				return "unmatched", nil
+				return "unmatched", "could not rewrite the row: " + err.Error(), nil
 			}
 		}
 		if err := s.foldInto(ctx, keeper, dup); err != nil {
-			return "unmatched", nil
+			return "unmatched", "could not merge with its duplicate: " + err.Error(), nil
 		}
-		return "merged", nil
+		return "merged", "", nil
 	}
 	if err := s.applyUpgrade(ctx, b, d); err != nil {
-		s.log.Warn("books: upgrade write failed", "title", b.Title, "err", err)
-		return "unmatched", nil
+		return "unmatched", "could not rewrite the row: " + err.Error(), nil
 	}
-	return "upgraded", nil
+	return "upgraded", "", nil
+}
+
+// matchUpgrade picks the result that is the same book: the same title-and-author key
+// first; failing that the same title with an author that shares a real word (so
+// "Hugh Howey" matches "Howey, Hugh" and an initial-only rendering); failing that,
+// with no author to check, the sole result of that title.
+func matchUpgrade(b Book, results []metadata.BookResult) *metadata.BookResult {
+	want := DedupeKey(b.Title, b.Author)
+	for i := range results {
+		if DedupeKey(results[i].Title, results[i].Author) == want {
+			return &results[i]
+		}
+	}
+	tk := titleKey(b.Title)
+	if tk == "" {
+		return nil
+	}
+	var sameTitle []*metadata.BookResult
+	for i := range results {
+		if titleKey(results[i].Title) == tk {
+			sameTitle = append(sameTitle, &results[i])
+		}
+	}
+	for _, r := range sameTitle {
+		if authorsOverlap(b.Author, r.Author) {
+			return r
+		}
+	}
+	if (strings.TrimSpace(b.Author) == "" || len(sameTitle) == 1 && strings.TrimSpace(sameTitle[0].Author) == "") && len(sameTitle) >= 1 {
+		return sameTitle[0]
+	}
+	return nil
+}
+
+// authorsOverlap reports whether two author strings share a word of three or more
+// letters ("Hugh Howey" / "Howey, Hugh" / "H. Howey").
+func authorsOverlap(a, b string) bool {
+	wa := strings.Fields(wordKey(a))
+	wb := strings.Fields(wordKey(b))
+	for _, x := range wa {
+		if len(x) < 3 {
+			continue
+		}
+		for _, y := range wb {
+			if x == y {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // applyUpgrade rewrites a row to the Hardcover entry, keeping what the user set by

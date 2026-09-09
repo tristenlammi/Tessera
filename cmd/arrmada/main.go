@@ -182,6 +182,9 @@ func main() {
 		} else if n > 0 {
 			log.Info("books: merged duplicate entries", "removed", n)
 		}
+		// Hardcover is the catalogue when a key is set; anything still on Open Library
+		// keys is re-matched without being asked.
+		booksSvc.MaybeStartUpgrade(context.Background())
 	}()
 	// MusicBrainz needs no key, the way Open Library needs none for books.
 	musicSvc := music.NewService(st.DB(), metadata.NewMusicBrainz(), log)

@@ -86,7 +86,7 @@ export function Books() {
         setUpgrade(st);
         if (!st.running) {
           refresh();
-          flash(st.error ? `Upgrade stopped: ${st.error}` : `Upgraded ${st.upgraded}, merged ${st.merged}, no match for ${st.unmatched}.`);
+          flash(st.error ? `Upgrade stopped: ${st.error}` : `Upgraded ${st.upgraded}, merged ${st.merged}, no match for ${st.unmatched}.${st.notes?.length ? ` E.g. ${st.notes[0]}` : ""}`);
         }
       }).catch(() => {});
     }, 2000);
@@ -102,6 +102,7 @@ export function Books() {
   useEffect(() => {
     refresh();
     api.qualityProfiles("book").then((r) => setProfiles(r.profiles.map((p) => ({ key: p.key, name: p.name })))).catch(() => {});
+    api.bookUpgradeStatus().then((st) => { if (st.started_at) setUpgrade(st); }).catch(() => {});
   }, []);
 
   const toggleSelect = (id: number) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -195,8 +196,8 @@ export function Books() {
               </>
             )}
             {source === "hardcover" && (upgradable > 0 || upgrade?.running) && (
-              <button onClick={startUpgrade} disabled={!!upgrade?.running} title="Re-match every book still on an Open Library key to Hardcover: better covers, descriptions and series, and duplicates folded together. Files, monitoring and profiles are kept." className="rounded-lg px-3 py-2 text-[12.5px] font-semibold" style={{ border: "1px solid var(--accent-line)", background: "var(--panel-2)", color: "var(--accent)" }}>
-                {upgrade?.running ? `Upgrading… ${upgrade.done}/${upgrade.total}` : `Upgrade ${upgradable} to Hardcover`}
+              <button onClick={startUpgrade} disabled={!!upgrade?.running} title={`${upgradable} book${upgradable === 1 ? " is" : "s are"} still on Open Library keys. Re-matching runs by itself when the key is saved and at startup; this retries whatever didn't match. Files, monitoring and profiles are kept.${upgrade?.notes?.length ? `\n\nLast run: ${upgrade.notes.slice(0, 4).join("\n")}` : ""}`} className="rounded-lg px-3 py-2 text-[12.5px] font-semibold" style={{ border: "1px solid var(--accent-line)", background: "var(--panel-2)", color: "var(--accent)" }}>
+                {upgrade?.running ? `Re-matching… ${upgrade.done}/${upgrade.total}` : `Re-match ${upgradable} to Hardcover`}
               </button>
             )}
             <button onClick={backfillSeries} disabled={backfilling} title="One-off: look up which series your books belong to. Searches indexers to read the series off, and downloads nothing." className="rounded-lg px-3 py-2 text-[12.5px] font-semibold" style={{ border: "1px solid var(--line)", background: "var(--panel-2)", color: "var(--ink)" }}>{backfilling ? "Looking up…" : "Find series"}</button>
@@ -249,6 +250,16 @@ export function Books() {
         )}
 
         {error && <div className="mb-3 rounded-lg p-3 text-[12.5px]" style={{ border: "1px solid var(--reject)", color: "var(--reject)" }}>{error}</div>}
+        {upgrade && !upgrade.running && (upgrade.error || (upgrade.notes?.length ?? 0) > 0) && (
+          <div className="mb-4 rounded-lg px-3.5 py-2.5 text-[12px]" style={{ border: "1px solid var(--line)", background: "var(--panel-2)", color: "var(--ink-dim)" }}>
+            <b>Hardcover re-match:</b> {upgrade.upgraded} upgraded, {upgrade.merged} merged, {upgrade.unmatched} left as they were{upgrade.error ? ` — stopped: ${upgrade.error}` : "."}
+            {(upgrade.notes?.length ?? 0) > 0 && (
+              <ul className="m-0 mt-1.5 list-disc pl-5 text-[11.5px] text-ink-faint">
+                {upgrade.notes!.map((n, i) => <li key={i}>{n}</li>)}
+              </ul>
+            )}
+          </div>
+        )}
         {/* Open Library works with no key; Hardcover is the better catalogue. Say so once,
             where the books are, rather than hoping the Settings page gets read. */}
         {source === "openlibrary" && metaOK && (

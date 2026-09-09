@@ -626,6 +626,7 @@ export type BookSource = "openlibrary" | "hardcover";
 export interface BookUpgradeStatus {
   running: boolean; total: number; done: number; upgraded: number; merged: number; unmatched: number;
   started_at?: number; ended_at?: number; error?: string;
+  notes?: string[]; // why the first few books didn't match
 }
 export interface BookLookup {
   key: string;
